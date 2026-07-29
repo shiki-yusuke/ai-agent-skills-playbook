@@ -32,7 +32,7 @@ trace:                        # canonical declaration（正方向リンクの正
     target: src/<path/to/test>.test.ts    # プレースホルダー。実在パスに差し替える
     scope: owned
   - type: tracking
-    target: gtm:sk_<event_name>                  # プレースホルダー。src/gtm/events.ts の実在イベントに差し替える（送信名は sk_ prefix 付き）
+    target: gtm:<event_name>                     # プレースホルダー。src/gtm/events.ts の実在イベントに差し替える（送信名のprefix規則があれば併記する）
     symbol: GTM_EVENTS.<eventKey>                # 定義 symbol（alias: GTM_EVENT_DEFINITIONS.<key>）
     dashboard: <GA エクスプロレーション URL>       # 任意
   - type: flag
@@ -66,7 +66,7 @@ related_specs:                # 関係種別付き 1 ホップグラフ。「念
 
 | 状態 ID | 現在状態 | イベント | ガード | 次状態 | 副作用 | 計測 | 関連SPEC |
 |---|---|---|---|---|---|---|---|
-| STATE-ANSWERING | answering | submit | — | judging | 回答送信 API | `gtm:sk_<event_name>`（実在イベントに差し替える） | SPEC-<AREA>-<NNN> |
+| STATE-ANSWERING | answering | submit | — | judging | 回答送信 API | `gtm:<event_name>`（実在イベントに差し替える） | SPEC-<AREA>-<NNN> |
 
 ## エッジケース
 
