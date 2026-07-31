@@ -146,6 +146,48 @@ description: コード変更前に、変更対象シンボル/ファイル/機�
 <次にどのskill/subagent/確認に進むべきかの提案>
 ```
 
+## Structured output block (impact-scan:v1)
+
+Markdown レポート本体（上記フォーマット）に加えて、下流ツール（見積もり・較正パイプライン等）が機械的に読み取れるよう、レポート末尾に **1個だけ** 以下の fenced code block を出力する。この block は本 skill が定める正規仕様であり、他リポジトリ・他ツール側の同名スキーマはこれを参照する。
+
+### フェンス形式
+
+- 開始フェンスの info string は文字列 `impact-scan:v1` そのもの（言語ヒント無し）
+- 中身は JSON オブジェクト1個のみ。前後に他のテキストを混ぜない
+- レポート1件につきこの block は**必ず1個**（0個・2個以上は消費側のパースエラーとして扱われる）
+
+````markdown
+```impact-scan:v1
+{
+  "scan_version": "1",
+  "repo_commit": "<git rev-parse HEAD の値>",
+  "candidate_paths": ["src/foo/Bar.ts", "src/foo/Bar.test.ts"],
+  "candidate_layers": ["domain", "presentation"],
+  "open_items": ["依存方向の逸脱疑いあり: 要人間確認 (5節参照)"]
+}
+```
+````
+
+### JSON スキーマ
+
+| フィールド | 型 | 必須 | 意味 |
+|---|---|---|---|
+| `scan_version` | string | ✅ | この block 形式のバージョン。現行は `"1"` |
+| `repo_commit` | string | ✅ | 調査時点の commit hash（再現性の基準点） |
+| `candidate_paths` | string[] | ✅ | 「3. 直接影響ファイル」「4. 参照元一覧」に列挙した file path の生リスト |
+| `candidate_layers` | string[] | ✅ | 「4. 参照元一覧」で分類したレイヤー名の生リスト（対象プロダクトの層構成に従う） |
+| `open_items` | string[] | 任意（省略時は空配列扱い） | 「11. 人間確認が必要な点」に相当する、未解決のまま残った項目の生リスト |
+
+このスキーマは消費側実装（例: lane リポジトリの `ImpactScanSnapshotSchema`）と一対一で整合させること。フィールドの追加・改名を行う場合は `scan_version` を上げ、既存消費側との後方互換を壊さないよう調整する。
+
+### 原則: 生の観測値のみ・集約スコアを作らない
+
+`candidate_paths` / `candidate_layers` / `open_items` は **観測した生のリストそのもの** であり、これらを合成した重要度スコア・リスクスコア・優先度ランク等の集約値は一切含めない。「影響が大きい/小さい」という評価は本 skill の責務ではなく、消費側（見積もり・較正ロジック等）が生データから独自に導出する。本 skill が集約判断を代行すると、判断根拠が block の外（本 skill 内部）に隠れてしまい、下流での検証・再計算ができなくなるため。
+
+### `digest` は含めない（参考値は消費側が再計算する）
+
+この block 自体には `digest`（内容のハッシュ値等）を含めない。再現性検証用の digest が必要な消費側は、`candidate_paths` + `candidate_layers` から**自分で再計算する**。本 skill が計算した digest を block に含めて渡しても、消費側はそれを信頼せず必ず独自再計算に置き換える運用とする（stale な値や手編集された値が検証をすり抜けることを防ぐため）。
+
 ## 禁止事項
 
 - ファイル編集・commit・push・PR作成・設定変更
