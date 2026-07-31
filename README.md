@@ -33,6 +33,12 @@ AIエージェント（Claude / Codex等）を使った開発で再利用して�
 
 各スキルディレクトリの README / SKILL.md を、導入先プロダクトの実際の構成（ディレクトリ構造・依存関係ルール・使用ツール）に合わせて具体化してから使う。テンプレートの `<placeholder>` 部分を実プロジェクトの値に置き換えること。
 
+## 収録ドキュメント
+
+| ドキュメント | 一言で言うと |
+|---|---|
+| [`docs/ai-metrics-platform-template.md`](docs/ai-metrics-platform-template.md) | AI支援開発の効果計測基盤（5テーブルスキーマ + PRコメントマーカー収集 + Goodhart回避ガードレール）の参照設計テンプレート |
+
 ## License
 
 MIT License. 詳細は [LICENSE](LICENSE) を参照。
