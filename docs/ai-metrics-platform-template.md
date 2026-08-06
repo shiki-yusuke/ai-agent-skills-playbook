@@ -146,6 +146,8 @@ The design goal: a developer using the AI coding agent should never have to run 
 3. A scheduled **harvester** (a cron-style job, run on a fixed interval during working hours is enough — sub-minute freshness is rarely worth the added complexity) scans PRs/comments across the target repositories for that marker tag, decodes the payload, verifies the hash, and **upserts** into the matching table using the payload's own declared key.
 4. The sha256 is not just integrity-checking: comparing it against the hash already stored for that upsert key lets the harvester skip re-processing unchanged comments cheaply, without re-parsing or re-writing anything.
 
+This section describes the *pattern*; [`docs/protocols/agent-metrics-v1.md`](protocols/agent-metrics-v1.md) is the concrete, machine-verifiable *protocol* one implementation of it follows — normative envelope/payload schemas, an RFC 8785-based upsert-key recipe, and JSON fixtures a harvester implementation can conform against.
+
 Why this shape, specifically:
 
 - **No developer-side credential.** The only credential that exists is the harvester's own read access to PR comments and write access to the metrics store — held once, centrally, not distributed to every developer's machine.
