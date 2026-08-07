@@ -191,7 +191,7 @@ Do not start by building the five tables and a harvester bot. That was not how t
 
 Two existing OSS projects are the implementation parts this template assumes you already have, or can adopt directly, rather than reinvent:
 
-- **[spec-lane](https://github.com/shiki-yusuke/lane)** — a phase-based delivery-pipeline CLI (intent → spec → implement → verify → done) with a Telemetry port that shells out to a usage-measurement CLI by session ID and records cost/duration per phase into a ledger. That ledger is a direct implementation of §2.3's Phase Cost Records.
+- **[spec-lane](https://github.com/shiki-yusuke/spec-lane)** — a phase-based delivery-pipeline CLI (intent → spec → implement → verify → done) with a Telemetry port that shells out to a usage-measurement CLI by session ID and records cost/duration per phase into a ledger. That ledger is a direct implementation of §2.3's Phase Cost Records.
 - **[agent-cost](https://github.com/shiki-yusuke/agent-cost)** — reads local Claude Code / Codex CLI logs (zero network calls), prices token usage against a versioned, sourced rate catalog, and exposes both a human-readable `report` and a machine-readable `measure --session-id ... --format json` contract (explicitly versioned via `protocol_version`) for attributing cost to a specific unit of work — exactly the need §2.3/§2.4's cost tables exist to serve.
 
 Also see this repository's [`spec-based-impact-analysis`](../skills/spec-based-impact-analysis/) skill: it is not a metrics tool, but the same "PR/Issue comment as the interface, no new developer-facing surface" pattern used in §3 recurs there for posting impact-analysis results.
