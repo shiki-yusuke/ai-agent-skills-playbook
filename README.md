@@ -4,6 +4,8 @@ AIエージェント（Claude / Codex等）を使った開発で再利用して�
 
 各スキルは「実際にプロダクションリポジトリで運用し、複数ラウンドのレビュー・複数回のブラインド評価を経て磨いたもの」の一般化版。プロダクト固有の実装詳細（ファイルパス・閾値・ビジネスロジック）は含めず、パターン・手順・テンプレートのみを収録する。
 
+スキル集が中心のリポジトリだが、他の公開OSSが依拠する標準仕様（protocol）の正本（SSOT）を1本含む（→ [Public interoperability protocols](#public-interoperability-protocols)）。
+
 ## 収録スキル
 
 | スキル | 一言で言うと | 詳細 |
@@ -38,6 +40,41 @@ AIエージェント（Claude / Codex等）を使った開発で再利用して�
 | ドキュメント | 一言で言うと |
 |---|---|
 | [`docs/ai-metrics-platform-template.md`](docs/ai-metrics-platform-template.md) | AI支援開発の効果計測基盤（5テーブルスキーマ + PRコメントマーカー収集 + Goodhart回避ガードレール）の参照設計テンプレート |
+| [`docs/protocols/agent-metrics-v1.md`](docs/protocols/agent-metrics-v1.md) | 上記テンプレートの「PRコメントマーカー収集」パターンを具体化した、機械検証可能な normative protocol（次節参照） |
+
+## Public interoperability protocols
+
+このリポジトリはスキル集が主目的だが、他の公開OSSが実装として依拠する protocol の正本（SSOT）としての役割も一部持つ。リポジトリ全体を metrics 専用にする意図はなく、あくまで収録物の1つという位置づけ。
+
+### agent-metrics:v1
+
+AIエージェントのトークン使用量・推定コストのテレメトリを、PR（変更）コメント経由で運ぶための normative protocol。
+
+- 凍結契約: `agent-metrics-v1.0.0`
+- Reference emitter: [spec-lane](https://github.com/shiki-yusuke/lane)
+- Reference harvester: [agent-metrics-harvester](https://github.com/shiki-yusuke/agent-metrics-harvester)
+- Protocol document: [`docs/protocols/agent-metrics-v1.md`](docs/protocols/agent-metrics-v1.md)
+- Conformance fixtures: [`contracts/agent-metrics/v1/`](contracts/agent-metrics/v1/)
+
+設計原則（詳細はprotocol文書側の記述が正本。ここでは複製せず要点のみ）:
+
+- snapshot、not delta — 訂正は同一 `upsert_key` への完全な置き換えとして表現する
+- checksum、not signature — `sha256` は改ざん検知用であり、認証の代わりにはならない
+- 認証は transport 層の責務（comment author の allowlist 照合等）であり、payload 自身は何も証明しない
+- `coverage` / `omissions` を明示し、測れなかったものを黙って落とさない
+- 個人識別次元を持たない（schema レベルで禁止） — この telemetry は個人評価ではなく、プロセス改善のための work/process telemetry
+
+### この protocol を含む計測パイプラインでの責務分担
+
+同じパイプラインを構成する各リポジトリは責務が独立しており、重複しない:
+
+| リポジトリ | 責務 |
+|---|---|
+| [agent-cost](https://github.com/shiki-yusuke/agent-cost) | ローカルのagent実行ログからトークン使用量・推定コストを計測する |
+| [spec-lane](https://github.com/shiki-yusuke/lane) | delivery workflowの制御・活動の帰属付け・`agent-metrics:v1` payloadの生成とPRコメントへのoptionalな投稿（reference emitter） |
+| **ai-agent-skills-playbook（このリポジトリ）** | `agent-metrics:v1` / `token-usage/v1` の正規仕様（SSOT）を保持する。protocolの実装（emit/harvest/report）自体は行わない |
+| [agent-metrics-harvester](https://github.com/shiki-yusuke/agent-metrics-harvester) | PRコメント中のmarkerを検証・収集し、ストア（JSONL/SQLite）へ永続化する（reference harvester） |
+| agent-metrics-harvester リポジトリ内の agent-metrics-report | ストアから merged PR あたりの推定コスト等を集計・レポートする（同一リポジトリ内の read-only binary） |
 
 ## License
 
