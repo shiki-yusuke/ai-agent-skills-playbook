@@ -51,7 +51,7 @@ AIエージェント（Claude / Codex等）を使った開発で再利用して�
 AIエージェントのトークン使用量・推定コストのテレメトリを、PR（変更）コメント経由で運ぶための normative protocol。
 
 - 凍結契約: `agent-metrics-v1.0.0`
-- Reference emitter: [spec-lane](https://github.com/shiki-yusuke/lane)
+- Reference emitter: [spec-lane](https://github.com/shiki-yusuke/spec-lane)
 - Reference harvester: [agent-metrics-harvester](https://github.com/shiki-yusuke/agent-metrics-harvester)
 - Protocol document: [`docs/protocols/agent-metrics-v1.md`](docs/protocols/agent-metrics-v1.md)
 - Conformance fixtures: [`contracts/agent-metrics/v1/`](contracts/agent-metrics/v1/)
@@ -71,7 +71,7 @@ AIエージェントのトークン使用量・推定コストのテレメトリ
 | リポジトリ | 責務 |
 |---|---|
 | [agent-cost](https://github.com/shiki-yusuke/agent-cost) | ローカルのagent実行ログからトークン使用量・推定コストを計測する |
-| [spec-lane](https://github.com/shiki-yusuke/lane) | delivery workflowの制御・活動の帰属付け・`agent-metrics:v1` payloadの生成とPRコメントへのoptionalな投稿（reference emitter） |
+| [spec-lane](https://github.com/shiki-yusuke/spec-lane) | delivery workflowの制御・活動の帰属付け・`agent-metrics:v1` payloadの生成とPRコメントへのoptionalな投稿（reference emitter） |
 | **ai-agent-skills-playbook（このリポジトリ）** | `agent-metrics:v1` / `token-usage/v1` の正規仕様（SSOT）を保持する。protocolの実装（emit/harvest/report）自体は行わない |
 | [agent-metrics-harvester](https://github.com/shiki-yusuke/agent-metrics-harvester) | PRコメント中のmarkerを検証・収集し、ストア（JSONL/SQLite）へ永続化する（reference harvester） |
 | agent-metrics-harvester リポジトリ内の agent-metrics-report | ストアから merged PR あたりの推定コスト等を集計・レポートする（同一リポジトリ内の read-only binary） |
