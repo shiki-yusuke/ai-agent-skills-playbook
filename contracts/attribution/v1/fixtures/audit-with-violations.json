@@ -3,8 +3,7 @@
   "generated_at": "2026-08-01T11:00:00Z",
   "window": { "since": "2026-08-01T00:00:00Z", "until": "2026-08-01T10:00:00Z" },
   "sessions": {
-    "measured": 3,
-    "exactly_attributed": 1,
+    "exactly_attributed": [{ "session_id": "session:c", "tokens": 400 }],
     "unbound": ["session:a"],
     "mixed": ["session:b"],
     "orphan_usage": [],

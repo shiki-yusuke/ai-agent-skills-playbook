@@ -15,6 +15,21 @@
     "bound_at",
     "binding_status"
   ],
+  "allOf": [
+    {
+      "description": "sol architect-review must5: schema-enforced, not just a verify-fixtures.mjs semantic check (kept as a defense-in-depth backstop -- see verify-fixtures.mjs).",
+      "if": { "properties": { "binding_method": { "const": "manual_bind" } } },
+      "then": {
+        "required": ["actor"],
+        "properties": {
+          "actor": {
+            "required": ["kind"],
+            "properties": { "kind": { "const": "human" } }
+          }
+        }
+      }
+    }
+  ],
   "properties": {
     "schema_version": { "const": "attribution/v1" },
     "task_run_id": { "type": "string", "minLength": 1 },

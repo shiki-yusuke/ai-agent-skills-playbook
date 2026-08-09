@@ -5,11 +5,11 @@
   "sessions": {
     "exactly_attributed": [],
     "unbound": [],
-    "mixed": [],
+    "mixed": ["session:x"],
     "orphan_usage": [],
     "measurement_incomplete": []
   },
-  "tokens": { "exact_attributed": 0, "total_measured": 0 },
+  "tokens": { "exact_attributed": 0, "total_measured": 500 },
   "research_eligible": true,
   "violations": []
 }
