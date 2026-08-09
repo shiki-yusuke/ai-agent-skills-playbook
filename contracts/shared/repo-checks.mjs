@@ -7,14 +7,19 @@
 //      contracts/ (a refactor that accidentally stopped a contract's script from being
 //      discovered should fail loudly, not silently run fewer checks than intended).
 //   2. Orphan-fixture detection: every actual file in a contract's fixtures/ directory must be
-//      referenced by at least one entry in that directory's expected-results.json (a fixture
-//      created but never wired into the manifest, or left behind after a rename, is dead
-//      weight nobody is actually running -- catch it before it accumulates).
-//   3. Schema meta-validation: every *.schema.json file must be valid JSON and declare
-//      "$schema": "https://json-schema.org/draft/2020-12/schema" (not full draft 2020-12
-//      meta-schema validation -- this repo's shared validator is a subset, not a general
-//      implementation, so this check is deliberately shallow: syntactic validity + the
-//      version declaration, not "does every keyword conform to the meta-schema").
+//      referenced by at least one fixture entry's `files` field in that directory's
+//      expected-results.json (a fixture created but never wired into the manifest, or left
+//      behind after a rename, is dead weight nobody is actually running -- catch it before it
+//      accumulates). Scoped to `files` only (sol architect-review 3rd round should) -- an
+//      earlier version scanned every field on a fixture entry (id, notes, reason_code, ...),
+//      which could accidentally treat an unrelated string coincidentally matching a filename
+//      as a "reference," masking a real gap.
+//   3. Schema structural check: every *.schema.json file must be valid JSON and declare
+//      "$schema": "https://json-schema.org/draft/2020-12/schema". Renamed from "meta-validation"
+//      (sol architect-review 3rd round should) -- that name overclaimed: this is JSON.parse
+//      plus a string-equality check on one field, not real draft 2020-12 meta-schema
+//      validation (this repo's shared validator is a documented subset, not a general
+//      implementation, so it cannot check "does every keyword conform to the meta-schema").
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
@@ -84,7 +89,9 @@ for (const manifestPath of manifestPaths) {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf-8"));
 
   const referenced = new Set();
-  collectReferencedFilenames(manifest.fixtures, referenced);
+  for (const entry of manifest.fixtures ?? []) {
+    collectReferencedFilenames(entry?.files, referenced);
+  }
 
   const actualFiles = readdirSync(dir).filter((f) => f !== "expected-results.json");
   const orphans = actualFiles.filter((f) => !referenced.has(f));
@@ -96,7 +103,7 @@ for (const manifestPath of manifestPaths) {
 }
 
 // ---------------------------------------------------------------------------
-// 3. Schema meta-validation
+// 3. Schema structural check
 // ---------------------------------------------------------------------------
 const schemaFiles = allFiles.filter((f) => f.endsWith(".schema.json"));
 for (const schemaFile of schemaFiles) {

@@ -211,6 +211,13 @@ key is forbidden either way and widening the forbidden set can only narrow what'
 disallowed. There is no other "extensions" namespace in either schema for future growth to
 land in without a version bump.
 
+**Known, accepted consequence of this one exception** (sol architect-review 3rd round should,
+same as `trace-v1.md`): extending the denylist creates a validator-version skew — a reader
+still running against an *older* copy of `contracts/shared/personal-dimensions.mjs` will
+accept a key a newer copy would now forbid, until that reader updates its own dependency. This
+is an operational fact about a shared module distributed by reference, not a design flaw in
+the exception itself.
+
 ## Rejected designs
 
 - **Hook-based session binding.** Considered before this contract was written and cut after a
