@@ -53,7 +53,7 @@ Schema:
 | `cohort.*` | yes (9 subfields) | Full comparison-population identity (agent_type, model_provider, model_generation, model_id, three sha256-hex digests, measure_contract_version, token_basis) — required in full even when abstained, since several reason_codes (`MODEL_GENERATION_MISMATCH`, `ROUTING_PROFILE_MISMATCH`, `TOKEN_BASIS_MISMATCH`, `TARGET_BASIS_UNSUPPORTED`) are only meaningful if the cohort they mismatched against is on record. |
 | `population.candidate_count` / `.eligible_count` | yes | `eligible_count <= candidate_count` (semantic check). |
 | `population.excluded_by_reason` | yes | Map of reason_code to excluded count — see "excluded_by_reason counting rule." |
-| `prediction_interval.status` | yes | `"available"` \| `"insufficient_data"`. When `"available"`: `level`/`lower`/`upper`/`method`/`calibration_sample_size` are ALL required together (schema `if`/`then`), `level` is exclusively `(0, 1)`, and `lower <= upper` (semantic check). When `"insufficient_data"`: none of those five value fields may be present at all (schema `if`/`then`/`else`, a closed sub-schema) — not merely optional. |
+| `prediction_interval.status` | yes | `"available"` \| `"insufficient_data"`. `"available"` FORCES `decision.status == "predicted"` (sol architect-review 3rd round must2 — an available confidence interval is an interval *around* a point estimate, which an abstained decision doesn't have). When `"available"`: `level`/`lower`/`upper`/`method`/`calibration_sample_size` are ALL required together (schema `if`/`then`), `level` is exclusively `(0, 1)`, `calibration_sample_size >= 1` (0 samples is not a calibration, it's the absence of one), and `lower <= upper` (semantic check). When `"insufficient_data"`: none of those five value fields may be present at all (schema `if`/`then`/`else`, a closed sub-schema) — not merely optional. |
 | `coverage_history.frozen_predictions_only` | yes | Always `const true` — a prediction, once recorded, is never retroactively rewritten; only new revisions get appended (mirrors `trace-v1.md`'s append-only `supersedes` model). |
 | `drift.status` | yes | `"insufficient_data"` \| `"stable"` \| `"warning"`. |
 
@@ -69,22 +69,27 @@ DRIFT_WARNING                                            -- ADVISORY
 
 ## Tagged-union state machine
 
-`decision.status`, `predicted`, and `applicability.status` are not three independently
-optional fields — together they form a state machine with exactly two valid states, both
-schema-enforced (`allOf`/`if`/`then`/`not`, not left to convention):
+`decision.status`, `predicted`, `applicability.status`, and `prediction_interval.status` are
+not four independently optional fields — together they form a state machine with exactly two
+valid states, all schema-enforced (`allOf`/`if`/`then`/`not`, not left to convention):
 
 - **`abstained`**: `predicted` MUST be absent entirely (not merely omittable — its presence is
   actively forbidden). `reason_codes` MUST contain at least one BLOCKING code; `DRIFT_WARNING`
-  alone does not justify withholding a point estimate.
+  alone does not justify withholding a point estimate. `prediction_interval.status` MUST NOT
+  be `"available"` (sol architect-review 3rd round must2) — the same reason `predicted` is
+  forbidden: an available interval has no point estimate to surround.
 - **`predicted`**: `predicted{p50, p80, value_status}` MUST be present. `reason_codes` MUST
   NOT contain any BLOCKING code (only the advisory `DRIFT_WARNING` may accompany a
   prediction). `applicability.status` MUST NOT be `"out_of_domain"` — out-of-domain implies
   the decision must abstain; there is no such thing as a confident point estimate for a
-  surface the population math says is out of domain.
+  surface the population math says is out of domain. `prediction_interval.status` MAY be
+  either value (a predicted decision can still lack enough calibration history for an
+  interval).
 
 Both BLOCKING-code directions are checked in `verify-fixtures.mjs` (set-membership arithmetic
-this repo's minimal validator subset has no keyword for); the `predicted`-presence and
-`out_of_domain` directions are schema-structural (`not` + `required`/`const`).
+this repo's minimal validator subset has no keyword for); the `predicted`-presence,
+`out_of_domain`, and `prediction_interval.status=="available"` directions are all
+schema-structural (`not` + `required`/`const`).
 
 ## `excluded_by_reason` counting rule
 
