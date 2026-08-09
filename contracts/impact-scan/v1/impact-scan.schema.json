@@ -10,7 +10,7 @@
       "const": "1"
     },
     "repo_commit": {
-      "description": "sol architect-review 2nd round must C: full hash only -- either the 40-hex short-SHA1-length form or a 64-hex SHA-256-repo form. A 7-character abbreviated commit (git's default short form) is no longer accepted; abbreviations are ambiguous across a growing repo in a way a reproducibility-critical field like this one cannot afford.",
+      "description": "sol architect-review 2nd round must C, nit-fixed 3rd round: full hash only -- either the 40-hex full-SHA-1 form or the 64-hex full-SHA-256 form (40 hex chars IS the full length of a SHA-1 hash, not an abbreviated/short one -- an earlier draft's comment miscalled it \"short-SHA1-length,\" backwards terminology this fixes). A 7-character abbreviated commit (git's default short form) is no longer accepted; abbreviations are ambiguous across a growing repo in a way a reproducibility-critical field like this one cannot afford.",
       "type": "string",
       "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
     },
