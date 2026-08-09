@@ -1,5 +1,6 @@
 {
   "schema_version": "estimate/v2",
+  "target": { "metric": "cost_usd", "unit": "usd" },
   "decision": { "status": "abstained", "reason_codes": ["NOVEL_SURFACE_UNKNOWN"] },
   "applicability": { "status": "unknown" },
   "cohort": {
@@ -7,11 +8,11 @@
     "model_provider": "anthropic",
     "model_generation": "claude-5",
     "model_id": "claude-sonnet-5",
-    "routing_policy_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "prompt_policy_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "routing_policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "prompt_policy_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "measure_contract_version": "agent-metrics/v1",
     "token_basis": "native",
-    "execution_profile_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    "execution_profile_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   },
   "population": { "candidate_count": 0, "eligible_count": 0, "excluded_by_reason": {} },
   "prediction_interval": { "status": "insufficient_data" },
