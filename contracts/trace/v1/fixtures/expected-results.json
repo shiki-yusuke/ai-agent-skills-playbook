@@ -200,6 +200,22 @@
       "expected": "reject",
       "reason_code": "event_too_deep",
       "notes": "sol architect-review must D: docs/protocols/trace-v1.md declares a JSON nesting depth limit (<=8) that nothing previously enforced. payload.nested is a 10-level-deep chain of {child: ...} wrappers."
+    },
+    {
+      "id": "valid-event-at-size-limit",
+      "kind": "event",
+      "files": { "event": "valid-event-at-size-limit.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sol architect-review 3rd round should: payload.padding is sized so that JSON.stringify(event) is EXACTLY 16384 bytes -- the declared limit is \"<= 16 KB\", so the boundary value itself MUST accept, not just values strictly below it. Fixes the off-by-one direction the two must-D reject fixtures alone couldn't prove (they only show values ABOVE the limit reject; this shows the limit itself is inclusive)."
+    },
+    {
+      "id": "valid-event-at-depth-limit",
+      "kind": "event",
+      "files": { "event": "valid-event-at-depth-limit.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sol architect-review 3rd round should: payload.nested is a 6-level chain of {child: ...} wrappers, making the whole event's maxDepth exactly 8 -- the declared limit is \"<= 8\", so this boundary value MUST accept."
     }
   ]
 }

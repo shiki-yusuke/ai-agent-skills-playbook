@@ -30,5 +30,5 @@ jobs:
             echo "::endgroup::"
           done < <(find contracts -type f -name "verify-fixtures.mjs" | sort)
           exit "$status"
-      - name: Repo-wide structural checks (discovery-count floor, orphan fixtures, schema meta-validation)
+      - name: Repo-wide structural checks (discovery-count floor, orphan fixtures, schema structural check)
         run: node contracts/shared/repo-checks.mjs

@@ -242,6 +242,16 @@ disallowed, never introduce a shape an existing strict reader would reject. Ther
 "extensions" namespace or escape-hatch field anywhere in this schema; nothing else may change
 within v1 without a version bump.
 
+**Known, accepted consequence of this one exception (sol architect-review 3rd round
+should):** extending the denylist creates a validator-version skew. A reader still running
+against an *older* copy of `contracts/shared/personal-dimensions.mjs` will accept (not
+reject) a key that a newer copy would now forbid, until that reader's own dependency on this
+module is updated — the extension does not retroactively reach into every already-deployed
+reader. This is not a gap in the exception's design, it is simply true of any shared denylist
+distributed by reference rather than fetched fresh per validation: the fix is operational
+(keep readers' copies of the shared module current), not a reason to avoid ever extending the
+set.
+
 ## Limits
 
 Tunable; not derived from a hard technical ceiling, same posture as
