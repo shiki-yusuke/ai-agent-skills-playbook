@@ -67,7 +67,7 @@
       "pattern": "^tr1_[0-9a-f]{64}$"
     },
     "relation": {
-      "description": "Closed set. `incident_observed` and `rolled_back_to` are reserved for a future version -- valid `relation` enum members (so a future v2 can define their shape without an enum change), but v1 never defined an identity/payload shape for either. sol architect-review 2nd round reversed the previous stance here: a v1 reader MUST reject, unconditionally, any event that actually uses one of these two values (enforced in verify-fixtures.mjs, not expressible as a schema constraint -- rejecting a specific enum VALUE while still listing it as valid isn't a plain closed-set check).",
+      "description": "Closed set (16 values). The names `incident_observed` and `rolled_back_to` are reserved for a future version in documentation only (see docs/protocols/trace-v1.md) -- they are NOT enum members here (sol architect-review 3rd round must1: an earlier draft listed them as valid enum members while a verify-fixtures.mjs semantic check unconditionally rejected any event using either, a schema/semantic split with no benefit -- v1 never defined an identity/payload shape for them, so there is nothing for the schema to accept in the first place). Emitting either value today is a plain enum violation, exactly like any other unrecognized string.",
       "enum": [
         "declares",
         "refines",
@@ -84,9 +84,7 @@
         "session_observed",
         "session_bound",
         "task_run_started",
-        "usage_imported",
-        "incident_observed",
-        "rolled_back_to"
+        "usage_imported"
       ]
     },
     "from_ref": { "$ref": "#/$defs/ref" },
