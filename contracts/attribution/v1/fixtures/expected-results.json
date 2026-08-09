@@ -57,7 +57,15 @@
       "files": { "records": ["binding-duplicate-active-1.json", "binding-duplicate-active-2.json"] },
       "expected": "reject",
       "reason_code": "multiple_active_bindings_for_session",
-      "notes": "sol architect-review should: the same session_id has two binding-records with binding_status==\"bound\" at once (bound to two different task_run_id values), neither marked superseded -- a cross-record check no single-record validation can catch."
+      "notes": "sol architect-review should: the same session_id has two binding-records with binding_status==\"bound\" at once, bound to two DISTINCT task_run_id values, neither marked superseded -- a cross-record check no single-record validation can catch."
+    },
+    {
+      "id": "binding-collection-idempotent-replay",
+      "type": "binding-collection",
+      "files": { "records": ["binding-idempotent-replay-1.json", "binding-idempotent-replay-2.json"] },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sol architect-review 2nd round must A2 regression: the exact same {task_run_id, session_id} pair, bound twice (e.g. a wrapper retry re-emitting an identical record; bound_at differs by 500ms but nothing else does). This is a harmless idempotent replay, NOT two active bindings -- the previous row-count-based check would have false-positived here. The fix dedups to distinct {task_run_id, session_id} pairs before counting, so this correctly stays an accept."
     },
     {
       "id": "audit-clean",
@@ -130,6 +138,22 @@
       "expected": "reject",
       "reason_code": "sessions_not_disjoint",
       "notes": "session:dup appears in both sessions.unbound and sessions.mixed -- a session cannot simultaneously BE two different failure categories in one audit."
+    },
+    {
+      "id": "invalid-violation-missing-session-id",
+      "type": "audit-result",
+      "files": { "record": "invalid-violation-missing-session-id.json" },
+      "expected": "reject",
+      "reason_code": "$.violations[0]",
+      "notes": "sol architect-review 2nd round must A1 regression: a violation with reason_code UNBOUND_SESSION but no session_id at all. Before this round, a violation missing session_id was silently skipped by the bidirectional list<->violation correspondence check (it only compared violations that HAD a session_id), letting an incomplete violation slip through unverified. session_id is now schema-required on every violation, since this schema's whole reason_code closed set is inherently session-keyed. Also independently fails missing_violation_for_session (session:a in sessions.unbound has no matching violation, since the one violation present has no session_id to match against)."
+    },
+    {
+      "id": "invalid-total-measured-below-exact",
+      "type": "audit-result",
+      "files": { "record": "invalid-total-measured-below-exact.json" },
+      "expected": "reject",
+      "reason_code": "total_measured_below_exact_attributed",
+      "notes": "sol architect-review 2nd round must A3: sessions.exactly_attributed sums to 100 tokens, but tokens.total_measured declares only 50 -- exactly_attributed's usage is a subset of everything measured, so the total can never be smaller than that subset. Before this round, nothing checked total_measured's relationship to exact_attributed at all (only that exact_attributed matched its own declared sum), so a total smaller than its own subset silently passed."
     },
     {
       "id": "invalid-all-forbidden-keys",

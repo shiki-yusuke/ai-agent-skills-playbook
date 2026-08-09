@@ -146,6 +146,16 @@ function checkAuditResult(result) {
           `exact_attributed_sum_mismatch: tokens.exact_attributed(${tokens.exact_attributed}) does not equal the sum of sessions.exactly_attributed[].tokens (${exactSum})`,
         );
       }
+      // sol architect-review 2nd round must A3: total_measured must be at least the
+      // exactly-attributed sum -- exactly_attributed's usage is a subset of everything
+      // measured, so the total can never be smaller than that subset (closes the "50 < 100"
+      // hole: previously nothing checked total_measured's relationship to exact_attributed at
+      // all, only that exact_attributed itself equaled its own declared sum).
+      if (typeof tokens.total_measured === "number" && tokens.total_measured < exactSum) {
+        reasons.push(
+          `total_measured_below_exact_attributed: tokens.total_measured(${tokens.total_measured}) is less than the sum of sessions.exactly_attributed[].tokens (${exactSum})`,
+        );
+      }
     }
   }
 
@@ -164,6 +174,14 @@ function readFixtureJson(filename) {
 // binding-records considered together) to catch the same session_id having more than one
 // simultaneously-active ("bound", not "superseded") binding-record -- a cross-record check no
 // single-record validation can express.
+//
+// sol architect-review 2nd round must A2: the multi-binding check must be robust to an
+// idempotent replay -- the exact same {task_run_id, session_id} binding record appended twice
+// (e.g. a wrapper retried after a network blip and re-emitted an identical record) is NOT a
+// conflict, it's the same fact recorded twice. The check therefore dedups to DISTINCT
+// {task_run_id, session_id} pairs among "bound" records first, and only flags a session_id
+// that maps to more than one DISTINCT task_run_id -- row count alone (the previous
+// implementation) would have false-positived on a harmless replay.
 function runBindingCollectionFixture(entry) {
   const records = entry.files.records.map(readFixtureJson);
   const problems = [];
@@ -173,16 +191,17 @@ function runBindingCollectionFixture(entry) {
     if (reasons.length > 0) problems.push(`record not individually valid: ${reasons.join("; ")}`);
   }
 
-  const activeCountBySession = new Map();
+  const taskRunIdsBySession = new Map();
   for (const record of records) {
     if (record.binding_status === "bound") {
-      activeCountBySession.set(record.session_id, (activeCountBySession.get(record.session_id) ?? 0) + 1);
+      if (!taskRunIdsBySession.has(record.session_id)) taskRunIdsBySession.set(record.session_id, new Set());
+      taskRunIdsBySession.get(record.session_id).add(record.task_run_id);
     }
   }
-  for (const [sessionId, count] of activeCountBySession) {
-    if (count > 1) {
+  for (const [sessionId, taskRunIds] of taskRunIdsBySession) {
+    if (taskRunIds.size > 1) {
       problems.push(
-        `multiple_active_bindings_for_session: session_id "${sessionId}" has ${count} binding-records with binding_status=="bound" at once`,
+        `multiple_active_bindings_for_session: session_id "${sessionId}" is bound to ${taskRunIds.size} distinct task_run_id values (${[...taskRunIds].join(", ")}) at once`,
       );
     }
   }
