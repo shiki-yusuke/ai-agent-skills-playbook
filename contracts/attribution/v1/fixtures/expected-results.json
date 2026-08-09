@@ -1,0 +1,95 @@
+{
+  "protocol_version": "attribution/v1",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. Each entry's `type` selects which schema + semantic checks apply: \"binding-record\" or \"audit-result\". `reason_code` for a \"reject\" fixture is either a named semantic-check code (e.g. \"manual_bind_requires_human_actor\") or a raw schema-validator JSON-path (e.g. \"$.binding_method\"), same leading-token convention as agent-metrics/v1 and trace/v1.",
+  "fixtures": [
+    {
+      "id": "binding-claude",
+      "type": "binding-record",
+      "files": { "record": "binding-claude.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "pre_assigned_session_id: the wrapper's UUID nonce is the session_id itself."
+    },
+    {
+      "id": "binding-codex",
+      "type": "binding-record",
+      "files": { "record": "binding-codex.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "self_reported_thread_id: session_id obtained after the fact from codex exec --json's thread.started event."
+    },
+    {
+      "id": "binding-manual",
+      "type": "binding-record",
+      "files": { "record": "binding-manual.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "manual_bind with actor.kind == \"human\" -- satisfies the semantic requirement that manual bindings are attested by a human, not inferred."
+    },
+    {
+      "id": "invalid-binding-method",
+      "type": "binding-record",
+      "files": { "record": "invalid-binding-method.json" },
+      "expected": "reject",
+      "reason_code": "$.binding_method",
+      "notes": "binding_method=\"hook_based\" is not in the v1 closed set -- hook-based binding was excluded after a spike found it silently skips binding when the agent's trust registration is missing (see docs/protocols/attribution-v1.md 'Rejected designs')."
+    },
+    {
+      "id": "invalid-manual-bind-non-human",
+      "type": "binding-record",
+      "files": { "record": "invalid-manual-bind-non-human.json" },
+      "expected": "reject",
+      "reason_code": "manual_bind_requires_human_actor",
+      "notes": "binding_method=manual_bind but actor.kind=\"agent\" -- a manual bind must be a human's own attested action, not a system inferring one on a human's behalf."
+    },
+    {
+      "id": "audit-clean",
+      "type": "audit-result",
+      "files": { "record": "audit-clean.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "All sessions exactly attributed, no violations, research_eligible=true."
+    },
+    {
+      "id": "audit-with-violations",
+      "type": "audit-result",
+      "files": { "record": "audit-with-violations.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "One UNBOUND_SESSION and one MULTI_TASK_BINDING violation, correctly reported with research_eligible=false. tokens.total_measured(900) includes the unattributed/mixed sessions' usage as a measured total -- it is NOT a claim that all 900 tokens are attributable; only tokens.exact_attributed(400) is."
+    },
+    {
+      "id": "audit-no-data",
+      "type": "audit-result",
+      "files": { "record": "audit-no-data.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sessions.measured=0 (no sessions at all in this window) with tokens both null -- 'nothing happened' represented honestly, not as a fabricated 0."
+    },
+    {
+      "id": "invalid-research-eligible-despite-violations",
+      "type": "audit-result",
+      "files": { "record": "invalid-research-eligible-despite-violations.json" },
+      "expected": "reject",
+      "reason_code": "research_eligible_violates_fail_closed_rule",
+      "notes": "One violation is present but research_eligible is declared true. Fail-closed is a MUST, not a recommendation a producer can override with its own judgment call."
+    },
+    {
+      "id": "invalid-unknown-reason-code",
+      "type": "audit-result",
+      "files": { "record": "invalid-unknown-reason-code.json" },
+      "expected": "reject",
+      "reason_code": "$.violations[0].reason_code",
+      "notes": "reason_code=\"STALE_BINDING\" is not in the v1 closed set (UNBOUND_SESSION | MULTI_TASK_BINDING | ORPHAN_USAGE | MEASUREMENT_INCOMPLETE)."
+    },
+    {
+      "id": "invalid-unattributed-zero-not-null",
+      "type": "audit-result",
+      "files": { "record": "invalid-unattributed-zero-not-null.json" },
+      "expected": "reject",
+      "reason_code": "unattributed_must_be_null_not_zero",
+      "notes": "sessions.measured=0 but tokens.exact_attributed/total_measured are declared 0 instead of null -- collapses 'nothing was measured' into 'zero was measured', which null-not-zero forbids."
+    }
+  ]
+}
