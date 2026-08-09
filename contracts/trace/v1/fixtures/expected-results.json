@@ -1,0 +1,106 @@
+{
+  "protocol_version": "trace/v1",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. `expected` is one of \"accept\" | \"reject\". For \"reject\" fixtures, `reason_code` must be present among the detected failure reasons -- for a named check this is a fixed string (e.g. \"event_id_mismatch\"); for a raw schema-validator error it is the JSON path the error occurred at (e.g. \"$.relation\"), following the same leading-token convention as agent-metrics/v1's fixture manifest.",
+  "notes": [
+    "Design decision -- supersedes target absence is NOT a reject case: `cross-segment-supersedes` (accept) carries a well-formed supersedes_event_id that does not match any other event_id in this fixture set. This is intentional, not an oversight. trace/v1 is an append-only ledger that may be split across segments/files; a single-event validator has no way to know whether the superseded event lives in a segment it simply hasn't loaded yet. Rejecting on 'target not found here' would make partial-ledger validation (e.g. validating one day's new events) impossible. Referential integrity of supersedes_event_id, if ever checked, belongs to a whole-ledger compaction/audit tool, not to per-event validation -- this fixture set deliberately does not include a fixture that rejects for this reason."
+  ],
+  "fixtures": [
+    {
+      "id": "session-bound-claude",
+      "kind": "event",
+      "files": { "event": "session-bound-claude.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Claude's binding_method (pre_assigned_session_id): the wrapper generates the UUID nonce and it IS the session_id, no separate join step. Payload carries binding_method for illustration only -- it is not part of the event_id identity."
+    },
+    {
+      "id": "session-bound-codex",
+      "kind": "event",
+      "files": { "event": "session-bound-codex.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Codex's binding_method (self_reported_thread_id): session_id is obtained after the fact from codex exec --json's thread.started event, not a pre-assigned nonce. Same relation (session_bound) as the Claude fixture, deliberately asymmetric payload -- this is the 'claude/codex 非対称' pair the spec calls for."
+    },
+    {
+      "id": "usage-imported",
+      "kind": "event",
+      "files": { "event": "usage-imported.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Exercises the identity exception: payload.window.{since,until} participates in event_id identity (re-importing the same window is idempotent) even though payload as a whole is excluded."
+    },
+    {
+      "id": "artifact-declares",
+      "kind": "event",
+      "files": { "event": "artifact-declares.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "A plain artifact-edge relation (declares) with a two-part to_ref (logical_id + content_digest)."
+    },
+    {
+      "id": "supersedes-correction-pair",
+      "kind": "correction-pair",
+      "files": { "first": "supersedes-pair-1.json", "second": "supersedes-pair-2.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "A correction: the second event declares a new revision of the same logical artifact (spec.md) and carries supersedes_event_id pointing at the first event's event_id. Both events individually valid, distinct event_ids, and the first row is never rewritten -- it remains in the fixture set unchanged."
+    },
+    {
+      "id": "cross-segment-supersedes",
+      "kind": "event",
+      "files": { "event": "cross-segment-supersedes.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "See the top-level 'notes' entry above: supersedes_event_id references an event_id absent from this fixture set entirely, simulating a prior ledger segment this validator hasn't loaded. MUST be accepted at the single-event level."
+    },
+    {
+      "id": "invalid-event-id-mismatch",
+      "kind": "event",
+      "files": { "event": "invalid-event-id-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "event_id_mismatch",
+      "notes": "event_id was computed, then to_ref.content_digest was mutated afterward -- the declared event_id no longer matches recomputing the identity hash over the actual body. A reader MUST recompute, never trust the declared value."
+    },
+    {
+      "id": "invalid-relation",
+      "kind": "event",
+      "files": { "event": "invalid-relation.json" },
+      "expected": "reject",
+      "reason_code": "$.relation",
+      "notes": "relation=\"does_not_exist\" is not in the closed set. Rejected by schema enum validation."
+    },
+    {
+      "id": "invalid-occurred-at-non-utc",
+      "kind": "event",
+      "files": { "event": "invalid-occurred-at-non-utc.json" },
+      "expected": "reject",
+      "reason_code": "$.occurred_at",
+      "notes": "occurred_at carries a +09:00 local offset instead of a literal Z suffix. This ledger has no concept of a local-offset timestamp; every writer MUST convert to UTC first."
+    },
+    {
+      "id": "invalid-personal-dimension",
+      "kind": "event",
+      "files": { "event": "invalid-personal-dimension.json" },
+      "expected": "reject",
+      "reason_code": "personal_dimension_forbidden_key",
+      "notes": "A forbidden personal-dimension key (\"reviewer\") nested inside payload, which schema-wise is an unconstrained object -- so this is only caught by the dedicated personal-dimension scan, not by additionalProperties:false (payload has no additionalProperties restriction). This is exactly why the scan exists as an independent layer."
+    },
+    {
+      "id": "invalid-actor-additional-property",
+      "kind": "event",
+      "files": { "event": "invalid-actor-additional-property.json" },
+      "expected": "reject",
+      "reason_code": "$.actor",
+      "notes": "actor carries an unrecognized field. Rejected by additionalProperties:false on the actor object."
+    },
+    {
+      "id": "invalid-event-id-format",
+      "kind": "event",
+      "files": { "event": "invalid-event-id-format.json" },
+      "expected": "reject",
+      "reason_code": "$.event_id",
+      "notes": "event_id uses the wrong version prefix (tr2_ instead of tr1_) -- a pattern violation distinct from invalid-event-id-mismatch's hash mismatch (that fixture has a well-formed tr1_ prefix and correct-looking hex, just the wrong hash)."
+    }
+  ]
+}
