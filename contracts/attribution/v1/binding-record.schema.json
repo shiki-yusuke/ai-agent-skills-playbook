@@ -40,7 +40,7 @@
       "enum": ["claude", "codex"]
     },
     "binding_method": {
-      "description": "pre_assigned_session_id (Claude: wrapper generates a UUID nonce and passes it as the session_id itself via `claude -p --session-id <nonce>` -- no separate join step) | self_reported_thread_id (Codex: wrapper reads session_id from `codex exec --json`'s leading {\"type\":\"thread.started\",...} event, obtained after the fact -- never from a stderr banner) | manual_bind (an interactive session bound by explicit human action, e.g. `lane work bind --session-id`; a binding-record with this method MUST carry an `actor` whose kind is \"human\" -- see docs/protocols/attribution-v1.md, enforced by verify-fixtures.mjs as a semantic check this schema alone cannot express).",
+      "description": "pre_assigned_session_id (Claude: wrapper generates a UUID nonce and passes it as the session_id itself via `claude -p --session-id <nonce>` -- no separate join step) | self_reported_thread_id (Codex: wrapper reads session_id from `codex exec --json`'s leading {\"type\":\"thread.started\",...} event, obtained after the fact -- never from a stderr banner) | manual_bind (an interactive session bound by explicit human action, e.g. `lane work bind --session-id`; a binding-record with this method MUST carry an `actor` whose kind is \"human\" -- schema-enforced via the top-level allOf/if-then above, with a matching verify-fixtures.mjs check kept as a defense-in-depth backstop, see docs/protocols/attribution-v1.md).",
       "enum": ["pre_assigned_session_id", "self_reported_thread_id", "manual_bind"]
     },
     "session_id": { "type": "string", "minLength": 1 },
