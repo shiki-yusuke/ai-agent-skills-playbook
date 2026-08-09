@@ -20,6 +20,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalize, sha256hex } from "../../shared/jcs.mjs";
 import { createValidator } from "../../shared/schema-validator.mjs";
+import { scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
@@ -87,40 +88,9 @@ function recomputeEventId(event) {
   return "tr1_" + sha256hex(canonicalize(canonicalTarget));
 }
 
-// ---------------------------------------------------------------------------
-// Personal-dimension scan. Re-lists the exact closed set from
-// docs/protocols/agent-metrics-v1.md section 7 (per this repo's cross-contract rule: this
-// set may only be extended, never shrunk, across every contract that adopts it).
-// ---------------------------------------------------------------------------
-const FORBIDDEN_PERSONAL_DIMENSION_KEYS = new Set([
-  "author",
-  "reviewer",
-  "assignee",
-  "owner",
-  "user_id",
-  "username",
-  "email",
-  "display_name",
-  "handle",
-  "chat_id",
-  "real_name",
-]);
-
-function scanPersonalDimensions(value, pathStr = "") {
-  const violations = [];
-  if (Array.isArray(value)) {
-    value.forEach((item, i) => violations.push(...scanPersonalDimensions(item, `${pathStr}[${i}]`)));
-    return violations;
-  }
-  if (value !== null && typeof value === "object") {
-    for (const [key, val] of Object.entries(value)) {
-      const here = pathStr ? `${pathStr}.${key}` : key;
-      if (FORBIDDEN_PERSONAL_DIMENSION_KEYS.has(key)) violations.push(here);
-      violations.push(...scanPersonalDimensions(val, here));
-    }
-  }
-  return violations;
-}
+// Personal-dimension scan: contracts/shared/personal-dimensions.mjs (re-lists the exact
+// closed set from docs/protocols/agent-metrics-v1.md section 7; centralized there so every
+// contract scans against the same list by construction -- see that module's own comment).
 
 // ---------------------------------------------------------------------------
 // Full check pipeline for a single event object.
