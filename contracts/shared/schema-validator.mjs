@@ -57,8 +57,14 @@ export function createValidator(schemaDir) {
       return;
     }
     if (schema.allOf) {
+      // Composes with every other keyword on the same schema object (does not return early)
+      // -- correct draft 2020-12 semantics, and needed so a schema can carry its own
+      // required/properties/additionalProperties at the top level *and* a set of per-relation
+      // if/then conditionals via allOf, both applying together. No existing schema in this
+      // repo combines allOf with sibling keywords in a way this change alters (agent-metrics/
+      // v1's token-usage.schema.json's only top-level keys besides allOf are $schema/$id/
+      // title/description, none of which this validator interprets), so this is safe.
       for (const sub of schema.allOf) validateAgainst(sub, instance, currentDoc, pathStr, errors);
-      return;
     }
     // if/then/else: `if` is evaluated in an isolated error list (never leaked into the
     // caller's `errors` on its own) purely to decide which branch applies; only the chosen
