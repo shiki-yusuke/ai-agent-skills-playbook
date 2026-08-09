@@ -64,6 +64,37 @@ AIエージェントのトークン使用量・推定コストのテレメトリ
 - `coverage` / `omissions` を明示し、測れなかったものを黙って落とさない
 - 個人識別次元を持たない（schema レベルで禁止） — この telemetry は個人評価ではなく、プロセス改善のための work/process telemetry
 
+### trace:v1
+
+Decision–Evidence Graph の正本エッジ（append-only JSONL、1行=1イベント）を表す normative protocol。`declares` / `session_bound` / `usage_imported` / `supersedes` 等の closed relation set と、決定的・冪等な `event_id` 生成規則（JCS + sha256）を定義する。
+
+- Status: **contract-only**（M0時点。schema/fixture/protocol文書はこのリポジトリがSSOTだが、emitter/reader の reference 実装はまだ無い — spec-lane 側の実装は今後の作業）
+- Protocol document: [`docs/protocols/trace-v1.md`](docs/protocols/trace-v1.md)
+- Conformance fixtures: [`contracts/trace/v1/`](contracts/trace/v1/)
+
+### attribution:v1
+
+「1 session = exactly 1 task」の会計原則を、session-to-task の binding 記録（`binding-record`）と時間窓ごとの audit 結果（`audit-result`）として機械検証可能にした normative protocol。trace:v1 の `session_bound` / `usage_imported` / `attributed_to` relation の上に構築される。
+
+- Status: **contract-only**（M0時点。Claude/Codex の binding-feasibility spike で実測した非対称性を `binding_method` closed set に焼き込んでいるが、reference 実装はまだ無い）
+- Protocol document: [`docs/protocols/attribution-v1.md`](docs/protocols/attribution-v1.md)
+- Conformance fixtures: [`contracts/attribution/v1/`](contracts/attribution/v1/)
+
+### impact-scan:v1
+
+[`pre-implementation-impact-scan`](skills/pre-implementation-impact-scan/) skill が定める、実装着手前レポート末尾の構造化出力 block（```impact-scan:v1```フェンス）の機械可読schema。生の観測値のみを運び、集約スコアや digest は含めない（消費側が自分で再計算する）。
+
+- Status: **稼働中**。Consumer: [spec-lane](https://github.com/shiki-yusuke/spec-lane)（`packages/core/src/impact-scan.ts` が本schemaのblockをパースする）
+- Normative spec: skills/pre-implementation-impact-scan/SKILL.md の「Structured output block」節（この schema はその機械可読な写し）
+- Conformance fixtures: [`contracts/impact-scan/v1/`](contracts/impact-scan/v1/)
+
+### estimate:v2
+
+コスト見積もりの「正直さ」を保証する schema。予測は常に `predicted`（点推定あり）か `abstained`（reason_codes 付きで見送り）のいずれかであり、無言のベストゲスは存在しない。spec-lane 自身の estimator 実装に先行する contract-first の設計。
+
+- Status: **contract-only**（M0時点。spec-lane 側の estimator実装は今後の作業）
+- Conformance fixtures: [`contracts/estimate/v2/`](contracts/estimate/v2/)
+
 ### この protocol を含む計測パイプラインでの責務分担
 
 同じパイプラインを構成する各リポジトリは責務が独立しており、重複しない:
