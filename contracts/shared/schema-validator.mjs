@@ -66,11 +66,13 @@ export function createValidator(schemaDir) {
       errors.push(`${pathStr}: ${JSON.stringify(instance)} not in enum ${JSON.stringify(schema.enum)}`);
     }
     if (schema.type) {
+      // `type` may be a single string or (draft 2020-12) an array of alternatives, e.g.
+      // ["integer", "null"] for a nullable numeric field -- needed by contracts that
+      // represent "genuinely unmeasured" as null rather than 0 (never collapse the two).
       const actual = typeOf(instance);
-      const ok =
-        actual === schema.type ||
-        (schema.type === "number" && actual === "integer");
-      if (!ok) errors.push(`${pathStr}: expected type ${schema.type}, got ${actual}`);
+      const allowed = Array.isArray(schema.type) ? schema.type : [schema.type];
+      const ok = allowed.some((t) => actual === t || (t === "number" && actual === "integer"));
+      if (!ok) errors.push(`${pathStr}: expected type ${JSON.stringify(schema.type)}, got ${actual}`);
     }
     if (schema.pattern && typeof instance === "string" && !new RegExp(schema.pattern).test(instance)) {
       errors.push(`${pathStr}: ${JSON.stringify(instance)} does not match pattern ${schema.pattern}`);
