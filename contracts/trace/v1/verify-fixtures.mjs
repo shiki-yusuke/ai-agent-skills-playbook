@@ -33,6 +33,12 @@ const { validate } = createValidator(HERE);
 // artifact edge) always resolves to the same event_id, while occurred_at and payload as a
 // whole are excluded so a re-run at a different wall-clock time, or a payload carrying an
 // extra diagnostic field, never mints a new id for the same fact.
+//
+// sol architect-review must3 (main裁定): when supersedes_event_id is present, it is folded
+// INTO the identity object. Without this, a correction that doesn't change from_ref/to_ref
+// (e.g. a payload-only fix) would compute the *same* base identity as the event it corrects
+// and collide with it -- silently overwriting rather than layering a new fact via
+// supersedes_event_id. See the supersedes-payload-only-* fixtures.
 // ---------------------------------------------------------------------------
 function refIdentity(ref) {
   if (!ref || typeof ref !== "object") return {};
@@ -41,7 +47,72 @@ function refIdentity(ref) {
   return out;
 }
 
-function computeIdentity(event) {
+// sol architect-review must1: which top-level fields (beyond from_ref/to_ref, already
+// unconditionally required) each relation's identity depends on, so a reader can check their
+// presence BEFORE attempting to hash -- never feed `undefined` into the JCS canonicalizer
+// (see missingIdentityFields below; this table is also mirrored as if/then blocks in
+// trace-event.schema.json so the requirement is structural, not just a verify-script opinion).
+const RELATION_REQUIRED_FIELDS = {
+  session_bound: ["task_run_id", "session_id"],
+  task_run_started: ["task_run_id"],
+  attributed_to: ["task_run_id"],
+  usage_imported: ["task_run_id", "session_id"], // payload.window.{since,until} checked separately below
+};
+
+function missingIdentityFields(event) {
+  const missing = [];
+  for (const field of RELATION_REQUIRED_FIELDS[event.relation] ?? []) {
+    if (event[field] === undefined) missing.push(field);
+  }
+  if (event.relation === "usage_imported") {
+    if (event.payload?.window?.since === undefined) missing.push("payload.window.since");
+    if (event.payload?.window?.until === undefined) missing.push("payload.window.until");
+  }
+  return missing;
+}
+
+// sol architect-review must1: from_ref/to_ref's logical_id is a redundant encoding of
+// task_run_id/session_id for the relations that carry both (via a "task_run:<id>" /
+// "session:<id>" prefix convention) -- catches the two representations drifting apart, which
+// event_id recomputation alone would not catch (it trusts from_ref/to_ref as given, it doesn't
+// cross-check them against the plain fields).
+function refFieldConsistencyIssues(event) {
+  const issues = [];
+  const taskRunRef = `task_run:${event.task_run_id}`;
+  const sessionRef = `session:${event.session_id}`;
+  if (event.relation === "session_bound") {
+    if (event.from_ref?.logical_id !== taskRunRef) {
+      issues.push(
+        `ref_field_mismatch: from_ref.logical_id (${event.from_ref?.logical_id}) does not match task_run_id-derived "${taskRunRef}"`,
+      );
+    }
+    if (event.to_ref?.logical_id !== sessionRef) {
+      issues.push(
+        `ref_field_mismatch: to_ref.logical_id (${event.to_ref?.logical_id}) does not match session_id-derived "${sessionRef}"`,
+      );
+    }
+  } else if (event.relation === "usage_imported") {
+    if (event.from_ref?.logical_id !== sessionRef) {
+      issues.push(
+        `ref_field_mismatch: from_ref.logical_id (${event.from_ref?.logical_id}) does not match session_id-derived "${sessionRef}"`,
+      );
+    }
+    if (event.to_ref?.logical_id !== taskRunRef) {
+      issues.push(
+        `ref_field_mismatch: to_ref.logical_id (${event.to_ref?.logical_id}) does not match task_run_id-derived "${taskRunRef}"`,
+      );
+    }
+  } else if (event.relation === "task_run_started") {
+    if (event.to_ref?.logical_id !== taskRunRef) {
+      issues.push(
+        `ref_field_mismatch: to_ref.logical_id (${event.to_ref?.logical_id}) does not match task_run_id-derived "${taskRunRef}"`,
+      );
+    }
+  }
+  return issues;
+}
+
+function computeBaseIdentity(event) {
   switch (event.relation) {
     case "session_bound":
       return { task_run_id: event.task_run_id, session_id: event.session_id };
@@ -52,6 +123,10 @@ function computeIdentity(event) {
       // `payload` description and docs/protocols/trace-v1.md section 3): window.since/until
       // describe *what period this import covers*, not *when the import ran* -- re-importing
       // the same window MUST resolve to the same event_id (idempotent), unlike occurred_at.
+      // sol architect-review must2 (main裁定): this stays exactly {task_run_id, session_id,
+      // window.since, window.until} -- a re-import of the same window under a different
+      // token_basis is a supersedes correction (must3), not a reason to widen identity to a
+      // second source of truth. See "Rejected: multi-source identity" in the protocol doc.
       return {
         task_run_id: event.task_run_id,
         session_id: event.session_id,
@@ -82,6 +157,14 @@ function computeIdentity(event) {
   }
 }
 
+function computeIdentity(event) {
+  const base = computeBaseIdentity(event);
+  if (event.supersedes_event_id !== undefined) {
+    return { ...base, supersedes_event_id: event.supersedes_event_id };
+  }
+  return base;
+}
+
 function recomputeEventId(event) {
   const identity = computeIdentity(event);
   const canonicalTarget = { schema: "trace/v1", relation: event.relation, identity };
@@ -104,10 +187,40 @@ function checkEvent(event) {
   reasons.push(...validate("trace-event.schema.json", event));
   reasons.push(...scanPersonalDimensions(event).map((v) => `personal_dimension_forbidden_key: ${v}`));
 
-  if (typeof event.event_id === "string" && typeof event.relation === "string") {
+  // Self-reference: compares two fields already on the event, independent of hashing --
+  // checked unconditionally, never gated on whether identity fields are otherwise complete.
+  if (
+    typeof event.event_id === "string" &&
+    event.supersedes_event_id !== undefined &&
+    event.supersedes_event_id === event.event_id
+  ) {
+    reasons.push("self_supersedes: supersedes_event_id must not equal this event's own event_id");
+  }
+
+  // sol architect-review must1: never feed an incomplete identity into the JCS canonicalizer
+  // -- a missing field must reject as "identity_fields_missing", not silently hash whatever
+  // string coercion `undefined` happens to produce.
+  const missing = missingIdentityFields(event);
+  if (missing.length > 0) {
+    reasons.push(
+      `identity_fields_missing: relation "${event.relation}" requires ${missing.join(", ")} (event_id was not recomputed against an incomplete identity)`,
+    );
+  } else if (typeof event.event_id === "string" && typeof event.relation === "string") {
     const recomputed = recomputeEventId(event);
     if (recomputed !== event.event_id) {
       reasons.push(`event_id_mismatch: declared=${event.event_id} recomputed=${recomputed}`);
+    }
+    reasons.push(...refFieldConsistencyIssues(event));
+  }
+
+  // sol architect-review must2: usage_imported's window.since must be strictly earlier than
+  // window.until. Parsed as instants (not compared lexically) since ISO 8601 strings with
+  // differing fractional-second precision don't always sort correctly as plain strings.
+  if (event.relation === "usage_imported" && missing.length === 0) {
+    const since = event.payload.window.since;
+    const until = event.payload.window.until;
+    if (!(Date.parse(since) < Date.parse(until))) {
+      reasons.push(`window_ordering_invalid: since (${since}) must be earlier than until (${until})`);
     }
   }
 
