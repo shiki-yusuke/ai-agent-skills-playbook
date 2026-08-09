@@ -87,6 +87,20 @@
       "expected": "reject",
       "reason_code": "$.repo_commit",
       "notes": "sol architect-review 2nd round must C: repo_commit=\"9f2c9c2\" is a 7-character abbreviated commit (git's default short form) -- no longer accepted. Only a full 40-hex or 64-hex hash satisfies the tightened pattern; abbreviations are ambiguous across a growing repo."
+    },
+    {
+      "id": "invalid-inline-mid-line-fence",
+      "files": { "report": "invalid-inline-mid-line-fence.md" },
+      "expected": "reject",
+      "reason_code": "no_impact_scan_block_found",
+      "notes": "sol architect-review 3rd round must4: the tag text \"```impact-scan:v1\" appears mid-sentence, not as its own line. Line-anchored extraction requires the ENTIRE line (trailing whitespace aside) to equal the opening marker -- a line with any other content, before or after, never counts as a fence open. Correctly treated as zero blocks found, not a false accept."
+    },
+    {
+      "id": "valid-json-backticks-not-fence",
+      "files": { "report": "valid-json-backticks-not-fence.md" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sol architect-review 3rd round must4: the JSON payload's open_items contains a string with literal backtick characters (\"```example```\"), but they never sit alone on their own line. A naive whole-text regex scanning for the next \"```\" could have mistaken them for the closing fence and truncated the block early; line-anchored extraction is immune -- only a line that IS exactly \"```\" closes the block, and a JSON string literal can never contain a raw newline, so this content can never produce such a line."
     }
   ]
 }
