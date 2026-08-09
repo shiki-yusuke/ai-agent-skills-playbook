@@ -153,6 +153,20 @@
       "expected": "reject",
       "reason_code": "excluded_by_reason_sum_mismatch",
       "notes": "sol architect-review 2nd round must B, main裁定 (exclusive primary-reason counting): candidate_count=42, eligible_count=38 (a gap of 4 excluded candidates), but excluded_by_reason=={} (sum 0). Every excluded candidate must be counted under exactly one reason -- an empty map claiming zero candidates needed a reason, when 4 were in fact excluded, silently drops the accounting."
+    },
+    {
+      "id": "invalid-abstained-with-available-interval",
+      "files": { "record": "invalid-abstained-with-available-interval.json" },
+      "expected": "reject",
+      "reason_code": "$.decision.status",
+      "notes": "sol architect-review 3rd round must2: decision.status==\"abstained\" but prediction_interval.status==\"available\" (fully shaped). An available confidence interval is an interval AROUND a point estimate; an abstained decision has no point estimate, so the two cannot coexist. Schema-enforced via allOf/if-then (prediction_interval.status==\"available\" forces decision.status==\"predicted\")."
+    },
+    {
+      "id": "invalid-calibration-sample-size-zero",
+      "files": { "record": "invalid-calibration-sample-size-zero.json" },
+      "expected": "reject",
+      "reason_code": "$.prediction_interval.calibration_sample_size",
+      "notes": "sol architect-review 3rd round must2: prediction_interval.calibration_sample_size is 0 -- a leave-one-out calibration computed from zero samples is not a calibration, it's the absence of one (already representable as status==\"insufficient_data\"). Minimum raised from 0 to 1."
     }
   ]
 }
