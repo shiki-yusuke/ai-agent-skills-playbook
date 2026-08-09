@@ -83,7 +83,7 @@ Schema:
 |---|---|---|
 | `schema_version` | yes | Literal `"attribution/v1"`. |
 | `generated_at` | yes | UTC timestamp this audit was produced. |
-| `window.since` / `window.until` | yes | The audited time range, both UTC. |
+| `window.since` / `window.until` | yes | The audited time range, both UTC. `since` MUST be strictly earlier than `until` (semantic check — mirrors `trace-v1.md`'s `usage_imported` window ordering rule). |
 | `sessions.exactly_attributed[]` | yes | `{session_id, tokens}` pairs — sessions cleanly resolved to exactly one task_run, the set this whole protocol exists to maximize. There is deliberately **no separate `sessions.measured` count field** anywhere: the total number of sessions audited is always `exactly_attributed.length` plus the four lists below's combined length, derived, never independently declared (sol architect-review must4 — a separately-declared count is a second source of truth that can silently drift from the lists it's supposed to summarize). |
 | `sessions.unbound[]` / `.mixed[]` / `.orphan_usage[]` / `.measurement_incomplete[]` | yes | Disjoint session_id lists explaining every session **not** in `exactly_attributed`. Pairwise disjoint with each other and with `exactly_attributed`'s session_ids (a semantic check — see Verification). Every session_id here MUST have a matching `violations[]` entry with the corresponding `reason_code`, and vice versa — no session silently sits in a list with no recorded reason, and no violation references a session absent from its list. |
 | `tokens.exact_attributed` / `.total_measured` | yes | Token totals. `exact_attributed` MUST equal the sum of `sessions.exactly_attributed[].tokens` (independently recomputed, never trusted as declared). `total_measured` MUST be `>= exact_attributed` (sol architect-review 2nd round — exactly_attributed's usage is a subset of everything measured, so the total can never be smaller than that subset). **Both null, not 0, when all five `sessions` lists are empty** (see Verification's null-not-zero check). `total_measured` is a measured total across every session, not a claim that all of it is attributable — only `exact_attributed` is. |
@@ -121,7 +121,7 @@ verified by
 that directory is the machine-readable table of which fixture is expected to be accepted or
 rejected (with which reason code).
 
-Beyond schema validation, eight semantic MUSTs neither schema alone can fully express:
+Beyond schema validation, nine semantic MUSTs neither schema alone can fully express:
 
 1. **A `manual_bind` binding-record MUST carry `actor.kind == "human"`** (schema-enforced via
    `if`/`then`; `verify-fixtures.mjs` re-checks it as a defense-in-depth backstop).
@@ -159,6 +159,9 @@ Beyond schema validation, eight semantic MUSTs neither schema alone can fully ex
    `sessions` lists are empty** (null-not-zero: "nothing was measured" and "zero tokens were
    measured" are different facts, and collapsing them would make an empty window
    indistinguishable from a window that genuinely measured zero usage).
+9. **`window.since` MUST be strictly earlier than `window.until`** (sol architect-review 3rd
+   round must3, mirroring `trace-v1.md`'s `usage_imported` window ordering rule). See
+   `invalid-window-ordering`.
 
 **A binding writer MUST:**
 
@@ -179,6 +182,8 @@ Beyond schema validation, eight semantic MUSTs neither schema alone can fully ex
   `sessions.exactly_attributed[].tokens`, and ensure `tokens.total_measured` is at least that
   sum.
 - Represent a fully-unmeasured window's token totals as `null`, never `0`.
+- Set `window.since` strictly earlier than `window.until` — never an inverted or zero-width
+  window.
 - Never apportion a `mixed` session's usage by time ratio or any other heuristic between the
   tasks it touched — record it as `mixed` and exclude it from `exact_attributed`, full stop.
 - Run with `--require-coverage 1.0` (or equivalent) before treating a window's data as fit for
