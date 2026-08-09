@@ -54,7 +54,7 @@
     },
     "tokens": {
       "type": "object",
-      "description": "exact_attributed = sum of sessions.exactly_attributed[].tokens, independently verified (verify-fixtures.mjs recomputes the sum and rejects on mismatch -- the field is never just trusted). total_measured = total tokens across every measured session (exactly_attributed + unbound + mixed + orphan_usage + measurement_incomplete), still just a measured total -- NEVER a mixed-session apportionment (see docs/protocols/attribution-v1.md 'Rejected designs': splitting a mixed session's tokens by time ratio between its tasks is a fabrication this protocol forbids, not merely discourages). Both fields are null, not 0, when all five `sessions` lists are empty.",
+      "description": "exact_attributed = sum of sessions.exactly_attributed[].tokens, independently verified (verify-fixtures.mjs recomputes the sum and rejects on mismatch -- the field is never just trusted). total_measured = total tokens across every measured session (exactly_attributed + unbound + mixed + orphan_usage + measurement_incomplete), still just a measured total -- NEVER a mixed-session apportionment (see docs/protocols/attribution-v1.md 'Rejected designs': splitting a mixed session's tokens by time ratio between its tasks is a fabrication this protocol forbids, not merely discourages). total_measured MUST be >= exact_attributed (sol architect-review 2nd round must A3 -- the exactly-attributed sessions' usage is a subset of everything measured, so the total can never be smaller than the part). Both fields are null, not 0, when all five `sessions` lists are empty.",
       "required": ["exact_attributed", "total_measured"],
       "properties": {
         "exact_attributed": { "type": ["integer", "null"], "minimum": 0 },
@@ -65,9 +65,10 @@
     "research_eligible": { "type": "boolean" },
     "violations": {
       "type": "array",
+      "description": "sol architect-review 2nd round must A1: session_id is required (not optional) on every violation -- this schema's reason_code closed set is exactly the four session-keyed reasons (UNBOUND_SESSION/MULTI_TASK_BINDING/ORPHAN_USAGE/MEASUREMENT_INCOMPLETE), so every violation here is inherently about some specific session. A violation with no session_id could not be checked against sessions.{unbound,mixed,orphan_usage,measurement_incomplete} by verify-fixtures.mjs's bidirectional correspondence check, letting it slip through unverified -- making it required closes that hole structurally.",
       "items": {
         "type": "object",
-        "required": ["reason_code", "detail"],
+        "required": ["reason_code", "session_id", "detail"],
         "properties": {
           "reason_code": {
             "enum": ["UNBOUND_SESSION", "MULTI_TASK_BINDING", "ORPHAN_USAGE", "MEASUREMENT_INCOMPLETE"]
