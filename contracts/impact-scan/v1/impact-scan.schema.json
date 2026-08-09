@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/impact-scan/v1/impact-scan.schema.json",
+  "title": "impact-scan:v1 structured output block",
+  "description": "Machine-readable form of the fenced ```impact-scan:v1 code block that skills/pre-implementation-impact-scan/SKILL.md's 'Structured output block (impact-scan:v1)' section (that section is the normative spec; this schema is its machine-readable mirror) requires at the end of an impact-scan report -- exactly one such block per report. Two design principles this schema enforces structurally, both explained in that section: (1) raw observations only, no synthesized aggregate score/rank/priority field -- the scan reports what it found, and leaves 'is this impact large or small' to the downstream consumer; (2) no `digest` field -- a consumer that needs a reproducibility digest computes it itself from candidate_paths+candidate_layers, so a stale or hand-edited digest can never silently pass through this block (see lane's ImpactScanSnapshot: its `digest` field is added AFTER parsing this block, by the consumer, and is never accepted from the block itself).",
+  "type": "object",
+  "required": ["scan_version", "repo_commit", "candidate_paths", "candidate_layers"],
+  "properties": {
+    "scan_version": {
+      "const": "1"
+    },
+    "repo_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_paths": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "candidate_layers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "open_items": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "additionalProperties": false
+}
