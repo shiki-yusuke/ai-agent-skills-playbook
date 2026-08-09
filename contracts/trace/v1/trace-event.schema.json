@@ -67,7 +67,7 @@
       "pattern": "^tr1_[0-9a-f]{64}$"
     },
     "relation": {
-      "description": "Closed set. `incident_observed` and `rolled_back_to` are reserved for future use (no v1 fixture exercises them, but they are valid values a v1 reader MUST accept, not reject).",
+      "description": "Closed set. `incident_observed` and `rolled_back_to` are reserved for a future version -- valid `relation` enum members (so a future v2 can define their shape without an enum change), but v1 never defined an identity/payload shape for either. sol architect-review 2nd round reversed the previous stance here: a v1 reader MUST reject, unconditionally, any event that actually uses one of these two values (enforced in verify-fixtures.mjs, not expressible as a schema constraint -- rejecting a specific enum VALUE while still listing it as valid isn't a plain closed-set check).",
       "enum": [
         "declares",
         "refines",

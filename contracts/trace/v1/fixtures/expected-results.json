@@ -4,7 +4,8 @@
   "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. `expected` is one of \"accept\" | \"reject\". For \"reject\" fixtures, `reason_code` must be present among the detected failure reasons -- for a named check this is a fixed string (e.g. \"event_id_mismatch\"); for a raw schema-validator error it is the JSON path the error occurred at (e.g. \"$.relation\"), following the same leading-token convention as agent-metrics/v1's fixture manifest.",
   "notes": [
     "Design decision -- supersedes target absence is NOT a reject case: `cross-segment-supersedes` (accept) carries a well-formed supersedes_event_id that does not match any other event_id in this fixture set. This is intentional, not an oversight. trace/v1 is an append-only ledger that may be split across segments/files; a single-event validator has no way to know whether the superseded event lives in a segment it simply hasn't loaded yet. Rejecting on 'target not found here' would make partial-ledger validation (e.g. validating one day's new events) impossible. Referential integrity of supersedes_event_id, if ever checked, belongs to a whole-ledger compaction/audit tool, not to per-event validation -- this fixture set deliberately does not include a fixture that rejects for this reason.",
-    "sol architect-review round (must3): supersedes_event_id is now folded into event_id identity when present. supersedes-pair-2 and cross-segment-supersedes's event_ids changed from the previous round of this contract as a direct result -- they are not stale/copy-paste artifacts, they were recomputed under the fixed recipe."
+    "sol architect-review round (must3): supersedes_event_id is now folded into event_id identity when present. supersedes-pair-2 and cross-segment-supersedes's event_ids changed from the previous round of this contract as a direct result -- they are not stale/copy-paste artifacts, they were recomputed under the fixed recipe.",
+    "sol architect-review 2nd round (must D / should): incident_observed/rolled_back_to REVERSED from 'a v1 reader MUST accept, not reject' to 'a v1 reader MUST reject, unconditionally' -- they remain valid `relation` enum members (reserved at v1's freeze), but v1 never defined an identity/payload shape for either, so no v1 event may actually use one yet. See invalid-reserved-relation-incident-observed / invalid-reserved-relation-rolled-back-to."
   ],
   "fixtures": [
     {
@@ -158,6 +159,46 @@
       "expected": "reject",
       "reason_code": "window_ordering_invalid",
       "notes": "sol architect-review must2: usage_imported's payload.window.since is later than window.until (until precedes since). Both are individually valid UTC timestamps, so this is a semantic ordering check, not a schema/pattern failure."
+    },
+    {
+      "id": "attributed-to",
+      "kind": "event",
+      "files": { "event": "attributed-to.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sol architect-review 2nd round should: this relation had ZERO fixtures exercising it before this round -- a real gap. from_ref is a usage record, to_ref/task_run_id is the task_run it's attributed to; identity is {from_ref.logical_id, to_ref.logical_id, task_run_id} per the identity table (logical_id only, no content_digest -- attribution binds to a stable logical thing, not a content revision)."
+    },
+    {
+      "id": "invalid-reserved-relation-incident-observed",
+      "kind": "event",
+      "files": { "event": "invalid-reserved-relation-incident-observed.json" },
+      "expected": "reject",
+      "reason_code": "reserved_relation_unusable_in_v1",
+      "notes": "sol architect-review 2nd round must D reversal: incident_observed is a valid `relation` enum member (schema accepts it) but v1 never defined its identity/payload shape, so a v1 reader MUST reject any event that actually uses it -- this is the opposite of the previous round's 'MUST accept, not reject' stance for reserved relations, which this round found to be wrong."
+    },
+    {
+      "id": "invalid-reserved-relation-rolled-back-to",
+      "kind": "event",
+      "files": { "event": "invalid-reserved-relation-rolled-back-to.json" },
+      "expected": "reject",
+      "reason_code": "reserved_relation_unusable_in_v1",
+      "notes": "Same reversal as invalid-reserved-relation-incident-observed, for the other reserved relation value."
+    },
+    {
+      "id": "invalid-event-too-large",
+      "kind": "event",
+      "files": { "event": "invalid-event-too-large.json" },
+      "expected": "reject",
+      "reason_code": "event_too_large",
+      "notes": "sol architect-review must D: docs/protocols/trace-v1.md declares an event size limit (<=16KB decoded bytes) that nothing previously enforced. payload.padding is a 17KB string, pushing the whole event past the limit."
+    },
+    {
+      "id": "invalid-event-too-deep",
+      "kind": "event",
+      "files": { "event": "invalid-event-too-deep.json" },
+      "expected": "reject",
+      "reason_code": "event_too_deep",
+      "notes": "sol architect-review must D: docs/protocols/trace-v1.md declares a JSON nesting depth limit (<=8) that nothing previously enforced. payload.nested is a 10-level-deep chain of {child: ...} wrappers."
     }
   ]
 }

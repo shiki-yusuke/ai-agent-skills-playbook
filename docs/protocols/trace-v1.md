@@ -66,8 +66,14 @@ session_observed, session_bound, task_run_started, usage_imported,
 incident_observed, rolled_back_to
 ```
 
-`incident_observed` and `rolled_back_to` are **reserved**: valid values a v1 reader MUST
-accept, but no v1 fixture exercises them yet (no producer emits them in v1's cut line).
+`incident_observed` and `rolled_back_to` are **reserved**: valid `relation` enum members (so a
+future v2 can define their shape without an enum change), but v1 never defined an
+identity/payload shape for either. **A v1 reader MUST reject, unconditionally, any event that
+actually uses one of these two values** (sol architect-review 2nd round — this reverses an
+earlier draft's "MUST accept, not reject" stance, which was wrong: reserved means the NAME is
+held for a future version to define, not that v1 has any idea how to compute an identity for
+one today). See `invalid-reserved-relation-incident-observed` /
+`invalid-reserved-relation-rolled-back-to`.
 
 Personal-dimension keys are forbidden anywhere in an event, re-listing the exact closed set
 from [`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model) (`author`,
@@ -149,8 +155,8 @@ that directory is the machine-readable table of which fixture is expected to be 
 rejected (with which reason code), including the explicit design-decision note on
 cross-segment `supersedes_event_id` references.
 
-Three independent layers, mirroring `agent-metrics/v1`'s redundancy on purpose (none of the
-three stands in for another):
+Four independent layers, mirroring `agent-metrics/v1`'s redundancy on purpose (none of the
+four stands in for another):
 
 1. **Schema validation** against `trace-event.schema.json` (closed `relation` set, two-part
    `from_ref`/`to_ref`, per-relation required fields via `if`/`then`). Every object in the
@@ -160,10 +166,14 @@ three stands in for another):
 2. **`event_id` recomputation** — a reader MUST independently recompute it via the recipe
    above (checking required-field presence first, never hashing an incomplete identity) and
    reject the event on mismatch; the declared value is never trusted as-is. This layer also
-   covers the self-reference check and the `from_ref`/`to_ref` ↔ `task_run_id`/`session_id`
-   consistency check, neither of which is a plain schema constraint.
+   covers the self-reference check, the `from_ref`/`to_ref` ↔ `task_run_id`/`session_id`
+   consistency check, and the reserved-relation rejection (`incident_observed`/
+   `rolled_back_to`) — none of which is a plain schema constraint.
 3. **Personal-dimension scan** — independent of schema validation, because `payload` is the
    one schema-unconstrained object (see layer 1).
+4. **Limits check** (see "Limits" below) — event size and nesting depth, enforced
+   independently of shape validation (an oversized or over-deep event could otherwise be
+   individually well-formed).
 
 **A writer MUST:**
 
@@ -191,11 +201,13 @@ three stands in for another):
   relations where both are present, and reject on drift.
 - Reject a `usage_imported` event whose `payload.window.since` is not strictly earlier than
   `payload.window.until`.
-- Accept `incident_observed`/`rolled_back_to` as valid `relation` values even though v1 ships
-  no fixture for them (they are reserved, not deprecated-and-forbidden).
+- Reject any event whose `relation` is `incident_observed` or `rolled_back_to` — reserved
+  enum members, but unconditionally unusable in v1 (no identity/payload shape was ever
+  defined for either).
 - Not treat an unresolved `supersedes_event_id` as a validation failure at the single-event
   level (it may reference a different ledger segment).
 - Run the personal-dimension scan independently of any writer-side check.
+- Reject an event exceeding the size or nesting-depth limits below, not truncate it.
 
 ## Versioning
 
@@ -210,17 +222,23 @@ hypothetical "v1.1" that added a field — so there is no such thing as a backwa
 additive change to police here in the first place. A version number that could still mean two
 different shapes is a version number that isn't doing its job.
 
-`incident_observed` and `rolled_back_to` being reserved-but-unexercised is not an exception to
-this: both values were already part of v1's `relation` enum **at the moment v1 was frozen** —
-nothing is being added to the set after the fact, a fixture is merely deferred. Exercising them
-with a real fixture later does not require a version bump; adding a thirteenth value would.
+`incident_observed` and `rolled_back_to` being reserved-but-unusable (see Format and
+Verification above) is not an exception to this: both values were already part of v1's
+`relation` enum **at the moment v1 was frozen** — nothing is being added to the set after the
+fact, the two values simply have no defined shape yet and are rejected on sight if used. A
+future v2 defining their shape and lifting the rejection is a version bump; adding any
+additional `relation` value beyond these 18 (16 usable + 2 reserved-and-rejected) would also
+require one.
 
-The personal-dimension closed set's own "may extend, never shrink" rule
-([`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model)) is a property of *that*
-document, inherited here by reference — it is not an exception carved into trace/v1's own
-versioning axis, which has none. There is no "extensions" namespace or escape-hatch field
-anywhere in this schema for future growth to land in without a version bump; there never will
-be one within v1.
+**Exception (main裁定):** the personal-dimension closed set's own "MAY extend this set; MUST
+NOT shrink it" rule ([`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model)) is
+explicitly carried over as **the one designated exception** to trace/v1's otherwise-total
+immutability — extending that set (in `contracts/shared/personal-dimensions.mjs`) is not a
+version bump, by the same logic agent-metrics-v1.md itself uses: a personal-dimension key is
+forbidden either way, so widening the forbidden set can only ever narrow what's already
+disallowed, never introduce a shape an existing strict reader would reject. There is no other
+"extensions" namespace or escape-hatch field anywhere in this schema; nothing else may change
+within v1 without a version bump.
 
 ## Limits
 
@@ -232,7 +250,9 @@ Tunable; not derived from a hard technical ceiling, same posture as
 | Event size (decoded bytes) | ≤ 16 KB |
 | JSON nesting depth | ≤ 8 |
 
-An event exceeding either MUST be rejected, not truncated.
+An event exceeding either MUST be rejected, not truncated. Enforced in `verify-fixtures.mjs`
+(sol architect-review 2nd round must D — declared here from the start, but nothing checked it
+until this round); see `invalid-event-too-large` / `invalid-event-too-deep`.
 
 ## Rejected designs
 
