@@ -1,7 +1,7 @@
 // Shared minimal JSON Schema (draft 2020-12 subset) validator: type, const, enum, pattern,
-// minLength, minimum, maxItems, minItems, uniqueItems, required, properties,
-// additionalProperties, items, allOf, if/then/else, and $ref (to a sibling schema file, or
-// to a local #/$defs/... pointer). Extracted out
+// minLength, minimum, exclusiveMinimum, exclusiveMaximum, maxItems, minItems, uniqueItems,
+// required, properties, additionalProperties, items, allOf, if/then/else, not, and $ref (to a
+// sibling schema file, or to a local #/$defs/... pointer). Extracted out
 // of contracts/agent-metrics/v1/verify-fixtures.mjs so every contract's verify script shares
 // one implementation instead of re-implementing it. This is exactly the subset this repo's
 // schemas use -- it is not a general draft 2020-12 implementation, and does not replace a
@@ -77,6 +77,17 @@ export function createValidator(schemaDir) {
       const branch = ifErrors.length === 0 ? schema.then : schema.else;
       if (branch) validateAgainst(branch, instance, currentDoc, pathStr, errors);
     }
+    // `not`: the instance must NOT validate against schema.not. Evaluated the same way as
+    // `if` -- into an isolated error list purely to decide whether schema.not "passed" (zero
+    // errors = the instance DOES match it, which is the failure case here). Composes with
+    // every other keyword on the same schema object.
+    if (schema.not) {
+      const notErrors = [];
+      validateAgainst(schema.not, instance, currentDoc, pathStr, notErrors);
+      if (notErrors.length === 0) {
+        errors.push(`${pathStr}: instance must not validate against the "not" schema, but it does`);
+      }
+    }
     if (schema.const !== undefined && instance !== schema.const) {
       errors.push(`${pathStr}: expected const ${JSON.stringify(schema.const)}, got ${JSON.stringify(instance)}`);
     }
@@ -101,6 +112,12 @@ export function createValidator(schemaDir) {
     if (schema.minimum !== undefined && typeof instance === "number" && instance < schema.minimum) {
       errors.push(`${pathStr}: ${instance} < minimum ${schema.minimum}`);
     }
+    if (schema.exclusiveMinimum !== undefined && typeof instance === "number" && instance <= schema.exclusiveMinimum) {
+      errors.push(`${pathStr}: ${instance} must be > exclusiveMinimum ${schema.exclusiveMinimum}`);
+    }
+    if (schema.exclusiveMaximum !== undefined && typeof instance === "number" && instance >= schema.exclusiveMaximum) {
+      errors.push(`${pathStr}: ${instance} must be < exclusiveMaximum ${schema.exclusiveMaximum}`);
+    }
     if (Array.isArray(instance)) {
       if (schema.maxItems !== undefined && instance.length > schema.maxItems) {
         errors.push(`${pathStr}: array length ${instance.length} > maxItems ${schema.maxItems}`);
@@ -109,6 +126,12 @@ export function createValidator(schemaDir) {
         errors.push(`${pathStr}: array length ${instance.length} < minItems ${schema.minItems}`);
       }
       if (schema.uniqueItems) {
+        // Equality is JSON.stringify comparison, not structural deep-equality -- two objects
+        // with the same keys in a different insertion order would stringify differently and
+        // so would NOT be caught as duplicates here. Every current use of uniqueItems in this
+        // repo is over arrays of plain strings (e.g. impact-scan/v1's candidate_paths), where
+        // this limitation cannot bite; it would need a real deep-equality check before this
+        // keyword is applied to arrays of objects.
         const seen = new Set();
         instance.forEach((item, i) => {
           const key = JSON.stringify(item);
