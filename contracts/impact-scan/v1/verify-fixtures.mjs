@@ -105,6 +105,13 @@ function reasonCodesOf(reasons) {
 
 function main() {
   const manifest = readFixtureJson("expected-results.json");
+  // sol architect-review should: refuse to report a false-green success if the manifest
+  // declares zero fixtures (e.g. a botched refactor that emptied the array) -- 0/0 passed
+  // must never print the same shape of success line as an intentional, populated run.
+  if (!Array.isArray(manifest.fixtures) || manifest.fixtures.length === 0) {
+    console.error("expected-results.json declares zero fixtures -- refusing to report success.");
+    process.exit(1);
+  }
   let failures = 0;
 
   console.log(`impact-scan:v1 fixture verification (${manifest.fixtures.length} fixtures)\n`);
