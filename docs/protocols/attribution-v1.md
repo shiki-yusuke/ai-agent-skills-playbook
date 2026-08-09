@@ -195,8 +195,16 @@ future hook-based method, if its spike-measured failure mode is ever independent
 requires `attribution/v2`, not a version-preserving addition. As in trace/v1: every object in
 both schemas is `additionalProperties: false`, so there is no such thing as a
 backward-compatible additive change a strict reader would even accept — a version number that
-can still mean two different shapes isn't doing its job. There is no "extensions" namespace in
-either schema for future growth to land in without a version bump.
+can still mean two different shapes isn't doing its job.
+
+**Exception (main裁定):** the personal-dimension closed set's own "MAY extend this set; MUST
+NOT shrink it" rule ([`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model)) is
+explicitly carried over as **the one designated exception** to this immutability, exactly as
+in [`trace-v1.md`](trace-v1.md)'s Versioning section — extending that set (in
+`contracts/shared/personal-dimensions.mjs`) is not a version bump, since a personal-dimension
+key is forbidden either way and widening the forbidden set can only narrow what's already
+disallowed. There is no other "extensions" namespace in either schema for future growth to
+land in without a version bump.
 
 ## Rejected designs
 
