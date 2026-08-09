@@ -61,6 +61,15 @@
           }
         }
       }
+    },
+    {
+      "description": "sol architect-review 3rd round must2: prediction_interval.status==\"available\" forces decision.status==\"predicted\" -- an abstained decision has no point estimate, so an \"available\" confidence interval (which is an interval AROUND a point estimate) cannot coexist with it. This closes the other direction of the same tagged-union coupling `predicted` itself already has with `decision.status`.",
+      "if": { "properties": { "prediction_interval": { "properties": { "status": { "const": "available" } } } } },
+      "then": {
+        "properties": {
+          "decision": { "properties": { "status": { "const": "predicted" } } }
+        }
+      }
     }
   ],
   "properties": {
@@ -181,7 +190,11 @@
         "lower": { "type": "number", "minimum": 0 },
         "upper": { "type": "number", "minimum": 0 },
         "method": { "type": "string", "minLength": 1 },
-        "calibration_sample_size": { "type": "integer", "minimum": 0 }
+        "calibration_sample_size": {
+          "description": "sol architect-review 3rd round must2: minimum 1, not 0 -- a leave-one-out calibration computed from zero samples is not a calibration, it's the absence of one (which is exactly what status==\"insufficient_data\" already represents).",
+          "type": "integer",
+          "minimum": 1
+        }
       },
       "additionalProperties": false
     },
