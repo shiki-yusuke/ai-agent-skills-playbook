@@ -1,17 +1,19 @@
 {
   "schema_version": "estimate/v2",
+  "target": { "metric": "cost_usd", "unit": "usd" },
   "decision": { "status": "predicted", "reason_codes": ["DRIFT_WARNING"] },
+  "predicted": { "p50": 1.2, "p80": 2.4, "value_status": "estimated" },
   "applicability": { "status": "in_domain", "nearest_distance": 0.3, "distance_threshold": 2.0 },
   "cohort": {
     "agent_type": "claude-code",
     "model_provider": "anthropic",
     "model_generation": "claude-5",
     "model_id": "claude-sonnet-5",
-    "routing_policy_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "prompt_policy_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "routing_policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "prompt_policy_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "measure_contract_version": "agent-metrics/v1",
     "token_basis": "native",
-    "execution_profile_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    "execution_profile_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   },
   "population": {
     "candidate_count": 42,

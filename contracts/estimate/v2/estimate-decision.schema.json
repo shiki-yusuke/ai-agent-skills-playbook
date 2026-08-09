@@ -2,10 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/estimate/v2/estimate-decision.schema.json",
   "title": "estimate/v2 decision",
-  "description": "The cost-estimate honesty schema: contract-first, ahead of spec-lane's own estimator implementation (see docs/protocols; the 'D4 estimate 正直さ schema' design note). A decision is either `predicted` (a point estimate exists) or `abstained` (it does not, and reason_codes says why) -- there is no third 'best guess anyway' state. `decision.status == \"abstained\"` MUST carry at least one reason_code; this is a semantic check in verify-fixtures.mjs, not something a single JSON Schema field constraint here can express (an object's own field can't conditionally require a sibling array to be non-empty). `DRIFT_WARNING` is the one reason_code that is advisory rather than abstain-forcing -- it MAY appear even when status is `predicted` (a calibrated prediction that also carries a drift warning is still a prediction, just a flagged one).",
+  "description": "The cost-estimate honesty schema: contract-first, ahead of spec-lane's own estimator implementation (see docs/protocols; the 'D4 estimate 正直さ schema' design note). A decision is either `predicted` (a point estimate exists, carried in top-level `predicted`) or `abstained` (it does not, and `decision.reason_codes` says why) -- there is no third 'best guess anyway' state. `reason_codes` is split into 11 BLOCKING codes and 1 ADVISORY code (`DRIFT_WARNING`): `status == \"abstained\"` MUST carry at least one BLOCKING code (sol architect-review must6 -- DRIFT_WARNING alone does not justify withholding a point estimate), and `status == \"predicted\"` MUST NOT carry any BLOCKING code (a point estimate with a due-for-abstain reason attached would be self-contradictory). Both directions are schema-structural where a plain closed set can express them and semantic (verify-fixtures.mjs) where 'at least one of these 11, and none of that other 1' needs actual set arithmetic this repo's validator subset doesn't have a keyword for.",
   "type": "object",
   "required": [
     "schema_version",
+    "target",
     "decision",
     "applicability",
     "cohort",
@@ -14,8 +15,56 @@
     "coverage_history",
     "drift"
   ],
+  "allOf": [
+    {
+      "description": "sol architect-review must6: a predicted decision requires a point estimate, structurally, not just as an implication of decision.status.",
+      "if": { "properties": { "decision": { "properties": { "status": { "const": "predicted" } } } } },
+      "then": {
+        "required": ["predicted"],
+        "properties": {
+          "predicted": {
+            "required": ["p50", "p80", "value_status"]
+          }
+        }
+      }
+    },
+    {
+      "description": "sol architect-review must6: prediction_interval's \"available\" state is frozen in full -- every field required together, not left partially specified.",
+      "if": { "properties": { "prediction_interval": { "properties": { "status": { "const": "available" } } } } },
+      "then": {
+        "properties": {
+          "prediction_interval": {
+            "required": ["level", "lower", "upper", "method", "calibration_sample_size"]
+          }
+        }
+      }
+    }
+  ],
   "properties": {
     "schema_version": { "const": "estimate/v2" },
+    "target": {
+      "description": "What quantity this decision is (or would be) predicting. Required unconditionally -- even an abstained decision was abstaining from estimating a specific, named target, not from estimating in the abstract.",
+      "type": "object",
+      "required": ["metric", "unit"],
+      "properties": {
+        "metric": { "enum": ["tokens", "cost_usd", "cycle_time_min"] },
+        "unit": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "predicted": {
+      "description": "The point estimate. Required when decision.status == \"predicted\" (see the top-level if/then); absent when abstained -- there is no partial or placeholder point estimate for an abstained decision. p50 <= p80 is a semantic check (verify-fixtures.mjs), mirroring spec-lane's own QuantileSchema.refine.",
+      "type": "object",
+      "properties": {
+        "p50": { "type": "number", "minimum": 0 },
+        "p80": { "type": "number", "minimum": 0 },
+        "value_status": {
+          "description": "estimated (a genuine model output) | lower_bound (the population/interval math could only bound it from below, e.g. too few high-cost neighbors to characterize the upper tail).",
+          "enum": ["estimated", "lower_bound"]
+        }
+      },
+      "additionalProperties": false
+    },
     "decision": {
       "type": "object",
       "required": ["status", "reason_codes"],
@@ -72,33 +121,41 @@
         "model_provider": { "type": "string", "minLength": 1 },
         "model_generation": { "type": "string", "minLength": 1 },
         "model_id": { "type": "string", "minLength": 1 },
-        "routing_policy_digest": { "type": "string", "minLength": 1 },
-        "prompt_policy_digest": { "type": "string", "minLength": 1 },
+        "routing_policy_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "prompt_policy_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "measure_contract_version": { "type": "string", "minLength": 1 },
         "token_basis": { "type": "string", "minLength": 1 },
-        "execution_profile_digest": { "type": "string", "minLength": 1 }
+        "execution_profile_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
       },
       "additionalProperties": false
     },
     "population": {
+      "description": "eligible_count MUST be <= candidate_count (a semantic check, verify-fixtures.mjs -- comparing two sibling fields isn't a plain schema constraint in this repo's validator subset).",
       "type": "object",
       "required": ["candidate_count", "eligible_count", "excluded_by_reason"],
       "properties": {
         "candidate_count": { "type": "integer", "minimum": 0 },
         "eligible_count": { "type": "integer", "minimum": 0 },
         "excluded_by_reason": {
-          "description": "Map of reason label to excluded count. Left as an unconstrained object -- this repo's minimal validator subset does not support per-value schema validation of arbitrary-keyed maps, and the keys here are informational counts, not another closed set requiring enforcement.",
+          "description": "Map of reason_code (same closed set as decision.reason_codes) to excluded count. Left schema-unconstrained as to keys/values (this repo's minimal validator subset does not support per-value schema validation of arbitrary-keyed maps) -- sol architect-review must7 enforces both as semantic checks in verify-fixtures.mjs instead: every key must be one of the 12 reason_codes, and every value must be a non-negative integer.",
           "type": "object"
         }
       },
       "additionalProperties": false
     },
     "prediction_interval": {
-      "description": "Whether enough calibration history (leave-one-out error samples) exists to also emit a confidence interval around the point estimate -- orthogonal to decision.status: a `predicted` decision (a point estimate exists) can still have prediction_interval.status == \"insufficient_data\" (not enough LOO history yet to bound it). M0 ships this schema only; the calibration math that would ever produce status == \"available\" is M1 work, so v2's own fixture set exercises insufficient_data exclusively (see fixtures/expected-results.json).",
+      "description": "Whether enough calibration history (leave-one-out error samples) exists to also emit a confidence interval around the point estimate -- orthogonal to decision.status: a `predicted` decision (a point estimate exists) can still have prediction_interval.status == \"insufficient_data\" (not enough LOO history yet to bound it). When status == \"available\", level/lower/upper/method/calibration_sample_size are ALL required together (schema if/then, sol architect-review must6 -- the \"available\" shape is frozen in full, not left partially specified) and lower <= upper is a semantic check (verify-fixtures.mjs). v2's own fixture set exercises both insufficient_data and a fully-shaped available example (see fixtures/expected-results.json).",
       "type": "object",
       "required": ["status"],
       "properties": {
         "status": { "enum": ["available", "insufficient_data"] },
+        "level": {
+          "description": "Confidence level as a fraction, e.g. 0.8 for an 80% interval.",
+          "type": "number",
+          "minimum": 0
+        },
+        "lower": { "type": "number", "minimum": 0 },
+        "upper": { "type": "number", "minimum": 0 },
         "method": { "type": "string", "minLength": 1 },
         "calibration_sample_size": { "type": "integer", "minimum": 0 }
       },
