@@ -11,14 +11,18 @@
     },
     "repo_commit": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^[0-9a-f]{7,40}$"
     },
     "candidate_paths": {
+      "description": "sol architect-review must7: no duplicates (uniqueItems, schema-enforced) and MUST be sorted ascending (lexicographic; a semantic check in verify-fixtures.mjs, not expressible as a plain schema constraint) -- a producer sorts before emitting so two equivalent scans always produce a byte-identical input to a consumer's own digest computation. Order-of-discovery is not part of this block's contract; the sorted order is.",
       "type": "array",
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "candidate_layers": {
+      "description": "Same sort/uniqueness rule as candidate_paths, for the same reproducibility reason.",
       "type": "array",
+      "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "open_items": {

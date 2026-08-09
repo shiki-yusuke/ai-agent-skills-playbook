@@ -1,43 +1,78 @@
 {
   "protocol_version": "impact-scan/v1",
-  "fixture_format_version": "1",
-  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match.",
-  "lane_alignment_note": "Checked against lane's ImpactScanSnapshotSchema (packages/schemas/src/estimate.ts, read-only reference) and its consumer parser (packages/core/src/impact-scan.ts). lane's internal schema has one extra required field, `digest`, that this contract's schema deliberately does not have -- this is not a drift to reconcile. lane's own parser (RawImpactScanBlock in impact-scan.ts) reads exactly this shape off the wire (scan_version, repo_commit, candidate_paths[], candidate_layers[], open_items?) with NO digest field, then computes digest itself from candidate_paths+candidate_layers before constructing the full internal ImpactScanSnapshot. So lane's wire-level expectation and this contract are already identical; `digest` only exists on lane's post-parse internal object, never on the block this contract governs.",
+  "fixture_format_version": "2",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. Fixture format version 2 (sol architect-review round): every fixture is now a raw markdown report (.md), not a bare parsed JSON object -- verify-fixtures.mjs extracts the fenced ```impact-scan:v1 block itself (mirroring lane's real extractFencedBlocks parser), so the fence-count rule (exactly one block per report) is actually exercised, not assumed.",
+  "lane_alignment_note": "Checked against lane's ImpactScanSnapshotSchema (packages/schemas/src/estimate.ts, read-only reference) and its consumer parser (packages/core/src/impact-scan.ts). lane's internal schema has one extra required field, `digest`, that this contract's schema deliberately does not have -- this is not a drift to reconcile. lane's own parser (RawImpactScanBlock in impact-scan.ts) reads exactly this shape off the wire (scan_version, repo_commit, candidate_paths[], candidate_layers[], open_items?) with NO digest field, then computes digest itself from candidate_paths+candidate_layers before constructing the full internal ImpactScanSnapshot. So lane's wire-level expectation and this contract are already identical; `digest` only exists on lane's post-parse internal object, never on the block this contract governs. This fixture round's fence-extraction logic (extractFencedBlocks) is a direct mirror of lane's own implementation of the same function.",
   "fixtures": [
     {
       "id": "valid-with-open-items",
-      "files": { "block": "valid-with-open-items.json" },
+      "files": { "report": "valid-with-open-items.md" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "The exact example shape from SKILL.md's spec section, including open_items."
+      "notes": "The example shape from SKILL.md's spec section (including open_items), with candidate_paths sorted ascending."
     },
     {
       "id": "valid-no-open-items",
-      "files": { "block": "valid-no-open-items.json" },
+      "files": { "report": "valid-no-open-items.md" },
       "expected": "accept",
       "reason_code": null,
       "notes": "open_items omitted entirely -- optional per the spec table ('省略時は空配列扱い'); this schema does not require a producer to emit an empty array explicitly."
     },
     {
       "id": "invalid-aggregate-score",
-      "files": { "block": "invalid-aggregate-score.json" },
+      "files": { "report": "invalid-aggregate-score.md" },
       "expected": "reject",
       "reason_code": "$",
       "notes": "A synthesized risk_score field. Rejected by additionalProperties:false -- enforces the 'raw observations only, no aggregate score' design principle structurally rather than by convention."
     },
     {
       "id": "invalid-digest-field",
-      "files": { "block": "invalid-digest-field.json" },
+      "files": { "report": "invalid-digest-field.md" },
       "expected": "reject",
       "reason_code": "$",
       "notes": "A digest field on the block itself. Rejected by additionalProperties:false -- a producer including its own computed digest would otherwise let a stale/hand-edited digest ride along unchallenged; consumers must always compute it themselves."
     },
     {
       "id": "invalid-scan-version",
-      "files": { "block": "invalid-scan-version.json" },
+      "files": { "report": "invalid-scan-version.md" },
       "expected": "reject",
       "reason_code": "$.scan_version",
       "notes": "scan_version=\"2\" -- the current block format is version \"1\" only."
+    },
+    {
+      "id": "invalid-zero-fences",
+      "files": { "report": "invalid-zero-fences.md" },
+      "expected": "reject",
+      "reason_code": "no_impact_scan_block_found",
+      "notes": "sol architect-review must7: a report with no ```impact-scan:v1 fenced block at all. A consumer's fence extraction, not schema validation, is what catches this -- there is no JSON object to even validate."
+    },
+    {
+      "id": "invalid-two-fences",
+      "files": { "report": "invalid-two-fences.md" },
+      "expected": "reject",
+      "reason_code": "multiple_impact_scan_blocks_found",
+      "notes": "sol architect-review must7: a report with TWO ```impact-scan:v1 fenced blocks (e.g. from a merge, or an appending re-run). Ambiguous -- a consumer cannot tell which is authoritative -- so both are rejected together rather than silently picking one."
+    },
+    {
+      "id": "invalid-wrong-info-string",
+      "files": { "report": "invalid-wrong-info-string.md" },
+      "expected": "reject",
+      "reason_code": "no_impact_scan_block_found",
+      "notes": "The report's only fence is tagged impact-scan:v2, not impact-scan:v1 -- similar-looking but a different tag entirely, so it is correctly treated as zero v1 blocks found, not as a mis-shaped v1 block."
+    },
+    {
+      "id": "invalid-duplicate-paths",
+      "files": { "report": "invalid-duplicate-paths.md" },
+      "expected": "reject",
+      "reason_code": "$.candidate_paths[1]",
+      "notes": "sol architect-review must7: candidate_paths contains the same path twice. Rejected by the schema's uniqueItems:true."
+    },
+    {
+      "id": "invalid-unsorted-layers",
+      "files": { "report": "invalid-unsorted-layers.md" },
+      "expected": "reject",
+      "reason_code": "layers_not_sorted",
+      "notes": "sol architect-review must7: candidate_layers is [\"presentation\", \"domain\"], not ascending. A semantic check (verify-fixtures.mjs), not a plain schema constraint -- ordering across sibling array elements isn't expressible with this repo's minimal validator subset."
     }
   ]
 }
