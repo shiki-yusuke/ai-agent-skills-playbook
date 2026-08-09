@@ -57,7 +57,7 @@ Schema:
 | `session_id` | yes | The session being bound. |
 | `bound_at` | yes | UTC timestamp, literal `Z` suffix. |
 | `binding_status` | yes | `"bound"` \| `"superseded"`. |
-| `actor` | conditionally | Who performed the binding. **Required, with `kind == "human"`, when `binding_method == "manual_bind"`** — a semantic check (see Verification), not a plain schema field, since one field can't conditionally require a sibling to hold a specific value in this repo's validator subset. Optional otherwise. |
+| `actor` | conditionally | Who performed the binding. **Required, with `kind == "human"`, when `binding_method == "manual_bind"`** — schema-enforced via `if`/`then` (sol architect-review must5), with a matching semantic check in `verify-fixtures.mjs` kept as a defense-in-depth backstop. Optional otherwise. |
 
 `binding_method` closed set — this asymmetry is not an oversight, it is the *measured* result
 of a binding-feasibility spike run before this contract was written:
@@ -84,10 +84,9 @@ Schema:
 | `schema_version` | yes | Literal `"attribution/v1"`. |
 | `generated_at` | yes | UTC timestamp this audit was produced. |
 | `window.since` / `window.until` | yes | The audited time range, both UTC. |
-| `sessions.measured` | yes | Total sessions observed in the window. |
-| `sessions.exactly_attributed` | yes | Sessions cleanly resolved to exactly one task_run — the count this whole protocol exists to maximize. |
-| `sessions.unbound[]` / `.mixed[]` / `.orphan_usage[]` / `.measurement_incomplete[]` | yes | Disjoint session_id lists explaining every session **not** in `exactly_attributed`. Their combined length plus `exactly_attributed` MUST equal `measured` (a semantic check — see Verification). |
-| `tokens.exact_attributed` / `.total_measured` | yes | Token totals. **Null, not 0, when `sessions.measured` is 0** (see Verification's null-not-zero check). `total_measured` is a measured total across every session, not a claim that all of it is attributable — only `exact_attributed` is. |
+| `sessions.exactly_attributed[]` | yes | `{session_id, tokens}` pairs — sessions cleanly resolved to exactly one task_run, the set this whole protocol exists to maximize. There is deliberately **no separate `sessions.measured` count field** anywhere: the total number of sessions audited is always `exactly_attributed.length` plus the four lists below's combined length, derived, never independently declared (sol architect-review must4 — a separately-declared count is a second source of truth that can silently drift from the lists it's supposed to summarize). |
+| `sessions.unbound[]` / `.mixed[]` / `.orphan_usage[]` / `.measurement_incomplete[]` | yes | Disjoint session_id lists explaining every session **not** in `exactly_attributed`. Pairwise disjoint with each other and with `exactly_attributed`'s session_ids (a semantic check — see Verification). Every session_id here MUST have a matching `violations[]` entry with the corresponding `reason_code`, and vice versa — no session silently sits in a list with no recorded reason, and no violation references a session absent from its list. |
+| `tokens.exact_attributed` / `.total_measured` | yes | Token totals. `exact_attributed` MUST equal the sum of `sessions.exactly_attributed[].tokens` (independently recomputed, never trusted as declared). **Both null, not 0, when all five `sessions` lists are empty** (see Verification's null-not-zero check). `total_measured` is a measured total across every session, not a claim that all of it is attributable — only `exact_attributed` is. |
 | `research_eligible` | yes | Boolean. **MUST be `false` whenever `violations` is non-empty** — see Verification. |
 | `violations[]` | yes | `{reason_code, session_id?, task_run_id?, detail}`. |
 
@@ -122,17 +121,29 @@ verified by
 that directory is the machine-readable table of which fixture is expected to be accepted or
 rejected (with which reason code).
 
-Beyond schema validation, three semantic MUSTs neither schema alone can express:
+Beyond schema validation, seven semantic MUSTs neither schema alone can fully express:
 
-1. **A `manual_bind` binding-record MUST carry `actor.kind == "human"`.**
-2. **An `audit-result` MUST have `research_eligible == false` whenever `violations` is
+1. **A `manual_bind` binding-record MUST carry `actor.kind == "human"`** (schema-enforced via
+   `if`/`then`; `verify-fixtures.mjs` re-checks it as a defense-in-depth backstop).
+2. **No `session_id` may have more than one binding-record with `binding_status == "bound"` at
+   the same time.** A cross-record check — a single record's own validity says nothing about
+   whether some *other* record concurrently claims the same session.
+3. **An `audit-result` MUST have `research_eligible == false` whenever `violations` is
    non-empty.** This is fail-closed, not advisory — a producer's own judgment call that "the
    violations are probably fine" is never sufficient to declare a window research-eligible.
-3. **An `audit-result`'s `sessions.exactly_attributed` plus the four exclusion lists' combined
-   length MUST equal `sessions.measured`.** No session is silently dropped from the
-   accounting.
-4. **`tokens.exact_attributed`/`.total_measured` MUST be `null`, not `0`, when
-   `sessions.measured` is `0`** (null-not-zero: "nothing was measured" and "zero tokens were
+4. **An `audit-result`'s five `sessions` lists (`exactly_attributed`'s session_ids plus the
+   four plain lists) MUST be pairwise disjoint.** No session_id may appear in more than one.
+5. **Every session_id in `unbound`/`mixed`/`orphan_usage`/`measurement_incomplete` MUST have a
+   matching `violations[]` entry with the corresponding `reason_code` — and every violation
+   with one of those four reason_codes MUST correspond to a session_id actually present in its
+   list.** This is the exact gap a sol architect-review round found: an audit-result with
+   `sessions.mixed` non-empty, `violations` empty, and `research_eligible: true` passed every
+   *other* check here vacuously (violations being empty trivially satisfied rule 3) — a mixed
+   session could be silently un-flagged. See `invalid-mixed-without-violation`.
+6. **`tokens.exact_attributed` MUST equal the sum of `sessions.exactly_attributed[].tokens`.**
+   The declared total is recomputed, never trusted as given.
+7. **`tokens.exact_attributed`/`.total_measured` MUST be `null`, not `0`, when all five
+   `sessions` lists are empty** (null-not-zero: "nothing was measured" and "zero tokens were
    measured" are different facts, and collapsing them would make an empty window
    indistinguishable from a window that genuinely measured zero usage).
 
@@ -140,11 +151,17 @@ Beyond schema validation, three semantic MUSTs neither schema alone can express:
 
 - Use exactly one of the three v1 `binding_method` values; never invent a fourth.
 - Attach a human `actor` for every `manual_bind` record.
-- Mark a superseded binding's `binding_status` as `"superseded"` rather than deleting it.
+- Mark a superseded binding's `binding_status` as `"superseded"` rather than deleting it, and
+  never leave two records for the same session simultaneously `"bound"`.
 
 **An auditor MUST:**
 
 - Set `research_eligible: false` whenever it records any `violations` entry, unconditionally.
+- Give every session_id placed in `unbound`/`mixed`/`orphan_usage`/`measurement_incomplete` a
+  matching `violations[]` entry — never place a session in one of these lists "for now" without
+  also recording why.
+- Recompute (never just carry forward) `tokens.exact_attributed` as the sum of
+  `sessions.exactly_attributed[].tokens`.
 - Represent a fully-unmeasured window's token totals as `null`, never `0`.
 - Never apportion a `mixed` session's usage by time ratio or any other heuristic between the
   tasks it touched — record it as `mixed` and exclude it from `exact_attributed`, full stop.
