@@ -1,6 +1,7 @@
 // Shared minimal JSON Schema (draft 2020-12 subset) validator: type, const, enum, pattern,
-// minLength, minimum, maxItems, minItems, required, properties, additionalProperties, items,
-// allOf, and $ref (to a sibling schema file, or to a local #/$defs/... pointer). Extracted out
+// minLength, minimum, maxItems, minItems, uniqueItems, required, properties,
+// additionalProperties, items, allOf, if/then/else, and $ref (to a sibling schema file, or
+// to a local #/$defs/... pointer). Extracted out
 // of contracts/agent-metrics/v1/verify-fixtures.mjs so every contract's verify script shares
 // one implementation instead of re-implementing it. This is exactly the subset this repo's
 // schemas use -- it is not a general draft 2020-12 implementation, and does not replace a
@@ -59,6 +60,17 @@ export function createValidator(schemaDir) {
       for (const sub of schema.allOf) validateAgainst(sub, instance, currentDoc, pathStr, errors);
       return;
     }
+    // if/then/else: `if` is evaluated in an isolated error list (never leaked into the
+    // caller's `errors` on its own) purely to decide which branch applies; only the chosen
+    // branch's errors (if any) are appended to `errors`. This composes with every other
+    // keyword on the same schema object -- it does not return early -- so a schema can mix
+    // e.g. `required` with a conditional `if/then` at the same level.
+    if (schema.if) {
+      const ifErrors = [];
+      validateAgainst(schema.if, instance, currentDoc, pathStr, ifErrors);
+      const branch = ifErrors.length === 0 ? schema.then : schema.else;
+      if (branch) validateAgainst(branch, instance, currentDoc, pathStr, errors);
+    }
     if (schema.const !== undefined && instance !== schema.const) {
       errors.push(`${pathStr}: expected const ${JSON.stringify(schema.const)}, got ${JSON.stringify(instance)}`);
     }
@@ -89,6 +101,14 @@ export function createValidator(schemaDir) {
       }
       if (schema.minItems !== undefined && instance.length < schema.minItems) {
         errors.push(`${pathStr}: array length ${instance.length} < minItems ${schema.minItems}`);
+      }
+      if (schema.uniqueItems) {
+        const seen = new Set();
+        instance.forEach((item, i) => {
+          const key = JSON.stringify(item);
+          if (seen.has(key)) errors.push(`${pathStr}[${i}]: duplicate item, uniqueItems requires no repeats`);
+          seen.add(key);
+        });
       }
       if (schema.items) {
         instance.forEach((item, i) => validateAgainst(schema.items, item, currentDoc, `${pathStr}[${i}]`, errors));
