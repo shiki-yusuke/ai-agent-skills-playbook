@@ -171,15 +171,16 @@ Beyond schema validation, seven semantic MUSTs neither schema alone can fully ex
 
 ## Versioning
 
-`attribution/v1` → `v2` covers a change to either schema's required fields, to the
-`binding_method` closed set, or to the `reason_code` closed set — anything that would silently
-change what an existing consumer computes from the same bytes, or that would let a producer
-emit a binding/violation kind an existing consumer can't recognize.
-
-Within v1, only additive optional fields are allowed. Adding a fourth `binding_method` (e.g. a
-future hook-based method, if its spike-measured failure mode above is ever fixed) requires a
-new value added to the closed set under a version bump's discipline — not a silent schema
-loosening.
+**`attribution/v1` is fully immutable once frozen (sol architect-review round, main裁定),
+matching [`trace-v1.md`](trace-v1.md)'s policy exactly.** No change of any kind — a new
+optional field on either schema, a fourth `binding_method`, a fifth `reason_code`, a widened
+`enum` anywhere — is permitted within v1 after freeze. Adding a fourth `binding_method` (e.g. a
+future hook-based method, if its spike-measured failure mode is ever independently fixed)
+requires `attribution/v2`, not a version-preserving addition. As in trace/v1: every object in
+both schemas is `additionalProperties: false`, so there is no such thing as a
+backward-compatible additive change a strict reader would even accept — a version number that
+can still mean two different shapes isn't doing its job. There is no "extensions" namespace in
+either schema for future growth to land in without a version bump.
 
 ## Rejected designs
 
