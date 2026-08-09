@@ -3,7 +3,8 @@
   "fixture_format_version": "1",
   "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. `expected` is one of \"accept\" | \"reject\". For \"reject\" fixtures, `reason_code` must be present among the detected failure reasons -- for a named check this is a fixed string (e.g. \"event_id_mismatch\"); for a raw schema-validator error it is the JSON path the error occurred at (e.g. \"$.relation\"), following the same leading-token convention as agent-metrics/v1's fixture manifest.",
   "notes": [
-    "Design decision -- supersedes target absence is NOT a reject case: `cross-segment-supersedes` (accept) carries a well-formed supersedes_event_id that does not match any other event_id in this fixture set. This is intentional, not an oversight. trace/v1 is an append-only ledger that may be split across segments/files; a single-event validator has no way to know whether the superseded event lives in a segment it simply hasn't loaded yet. Rejecting on 'target not found here' would make partial-ledger validation (e.g. validating one day's new events) impossible. Referential integrity of supersedes_event_id, if ever checked, belongs to a whole-ledger compaction/audit tool, not to per-event validation -- this fixture set deliberately does not include a fixture that rejects for this reason."
+    "Design decision -- supersedes target absence is NOT a reject case: `cross-segment-supersedes` (accept) carries a well-formed supersedes_event_id that does not match any other event_id in this fixture set. This is intentional, not an oversight. trace/v1 is an append-only ledger that may be split across segments/files; a single-event validator has no way to know whether the superseded event lives in a segment it simply hasn't loaded yet. Rejecting on 'target not found here' would make partial-ledger validation (e.g. validating one day's new events) impossible. Referential integrity of supersedes_event_id, if ever checked, belongs to a whole-ledger compaction/audit tool, not to per-event validation -- this fixture set deliberately does not include a fixture that rejects for this reason.",
+    "sol architect-review round (must3): supersedes_event_id is now folded into event_id identity when present. supersedes-pair-2 and cross-segment-supersedes's event_ids changed from the previous round of this contract as a direct result -- they are not stale/copy-paste artifacts, they were recomputed under the fixed recipe."
   ],
   "fixtures": [
     {
@@ -28,7 +29,7 @@
       "files": { "event": "usage-imported.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "Exercises the identity exception: payload.window.{since,until} participates in event_id identity (re-importing the same window is idempotent) even though payload as a whole is excluded."
+      "notes": "Exercises the identity exception: payload.window.{since,until} participates in event_id identity (re-importing the same window is idempotent) even though payload as a whole is excluded. since < until, both UTC."
     },
     {
       "id": "artifact-declares",
@@ -39,12 +40,28 @@
       "notes": "A plain artifact-edge relation (declares) with a two-part to_ref (logical_id + content_digest)."
     },
     {
+      "id": "task-run-started",
+      "kind": "event",
+      "files": { "event": "task-run-started.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "task_run_started requires task_run_id (identity table) and to_ref.logical_id must be the task_run_id-derived \"task_run:<id>\" form -- was missing from the fixture set before the sol architect-review round; added to actually exercise this relation's required-field and ref-consistency rules."
+    },
+    {
       "id": "supersedes-correction-pair",
       "kind": "correction-pair",
       "files": { "first": "supersedes-pair-1.json", "second": "supersedes-pair-2.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "A correction: the second event declares a new revision of the same logical artifact (spec.md) and carries supersedes_event_id pointing at the first event's event_id. Both events individually valid, distinct event_ids, and the first row is never rewritten -- it remains in the fixture set unchanged."
+      "notes": "A correction: the second event declares a new revision of the same logical artifact (spec.md, different content_digest) and carries supersedes_event_id pointing at the first event's event_id. Both events individually valid, distinct event_ids, and the first row is never rewritten."
+    },
+    {
+      "id": "supersedes-payload-only-pair",
+      "kind": "correction-pair",
+      "files": { "first": "supersedes-payload-only-1.json", "second": "supersedes-payload-only-2.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "must3 regression: the second event has the IDENTICAL relation/from_ref/to_ref/content_digest as the first (not a new content revision) -- only payload and supersedes_event_id differ. Proves the fixed identity recipe (supersedes_event_id folded into identity) mints a genuinely different event_id here; under the old recipe this pair would have collided on the same event_id."
     },
     {
       "id": "cross-segment-supersedes",
@@ -52,7 +69,7 @@
       "files": { "event": "cross-segment-supersedes.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "See the top-level 'notes' entry above: supersedes_event_id references an event_id absent from this fixture set entirely, simulating a prior ledger segment this validator hasn't loaded. MUST be accepted at the single-event level."
+      "notes": "See the top-level 'notes' entries above: supersedes_event_id references an event_id absent from this fixture set entirely, simulating a prior ledger segment this validator hasn't loaded. MUST be accepted at the single-event level."
     },
     {
       "id": "invalid-event-id-mismatch",
@@ -101,6 +118,46 @@
       "expected": "reject",
       "reason_code": "$.event_id",
       "notes": "event_id uses the wrong version prefix (tr2_ instead of tr1_) -- a pattern violation distinct from invalid-event-id-mismatch's hash mismatch (that fixture has a well-formed tr1_ prefix and correct-looking hex, just the wrong hash)."
+    },
+    {
+      "id": "invalid-missing-session-id",
+      "kind": "event",
+      "files": { "event": "invalid-missing-session-id.json" },
+      "expected": "reject",
+      "reason_code": "identity_fields_missing",
+      "notes": "sol architect-review must1: session_bound with session_id omitted entirely. Caught by both the schema's if/then (relation==session_bound => required session_id) and verify-fixtures.mjs's own presence check, which fires BEFORE any event_id recomputation is attempted -- this fixture's event_id field is a placeholder, never actually hashed against, proving the fix for 'never feed undefined into the JCS canonicalizer.'"
+    },
+    {
+      "id": "invalid-missing-window",
+      "kind": "event",
+      "files": { "event": "invalid-missing-window.json" },
+      "expected": "reject",
+      "reason_code": "identity_fields_missing",
+      "notes": "usage_imported with payload.window omitted entirely. Same must1 fix as invalid-missing-session-id, exercised on the nested payload.window.{since,until} identity fields."
+    },
+    {
+      "id": "invalid-ref-field-mismatch",
+      "kind": "event",
+      "files": { "event": "invalid-ref-field-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "ref_field_mismatch",
+      "notes": "sol architect-review must1: session_bound's from_ref.logical_id does not match the task_run_id-derived \"task_run:<id>\" convention (from_ref says a different task_run entirely from the task_run_id field). The two redundant encodings of the same fact have drifted apart."
+    },
+    {
+      "id": "invalid-self-supersedes",
+      "kind": "event",
+      "files": { "event": "invalid-self-supersedes.json" },
+      "expected": "reject",
+      "reason_code": "self_supersedes",
+      "notes": "sol architect-review must3: supersedes_event_id is set equal to the event's own event_id. Not expressible as a plain schema constraint in this repo's validator subset (would require comparing two sibling field values); enforced in verify-fixtures.mjs. Also independently fails event_id_mismatch, since recomputing identity now includes supersedes_event_id -- multiple reasons is expected and fine, same convention as invalid-event-id-format."
+    },
+    {
+      "id": "invalid-window-ordering",
+      "kind": "event",
+      "files": { "event": "invalid-window-ordering.json" },
+      "expected": "reject",
+      "reason_code": "window_ordering_invalid",
+      "notes": "sol architect-review must2: usage_imported's payload.window.since is later than window.until (until precedes since). Both are individually valid UTC timestamps, so this is a semantic ordering check, not a schema/pattern failure."
     }
   ]
 }
