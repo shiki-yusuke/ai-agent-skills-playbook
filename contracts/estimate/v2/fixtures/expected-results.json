@@ -1,0 +1,52 @@
+{
+  "protocol_version": "estimate/v2",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. This is a contract-first schema: it ships ahead of spec-lane's own estimator implementation, so every fixture here is a hand-authored example of a decision shape, not a captured real output.",
+  "notes": [
+    "M0 scope: prediction_interval.status is exercised as \"insufficient_data\" in every fixture, accept and reject alike. status == \"available\" (meaning enough leave-one-out calibration history exists to also bound the point estimate) requires calibration math that is M1 work; v2's schema allows the value but no v2 fixture exercises it yet."
+  ],
+  "fixtures": [
+    {
+      "id": "abstain-novel-surface",
+      "files": { "record": "abstain-novel-surface.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Single reason_code (NOVEL_SURFACE_UNKNOWN): the surface has no comparable history at all, so applicability.status is \"unknown\" (not even out_of_domain -- there's no distance to measure against an empty population)."
+    },
+    {
+      "id": "abstain-composite-reasons",
+      "files": { "record": "abstain-composite-reasons.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Two reason_codes together (INSUFFICIENT_POPULATION + DISTANCE_ABOVE_THRESHOLD): a small candidate population where the one eligible neighbor is still farther than distance_threshold. Composite abstain reasons are additive, not mutually exclusive."
+    },
+    {
+      "id": "abstain-mixed-unattributed-usage",
+      "files": { "record": "abstain-mixed-unattributed-usage.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "MIXED_OR_UNATTRIBUTED_USAGE: every candidate in the population was excluded for this one reason (attribution/v1's fail-closed rule upstream means none of this population's usage is trustworthy input to a prediction)."
+    },
+    {
+      "id": "predicted-with-drift-warning",
+      "files": { "record": "predicted-with-drift-warning.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "status == \"predicted\" WITH reason_codes == [\"DRIFT_WARNING\"] present at the same time -- demonstrates DRIFT_WARNING is advisory, not abstain-forcing: a point estimate still exists, flagged with a warning, rather than being withheld."
+    },
+    {
+      "id": "invalid-abstained-no-reasons",
+      "files": { "record": "invalid-abstained-no-reasons.json" },
+      "expected": "reject",
+      "reason_code": "abstained_requires_reason_codes",
+      "notes": "status == \"abstained\" but reason_codes == [] -- an unexplained abstain is indistinguishable from a silent failure, which v2 exists specifically to rule out."
+    },
+    {
+      "id": "invalid-unknown-reason-code",
+      "files": { "record": "invalid-unknown-reason-code.json" },
+      "expected": "reject",
+      "reason_code": "$.decision.reason_codes[0]",
+      "notes": "reason_codes contains \"STALE_CALIBRATION\", not in the v2 closed set of 12 codes."
+    }
+  ]
+}
