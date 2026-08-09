@@ -41,12 +41,45 @@ const IMPACT_SCAN_FENCE_TAG = "impact-scan:v1";
 // trailing whitespace up to the newline is tolerated (that's line-ending normalization, not
 // "attribute" content); anything else after the tag (a language hint, a key=value attribute,
 // even one extra character) means this fence does NOT count as a valid impact-scan:v1 block.
+//
+// sol architect-review 3rd round must4: extraction is anchored to LINE boundaries, not a
+// single whole-text regex. A whole-text regex risks two false positives a line-based scan
+// cannot make: (1) the tag text appearing mid-line, inside a sentence, not as an actual fence
+// open (a regex with no "start of line" anchor would still match it); (2) a literal "```"
+// appearing inside a JSON string value within the block's own payload being mistaken for the
+// closing delimiter, truncating the block early. Both are structurally impossible here: the
+// opening marker must be an entire line (after trimming only trailing whitespace) equal to
+// "```impact-scan:v1", and the closing marker must be an entire line (trimmed) equal to
+// "```" -- a JSON string cannot itself contain a raw newline (JSON disallows literal
+// newlines inside string literals), so a "```" embedded in a string value can never be the
+// only content of its own line within a single-line JSON blob.
 function extractFencedBlocks(markdown, tag) {
-  const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`\`\`\`${escapedTag}[ \\t]*\\r?\\n([\\s\\S]*?)\`\`\``, "g");
+  const openLine = "```" + tag;
+  const lines = markdown.split(/\r\n|\r|\n/);
   const blocks = [];
-  for (const match of markdown.matchAll(pattern)) {
-    blocks.push(match[1] ?? "");
+  let i = 0;
+  while (i < lines.length) {
+    if (lines[i].replace(/[ \t]+$/, "") === openLine) {
+      const contentLines = [];
+      let j = i + 1;
+      let closed = false;
+      while (j < lines.length) {
+        if (lines[j].trim() === "```") {
+          closed = true;
+          break;
+        }
+        contentLines.push(lines[j]);
+        j++;
+      }
+      if (closed) {
+        blocks.push(contentLines.join("\n"));
+        i = j + 1;
+        continue;
+      }
+      // Unterminated fence (no closing "```" line before EOF) -- not a valid block; fall
+      // through and keep scanning past this line rather than treating it as one.
+    }
+    i++;
   }
   return blocks;
 }
@@ -56,7 +89,7 @@ function dedupe(arr) {
 }
 
 // Full check pipeline for one report's raw markdown text: fence extraction, then (if exactly
-// one candidate block was found) schema validation + sortedness.
+// one candidate block was found) schema validation.
 function checkReport(markdown) {
   const blocks = extractFencedBlocks(markdown, IMPACT_SCAN_FENCE_TAG);
 
