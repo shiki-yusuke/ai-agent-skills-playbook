@@ -102,12 +102,34 @@ function checkDecision(instance) {
     }
     const excludedByReason = population.excluded_by_reason;
     if (excludedByReason && typeof excludedByReason === "object") {
+      let sum = 0;
+      let sumIsTrustworthy = true;
       for (const [key, value] of Object.entries(excludedByReason)) {
         if (!ALL_REASON_CODES.has(key)) {
           reasons.push(`excluded_by_reason_unknown_key: "${key}" is not one of the 12 reason_codes`);
         }
         if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
           reasons.push(`excluded_by_reason_invalid_value: excluded_by_reason["${key}"] must be a non-negative integer, got ${JSON.stringify(value)}`);
+          sumIsTrustworthy = false;
+        } else {
+          sum += value;
+        }
+      }
+      // main裁定 (sol architect-review 2nd round must B): exclusive primary-reason counting --
+      // each excluded candidate is counted under exactly one reason_code (the first one, in
+      // enum-declared order, that applies), never double-counted. So the sum MUST reconcile
+      // exactly with candidate_count - eligible_count; skipped only when a value above was
+      // already invalid (avoids a redundant, confusing second failure on the same bad data).
+      if (
+        sumIsTrustworthy &&
+        typeof population.candidate_count === "number" &&
+        typeof population.eligible_count === "number"
+      ) {
+        const expectedSum = population.candidate_count - population.eligible_count;
+        if (sum !== expectedSum) {
+          reasons.push(
+            `excluded_by_reason_sum_mismatch: excluded_by_reason values sum to ${sum}, but candidate_count(${population.candidate_count}) - eligible_count(${population.eligible_count}) = ${expectedSum}`,
+          );
         }
       }
     }

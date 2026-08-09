@@ -1,9 +1,21 @@
 {
   "schema_version": "estimate/v2",
-  "target": { "metric": "cost_usd", "unit": "usd" },
-  "decision": { "status": "predicted", "reason_codes": [] },
-  "predicted": { "p50": 1.0, "p80": 2.0, "value_status": "estimated" },
-  "applicability": { "status": "in_domain" },
+  "target": {
+    "metric": "cost_usd",
+    "unit": "usd"
+  },
+  "decision": {
+    "status": "predicted",
+    "reason_codes": []
+  },
+  "predicted": {
+    "p50": 1.0,
+    "p80": 2.0,
+    "value_status": "estimated"
+  },
+  "applicability": {
+    "status": "in_domain"
+  },
   "cohort": {
     "agent_type": "claude-code",
     "model_provider": "anthropic",
@@ -15,7 +27,11 @@
     "token_basis": "native",
     "execution_profile_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
   },
-  "population": { "candidate_count": 40, "eligible_count": 35, "excluded_by_reason": {} },
+  "population": {
+    "candidate_count": 40,
+    "eligible_count": 40,
+    "excluded_by_reason": {}
+  },
   "prediction_interval": {
     "status": "available",
     "level": 0.8,
@@ -24,6 +40,10 @@
     "method": "knn_quantile_loo",
     "calibration_sample_size": 35
   },
-  "coverage_history": { "frozen_predictions_only": true },
-  "drift": { "status": "stable" }
+  "coverage_history": {
+    "frozen_predictions_only": true
+  },
+  "drift": {
+    "status": "stable"
+  }
 }

@@ -93,6 +93,7 @@ Decision–Evidence Graph の正本エッジ（append-only JSONL、1行=1イベ�
 コスト見積もりの「正直さ」を保証する schema。予測は常に `predicted`（点推定あり）か `abstained`（reason_codes 付きで見送り）のいずれかであり、無言のベストゲスは存在しない。spec-lane 自身の estimator 実装に先行する contract-first の設計。
 
 - Status: **contract-only**（M0時点。spec-lane 側の estimator実装は今後の作業）
+- Protocol document: [`docs/protocols/estimate-v2.md`](docs/protocols/estimate-v2.md)
 - Conformance fixtures: [`contracts/estimate/v2/`](contracts/estimate/v2/)
 
 ### この protocol を含む計測パイプラインでの責務分担
