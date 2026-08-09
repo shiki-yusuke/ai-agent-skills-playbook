@@ -114,6 +114,18 @@ function checkAuditResult(result) {
   reasons.push(...validate("audit-result.schema.json", result));
   reasons.push(...scanPersonalDimensions(result).map((v) => `personal_dimension_forbidden_key: ${v}`));
 
+  // sol architect-review 3rd round must3: window.since must be strictly earlier than
+  // window.until, mirroring trace/v1's usage_imported window ordering check. Parsed as
+  // instants (not compared lexically) for the same reason: ISO 8601 strings with differing
+  // fractional-second precision don't always sort correctly as plain strings.
+  if (result.window && typeof result.window.since === "string" && typeof result.window.until === "string") {
+    if (!(Date.parse(result.window.since) < Date.parse(result.window.until))) {
+      reasons.push(
+        `window_ordering_invalid: since (${result.window.since}) must be earlier than until (${result.window.until})`,
+      );
+    }
+  }
+
   const violations = Array.isArray(result.violations) ? result.violations : [];
   if (violations.length > 0 && result.research_eligible !== false) {
     reasons.push(
