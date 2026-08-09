@@ -1,0 +1,43 @@
+{
+  "protocol_version": "impact-scan/v1",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match.",
+  "lane_alignment_note": "Checked against lane's ImpactScanSnapshotSchema (packages/schemas/src/estimate.ts, read-only reference) and its consumer parser (packages/core/src/impact-scan.ts). lane's internal schema has one extra required field, `digest`, that this contract's schema deliberately does not have -- this is not a drift to reconcile. lane's own parser (RawImpactScanBlock in impact-scan.ts) reads exactly this shape off the wire (scan_version, repo_commit, candidate_paths[], candidate_layers[], open_items?) with NO digest field, then computes digest itself from candidate_paths+candidate_layers before constructing the full internal ImpactScanSnapshot. So lane's wire-level expectation and this contract are already identical; `digest` only exists on lane's post-parse internal object, never on the block this contract governs.",
+  "fixtures": [
+    {
+      "id": "valid-with-open-items",
+      "files": { "block": "valid-with-open-items.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "The exact example shape from SKILL.md's spec section, including open_items."
+    },
+    {
+      "id": "valid-no-open-items",
+      "files": { "block": "valid-no-open-items.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "open_items omitted entirely -- optional per the spec table ('省略時は空配列扱い'); this schema does not require a producer to emit an empty array explicitly."
+    },
+    {
+      "id": "invalid-aggregate-score",
+      "files": { "block": "invalid-aggregate-score.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "A synthesized risk_score field. Rejected by additionalProperties:false -- enforces the 'raw observations only, no aggregate score' design principle structurally rather than by convention."
+    },
+    {
+      "id": "invalid-digest-field",
+      "files": { "block": "invalid-digest-field.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "A digest field on the block itself. Rejected by additionalProperties:false -- a producer including its own computed digest would otherwise let a stale/hand-edited digest ride along unchallenged; consumers must always compute it themselves."
+    },
+    {
+      "id": "invalid-scan-version",
+      "files": { "block": "invalid-scan-version.json" },
+      "expected": "reject",
+      "reason_code": "$.scan_version",
+      "notes": "scan_version=\"2\" -- the current block format is version \"1\" only."
+    }
+  ]
+}
