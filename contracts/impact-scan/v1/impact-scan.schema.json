@@ -10,17 +10,18 @@
       "const": "1"
     },
     "repo_commit": {
+      "description": "sol architect-review 2nd round must C: full hash only -- either the 40-hex short-SHA1-length form or a 64-hex SHA-256-repo form. A 7-character abbreviated commit (git's default short form) is no longer accepted; abbreviations are ambiguous across a growing repo in a way a reproducibility-critical field like this one cannot afford.",
       "type": "string",
-      "pattern": "^[0-9a-f]{7,40}$"
+      "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
     },
     "candidate_paths": {
-      "description": "sol architect-review must7: no duplicates (uniqueItems, schema-enforced) and MUST be sorted ascending (lexicographic; a semantic check in verify-fixtures.mjs, not expressible as a plain schema constraint) -- a producer sorts before emitting so two equivalent scans always produce a byte-identical input to a consumer's own digest computation. Order-of-discovery is not part of this block's contract; the sorted order is.",
+      "description": "No duplicates (uniqueItems, schema-enforced) -- the skill's own example has no duplicates, so this isn't a contradiction of the normative spec. Sort order is deliberately NOT a wire requirement (sol architect-review 2nd round must C, main裁定): skills/pre-implementation-impact-scan/SKILL.md's own literal example (['src/foo/Bar.ts', 'src/foo/Bar.test.ts']) is not sorted ascending, so requiring sort here would contradict the normative spec this schema mirrors. A CONSUMER that needs a reproducibility digest MUST sort (and dedup) candidate_paths+candidate_layers itself before hashing them, so two equivalent scans discovered in different orders still produce the same digest input -- that responsibility lives on the consumer side, not the wire format.",
       "type": "array",
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }
     },
     "candidate_layers": {
-      "description": "Same sort/uniqueness rule as candidate_paths, for the same reproducibility reason.",
+      "description": "Same uniqueItems rule as candidate_paths, and the same consumer-side sort/dedup-before-digest rule -- sort is not a wire requirement here either.",
       "type": "array",
       "uniqueItems": true,
       "items": { "type": "string", "minLength": 1 }

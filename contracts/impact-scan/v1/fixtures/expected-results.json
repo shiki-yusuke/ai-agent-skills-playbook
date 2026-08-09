@@ -9,7 +9,7 @@
       "files": { "report": "valid-with-open-items.md" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "The example shape from SKILL.md's spec section (including open_items), with candidate_paths sorted ascending."
+      "notes": "The example shape from SKILL.md's spec section VERBATIM (including open_items) -- candidate_paths is [\"src/foo/Bar.ts\", \"src/foo/Bar.test.ts\"], the skill's own literal order, which is NOT sorted ascending. Deliberately unsorted (sol architect-review 2nd round must C, main裁定): sort is not a wire requirement, and this fixture proves it by matching the normative spec's own example byte-for-byte."
     },
     {
       "id": "valid-no-open-items",
@@ -68,11 +68,25 @@
       "notes": "sol architect-review must7: candidate_paths contains the same path twice. Rejected by the schema's uniqueItems:true."
     },
     {
-      "id": "invalid-unsorted-layers",
-      "files": { "report": "invalid-unsorted-layers.md" },
+      "id": "valid-unsorted-layers",
+      "files": { "report": "valid-unsorted-layers.md" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "sol architect-review 2nd round must C, main裁定: candidate_layers is [\"presentation\", \"domain\"], not ascending -- and that is FINE. This fixture was `invalid-unsorted-layers` (reject) in the previous round; sort was reverted from the wire contract because it contradicted the skill's own literal example, so this flips to an explicit accept case proving unsorted order is valid on the wire. A digest-computing consumer sorts on its own side (see impact-scan.schema.json)."
+    },
+    {
+      "id": "invalid-info-string-trailing-content",
+      "files": { "report": "invalid-info-string-trailing-content.md" },
       "expected": "reject",
-      "reason_code": "layers_not_sorted",
-      "notes": "sol architect-review must7: candidate_layers is [\"presentation\", \"domain\"], not ascending. A semantic check (verify-fixtures.mjs), not a plain schema constraint -- ordering across sibling array elements isn't expressible with this repo's minimal validator subset."
+      "reason_code": "no_impact_scan_block_found",
+      "notes": "sol architect-review 2nd round must C, main裁定: fence tagged \"impact-scan:v1 lang=json\" -- trailing content after the exact tag. The skill's spec says the info string IS the literal string \"impact-scan:v1\", nothing else; the previous round's tolerance for trailing attributes (mirroring one consumer's own implementation leniency) has been reverted from the wire contract, so this is now indistinguishable from zero valid blocks."
+    },
+    {
+      "id": "invalid-repo-commit-abbreviated",
+      "files": { "report": "invalid-repo-commit-abbreviated.md" },
+      "expected": "reject",
+      "reason_code": "$.repo_commit",
+      "notes": "sol architect-review 2nd round must C: repo_commit=\"9f2c9c2\" is a 7-character abbreviated commit (git's default short form) -- no longer accepted. Only a full 40-hex or 64-hex hash satisfies the tightened pattern; abbreviations are ambiguous across a growing repo."
     }
   ]
 }

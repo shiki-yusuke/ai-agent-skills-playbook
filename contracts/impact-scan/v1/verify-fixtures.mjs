@@ -8,11 +8,13 @@
 // block per report" rule -- zero or two-or-more matching fences is itself a failure mode a
 // bare-object fixture can never represent.
 //
-// Beyond schema validation (relation... no wait, impact-scan has no relation -- beyond the
-// closed shape and additionalProperties:false), two semantic checks neither the fence
-// extraction nor the schema alone can express (sol architect-review must7): candidate_paths
-// and candidate_layers must each be sorted ascending (uniqueItems:true is schema-enforced;
-// sortedness across sibling array elements is not).
+// Beyond schema validation and fence extraction, this contract has no further semantic
+// checks: uniqueItems (no duplicate paths/layers) is schema-enforced, and sort order is
+// deliberately NOT required at all (sol architect-review 2nd round must C, main裁定) --
+// skills/pre-implementation-impact-scan/SKILL.md's own literal example is not sorted
+// ascending, so requiring sort here would contradict the normative spec this schema mirrors.
+// A consumer computing a reproducibility digest is responsible for its own sort+dedup before
+// hashing; see impact-scan.schema.json's candidate_paths description.
 //
 // Zero npm dependencies by design, same as every other contract in this repo: the JSON
 // Schema subset validator comes from contracts/shared/.
@@ -30,27 +32,23 @@ const { validate } = createValidator(HERE);
 
 const IMPACT_SCAN_FENCE_TAG = "impact-scan:v1";
 
-// Mirrors spec-lane's packages/core/src/impact-scan.ts extractFencedBlocks: matches a fenced
-// code block whose info string *starts with* the literal tag "impact-scan:v1", tolerating
-// trailing whitespace/attributes after the whole tag token, while (?![\w-]) keeps a longer
-// tag like "impact-scan:v10" from being mistaken for this one. A fence tagged something else
-// entirely (e.g. "impact-scan:v2") simply never matches -- indistinguishable from a report
-// carrying zero v1 blocks, which is the correct outcome (see invalid-wrong-info-string).
+// sol architect-review 2nd round must C, main裁定: EXACT info-string match only, per
+// skills/pre-implementation-impact-scan/SKILL.md's literal wording ("開始フェンスのinfo
+// stringは文字列 impact-scan:v1 そのもの" -- the info string IS the literal tag itself,
+// nothing else). The previous round tolerated trailing content after the tag (mirroring a
+// leniency spec-lane's OWN consumer happens to have chosen to apply) -- that leniency is
+// spec-lane's implementation choice, not something this wire contract itself grants. Only
+// trailing whitespace up to the newline is tolerated (that's line-ending normalization, not
+// "attribute" content); anything else after the tag (a language hint, a key=value attribute,
+// even one extra character) means this fence does NOT count as a valid impact-scan:v1 block.
 function extractFencedBlocks(markdown, tag) {
   const escapedTag = tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`\`\`\`${escapedTag}(?![\\w-])[^\\n]*\\r?\\n([\\s\\S]*?)\`\`\``, "g");
+  const pattern = new RegExp(`\`\`\`${escapedTag}[ \\t]*\\r?\\n([\\s\\S]*?)\`\`\``, "g");
   const blocks = [];
   for (const match of markdown.matchAll(pattern)) {
     blocks.push(match[1] ?? "");
   }
   return blocks;
-}
-
-function isSortedAscending(arr) {
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i - 1] > arr[i]) return false;
-  }
-  return true;
 }
 
 function dedupe(arr) {
@@ -80,13 +78,6 @@ function checkReport(markdown) {
 
   const reasons = [];
   reasons.push(...validate("impact-scan.schema.json", instance));
-
-  if (Array.isArray(instance.candidate_paths) && !isSortedAscending(instance.candidate_paths)) {
-    reasons.push("paths_not_sorted: candidate_paths must be sorted ascending (lexicographic)");
-  }
-  if (Array.isArray(instance.candidate_layers) && !isSortedAscending(instance.candidate_layers)) {
-    reasons.push("layers_not_sorted: candidate_layers must be sorted ascending (lexicographic)");
-  }
 
   return dedupe(reasons);
 }
