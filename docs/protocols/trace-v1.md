@@ -57,23 +57,25 @@ One event is one JSON object (one line of a `.jsonl` file). Schema:
 | `payload` | conditionally | Relation-specific body, otherwise unconstrained by this schema (each relation's own shape is informal). Excluded from `event_id` identity as a whole (see below) except for one named exception. **Required, with a required `window: {since, until}` sub-object, when `relation == "usage_imported"`** — the one relation where this schema reaches inside `payload`. |
 | `supersedes_event_id` | no | `event_id` of the event this one corrects. **Folded into `event_id` identity when present** (see Identity & idempotency) and **MUST NOT equal this event's own `event_id`** (a self-reference) — the latter isn't expressible as a schema constraint in this repo's validator subset (comparing one field to another, not to a fixed value), so it's enforced in `verify-fixtures.mjs`; see the `invalid-self-supersedes` fixture. |
 
-`relation` closed set:
+`relation` closed set (16 values):
 
 ```
 declares, refines, acknowledges, critiques, implements, verifies, produced_by,
 incurred_usage, attributed_to, deployed_as, supersedes, invalidates,
-session_observed, session_bound, task_run_started, usage_imported,
-incident_observed, rolled_back_to
+session_observed, session_bound, task_run_started, usage_imported
 ```
 
-`incident_observed` and `rolled_back_to` are **reserved**: valid `relation` enum members (so a
-future v2 can define their shape without an enum change), but v1 never defined an
-identity/payload shape for either. **A v1 reader MUST reject, unconditionally, any event that
-actually uses one of these two values** (sol architect-review 2nd round — this reverses an
-earlier draft's "MUST accept, not reject" stance, which was wrong: reserved means the NAME is
-held for a future version to define, not that v1 has any idea how to compute an identity for
-one today). See `invalid-reserved-relation-incident-observed` /
-`invalid-reserved-relation-rolled-back-to`.
+`incident_observed` and `rolled_back_to` are **reserved names, in documentation only** — they
+are **not** `relation` enum members (sol architect-review 3rd round must1). An earlier draft
+listed them as valid enum members while a dedicated semantic check unconditionally rejected
+any event that actually used either; that schema/semantic split had no upside once the check
+always fires regardless — v1 never defined an identity/payload shape for either name, so
+there was nothing for the schema to legitimately accept in the first place. Reserving the
+*names* (so a future v2 can define their shape without risking an unrelated producer having
+already squatted on the same string for something else) needs nothing more than this
+paragraph — it does not need enum membership. Emitting either value today is a plain enum
+violation, exactly like any other unrecognized `relation` string; see
+`invalid-reserved-relation-incident-observed` / `invalid-reserved-relation-rolled-back-to`.
 
 Personal-dimension keys are forbidden anywhere in an event, re-listing the exact closed set
 from [`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model) (`author`,
@@ -166,9 +168,10 @@ four stands in for another):
 2. **`event_id` recomputation** — a reader MUST independently recompute it via the recipe
    above (checking required-field presence first, never hashing an incomplete identity) and
    reject the event on mismatch; the declared value is never trusted as-is. This layer also
-   covers the self-reference check, the `from_ref`/`to_ref` ↔ `task_run_id`/`session_id`
-   consistency check, and the reserved-relation rejection (`incident_observed`/
-   `rolled_back_to`) — none of which is a plain schema constraint.
+   covers the self-reference check and the `from_ref`/`to_ref` ↔ `task_run_id`/`session_id`
+   consistency check, neither of which is a plain schema constraint. (`incident_observed`/
+   `rolled_back_to` are rejected by ordinary schema enum validation, layer 1 — they are not
+   enum members at all, see Format above.)
 3. **Personal-dimension scan** — independent of schema validation, because `payload` is the
    one schema-unconstrained object (see layer 1).
 4. **Limits check** (see "Limits" below) — event size and nesting depth, enforced
@@ -201,9 +204,9 @@ four stands in for another):
   relations where both are present, and reject on drift.
 - Reject a `usage_imported` event whose `payload.window.since` is not strictly earlier than
   `payload.window.until`.
-- Reject any event whose `relation` is `incident_observed` or `rolled_back_to` — reserved
-  enum members, but unconditionally unusable in v1 (no identity/payload shape was ever
-  defined for either).
+- Reject any event whose `relation` is `incident_observed` or `rolled_back_to` — not enum
+  members (they are reserved *names*, in documentation only), so this falls out of ordinary
+  schema enum validation with no extra check needed.
 - Not treat an unresolved `supersedes_event_id` as a validation failure at the single-event
   level (it may reference a different ledger segment).
 - Run the personal-dimension scan independently of any writer-side check.
@@ -222,13 +225,12 @@ hypothetical "v1.1" that added a field — so there is no such thing as a backwa
 additive change to police here in the first place. A version number that could still mean two
 different shapes is a version number that isn't doing its job.
 
-`incident_observed` and `rolled_back_to` being reserved-but-unusable (see Format and
-Verification above) is not an exception to this: both values were already part of v1's
-`relation` enum **at the moment v1 was frozen** — nothing is being added to the set after the
-fact, the two values simply have no defined shape yet and are rejected on sight if used. A
-future v2 defining their shape and lifting the rejection is a version bump; adding any
-additional `relation` value beyond these 18 (16 usable + 2 reserved-and-rejected) would also
-require one.
+`incident_observed` and `rolled_back_to` are not an exception to this, and not even a
+version-relevant fact about the schema at all (sol architect-review 3rd round must1): they are
+reserved *names* in this document's prose, never `relation` enum members, so a future v2
+adding either as an actual enum member (with a defined identity/payload shape) is simply "add
+a new `relation` value" — the same kind of change any other brand-new relation name would be,
+requiring a version bump for the same reason any addition to the 16-value enum would.
 
 **Exception (main裁定):** the personal-dimension closed set's own "MAY extend this set; MUST
 NOT shrink it" rule ([`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model)) is

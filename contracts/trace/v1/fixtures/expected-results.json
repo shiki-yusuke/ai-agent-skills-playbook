@@ -5,7 +5,8 @@
   "notes": [
     "Design decision -- supersedes target absence is NOT a reject case: `cross-segment-supersedes` (accept) carries a well-formed supersedes_event_id that does not match any other event_id in this fixture set. This is intentional, not an oversight. trace/v1 is an append-only ledger that may be split across segments/files; a single-event validator has no way to know whether the superseded event lives in a segment it simply hasn't loaded yet. Rejecting on 'target not found here' would make partial-ledger validation (e.g. validating one day's new events) impossible. Referential integrity of supersedes_event_id, if ever checked, belongs to a whole-ledger compaction/audit tool, not to per-event validation -- this fixture set deliberately does not include a fixture that rejects for this reason.",
     "sol architect-review round (must3): supersedes_event_id is now folded into event_id identity when present. supersedes-pair-2 and cross-segment-supersedes's event_ids changed from the previous round of this contract as a direct result -- they are not stale/copy-paste artifacts, they were recomputed under the fixed recipe.",
-    "sol architect-review 2nd round (must D / should): incident_observed/rolled_back_to REVERSED from 'a v1 reader MUST accept, not reject' to 'a v1 reader MUST reject, unconditionally' -- they remain valid `relation` enum members (reserved at v1's freeze), but v1 never defined an identity/payload shape for either, so no v1 event may actually use one yet. See invalid-reserved-relation-incident-observed / invalid-reserved-relation-rolled-back-to."
+    "sol architect-review 2nd round (must D / should): incident_observed/rolled_back_to REVERSED from 'a v1 reader MUST accept, not reject' to 'a v1 reader MUST reject, unconditionally' -- at that point they were still valid `relation` enum members, rejected only by a dedicated semantic check.",
+    "sol architect-review 3rd round (must1): went one step further and removed both values from the `relation` enum entirely -- the schema/semantic split (schema accepts the value, a separate check unconditionally rejects it anyway) had no benefit once the semantic check always fires. Reservation of the two names for a future version is now documentation-only (docs/protocols/trace-v1.md), not an enum-membership claim. invalid-reserved-relation-incident-observed / invalid-reserved-relation-rolled-back-to now reject via plain schema enum violation ($.relation), same as any other unrecognized relation string."
   ],
   "fixtures": [
     {
@@ -173,16 +174,16 @@
       "kind": "event",
       "files": { "event": "invalid-reserved-relation-incident-observed.json" },
       "expected": "reject",
-      "reason_code": "reserved_relation_unusable_in_v1",
-      "notes": "sol architect-review 2nd round must D reversal: incident_observed is a valid `relation` enum member (schema accepts it) but v1 never defined its identity/payload shape, so a v1 reader MUST reject any event that actually uses it -- this is the opposite of the previous round's 'MUST accept, not reject' stance for reserved relations, which this round found to be wrong."
+      "reason_code": "$.relation",
+      "notes": "sol architect-review 3rd round must1: incident_observed is no longer a `relation` enum member at all -- rejected by plain schema enum validation, same as any other unrecognized relation string. (Previously rejected by a dedicated semantic check while still schema-valid; that split is gone.)"
     },
     {
       "id": "invalid-reserved-relation-rolled-back-to",
       "kind": "event",
       "files": { "event": "invalid-reserved-relation-rolled-back-to.json" },
       "expected": "reject",
-      "reason_code": "reserved_relation_unusable_in_v1",
-      "notes": "Same reversal as invalid-reserved-relation-incident-observed, for the other reserved relation value."
+      "reason_code": "$.relation",
+      "notes": "Same as invalid-reserved-relation-incident-observed, for the other reserved-in-name-only relation value."
     },
     {
       "id": "invalid-event-too-large",

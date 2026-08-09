@@ -175,15 +175,6 @@ function recomputeEventId(event) {
 // closed set from docs/protocols/agent-metrics-v1.md section 7; centralized there so every
 // contract scans against the same list by construction -- see that module's own comment).
 
-// sol architect-review 2nd round should: incident_observed/rolled_back_to remain valid
-// `relation` enum members (reserved at v1's freeze, not added afterward -- see must8's
-// immutability policy), but v1 never defined their identity/payload shape. A v1 reader MUST
-// reject an event that actually uses one, right now, unconditionally -- this reverses the
-// previous round's "a reader MUST accept, not reject" stance, which this round found to be
-// wrong: "reserved" means the NAME is held for a future v2 to define, not that v1 has any
-// idea how to compute an identity for one today.
-const RESERVED_RELATIONS = new Set(["incident_observed", "rolled_back_to"]);
-
 // ---------------------------------------------------------------------------
 // Limits (docs/protocols/trace-v1.md section "Limits"). Mirrors agent-metrics/v1's own
 // checkLimits pattern (payload size + nesting depth), enforced here for the first time --
@@ -226,13 +217,12 @@ function checkEvent(event) {
   reasons.push(...scanPersonalDimensions(event).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...checkLimits(event));
 
-  // sol architect-review 2nd round should: reserved relations are valid enum members but
-  // unconditionally unusable in v1 -- no identity/payload shape was ever defined for them.
-  if (typeof event.relation === "string" && RESERVED_RELATIONS.has(event.relation)) {
-    reasons.push(
-      `reserved_relation_unusable_in_v1: relation "${event.relation}" is reserved for a future version; v1 never defined its identity/payload shape, so no v1 event may use it yet`,
-    );
-  }
+  // sol architect-review 3rd round must1: incident_observed/rolled_back_to are no longer
+  // enum members at all (see trace-event.schema.json's relation description) -- an event
+  // using either is now caught by ordinary schema enum validation above, with no separate
+  // semantic check needed. The reservation of these two names for a future version is
+  // documentation-only (docs/protocols/trace-v1.md), not something this verify script
+  // enforces.
 
   // Self-reference: compares two fields already on the event, independent of hashing --
   // checked unconditionally, never gated on whether identity fields are otherwise complete.
