@@ -162,6 +162,14 @@
       "expected": "reject",
       "all_forbidden_keys_flagged": true,
       "notes": "sol architect-review should: all 11 forbidden personal-dimension keys planted at once (as extra top-level properties) -- proves the scan actually flags every one of them individually, not just whichever single key an ordinary fixture happens to test. Also independently caught 11 times over by additionalProperties:false (audit-result's top level is fully closed); this fixture is about proving the SCAN works, not about needing an open field for it to matter."
+    },
+    {
+      "id": "invalid-window-ordering",
+      "type": "audit-result",
+      "files": { "record": "invalid-window-ordering.json" },
+      "expected": "reject",
+      "reason_code": "window_ordering_invalid",
+      "notes": "sol architect-review 3rd round must3: window.since is later than window.until (until precedes since). Both are individually valid UTC timestamps, so this is a semantic ordering check, not a schema/pattern failure -- mirrors trace/v1's usage_imported window ordering rule."
     }
   ]
 }
