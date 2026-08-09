@@ -48,14 +48,14 @@ One event is one JSON object (one line of a `.jsonl` file). Schema:
 | `schema_version` | yes | Literal `"trace/v1"`. |
 | `event_id` | yes | `tr1_<sha256 hex>` — see "Identity & idempotency." A reader MUST recompute it and reject the event on mismatch. |
 | `relation` | yes | Closed set (below). |
-| `from_ref` / `to_ref` | yes | `{logical_id, content_digest?}` — the edge's two endpoints. `content_digest` is present for an artifact_revision endpoint, absent for a runtime_entity endpoint. |
+| `from_ref` / `to_ref` | yes | `{logical_id, content_digest?}` — the edge's two endpoints. `content_digest` is present for an artifact_revision endpoint, absent for a runtime_entity endpoint. For `session_bound`/`usage_imported`/`task_run_started`, `logical_id` on the relevant end MUST equal the `"task_run:<task_run_id>"`/`"session:<session_id>"`-derived string (a redundant encoding of `task_run_id`/`session_id`; a reader MUST cross-check the two never silently drift apart — see `invalid-ref-field-mismatch`). |
 | `occurred_at` | yes | UTC only, literal `Z` suffix. No local-offset timestamp is representable — a writer MUST convert before emitting. |
 | `actor` | yes | `{kind: human\|agent\|cli\|ci, id?, version?}`. |
 | `trace_id` / `span_id` / `parent_span_id` | no | Distributed-tracing correlation, orthogonal to the ledger's own identity. |
-| `lane_id` / `task_run_id` / `phase_run_id` / `session_id` | no | Delivery-pipeline correlation fields; which ones are present depends on `relation` (see the identity table below). |
+| `lane_id` / `task_run_id` / `phase_run_id` / `session_id` | conditionally | Delivery-pipeline correlation fields. `task_run_id`/`session_id` become **required** for specific `relation` values per the identity table below (`session_bound`, `task_run_started`, `attributed_to`, `usage_imported`) — enforced structurally via `if`/`then` in the schema, not left as a convention. |
 | `causation_event_id` | no | `event_id` of the event that *caused* this one — a different relationship from `supersedes_event_id` (correction, not causation). |
-| `payload` | no | Relation-specific body, unconstrained by this schema (each relation's shape is informal). Excluded from `event_id` identity as a whole (see below) except for one named exception. |
-| `supersedes_event_id` | no | `event_id` of the event this one corrects. |
+| `payload` | conditionally | Relation-specific body, otherwise unconstrained by this schema (each relation's own shape is informal). Excluded from `event_id` identity as a whole (see below) except for one named exception. **Required, with a required `window: {since, until}` sub-object, when `relation == "usage_imported"`** — the one relation where this schema reaches inside `payload`. |
+| `supersedes_event_id` | no | `event_id` of the event this one corrects. **Folded into `event_id` identity when present** (see Identity & idempotency) and **MUST NOT equal this event's own `event_id`** (a self-reference) — the latter isn't expressible as a schema constraint in this repo's validator subset (comparing one field to another, not to a fixed value), so it's enforced in `verify-fixtures.mjs`; see the `invalid-self-supersedes` fixture. |
 
 `relation` closed set:
 
@@ -108,14 +108,37 @@ contradiction of the rule above — `window.since`/`until` describe **what perio
 covers**, a stable fact about the import itself, not **when the import ran** (which is what
 `occurred_at` and the "exclude payload" rule exist to keep out). Re-importing the same window
 twice MUST resolve to the same `event_id`; re-running the import job at a different time for
-a *different* purpose must not silently collide with an unrelated window's import.
+a *different* purpose must not silently collide with an unrelated window's import. `window.since`
+MUST be strictly earlier than `window.until` (both UTC); a reader MUST reject an event whose
+window is inverted or zero-width — see `invalid-window-ordering`. **This identity stays exactly
+`{task_run_id, session_id, window.since, window.until}` even if the same window is re-imported
+under a different `token_basis` or other varying import parameter** — see "Rejected: multi-source
+identity" below; that case is a correction (below), not a reason to widen identity.
+
+**Before computing `event_id`, a reader MUST check that every identity field the relation
+requires is actually present** (the table above) **and reject with a missing-field reason if
+not, rather than attempting the hash anyway.** Feeding a missing field into the JCS
+canonicalizer as `undefined` produces a well-defined-looking but meaningless string (JavaScript
+coerces it to the six characters `undefined` rather than erroring) — a naive implementation can
+silently "succeed" at hashing an incomplete identity and produce a hash nobody could ever
+reproduce correctly. See `invalid-missing-session-id` and `invalid-missing-window`.
 
 **Corrections are new events, never rewrites.** A correction carries `supersedes_event_id`
-equal to the event it corrects; the original line is never edited or removed. A reader MAY
-encounter a `supersedes_event_id` that doesn't resolve to any event it has loaded — the ledger
-may be split across segments/files, and the original could be in one the reader hasn't read
-yet. **This MUST NOT be treated as a validation failure at the single-event level** (see the
-`cross-segment-supersedes` fixture and Rejected designs' note on referential integrity).
+equal to the event it corrects; the original line is never edited or removed. **When
+`supersedes_event_id` is present, it is folded into `event_id`'s identity object** (in addition
+to the relation's own identity fields above) — a correction that changes nothing else (e.g. a
+payload-only fix, same `from_ref`/`to_ref`/`content_digest` as the event it corrects) would
+otherwise compute the *same* identity as the original and collide with it, rather than minting
+a distinguishable new fact layered on top via `supersedes_event_id`. See the
+`supersedes-payload-only-pair` fixture, which exists specifically to prove this. A conformant
+`event_id` therefore MUST NOT equal its own `supersedes_event_id` (a self-reference is
+meaningless — an event cannot correct itself); see `invalid-self-supersedes`.
+
+A reader MAY encounter a `supersedes_event_id` that doesn't resolve to any event it has loaded
+— the ledger may be split across segments/files, and the original could be in one the reader
+hasn't read yet. **This MUST NOT be treated as a validation failure at the single-event level**
+(see the `cross-segment-supersedes` fixture and Rejected designs' note on referential
+integrity).
 
 ## Verification
 
@@ -130,16 +153,27 @@ Three independent layers, mirroring `agent-metrics/v1`'s redundancy on purpose (
 three stands in for another):
 
 1. **Schema validation** against `trace-event.schema.json` (closed `relation` set, two-part
-   `from_ref`/`to_ref`, `additionalProperties: false` everywhere).
+   `from_ref`/`to_ref`, per-relation required fields via `if`/`then`). Every object in the
+   schema declares `additionalProperties: false` **except `payload`**, which is deliberately
+   left open (each relation's payload shape is informal, not a normative closed set) — the
+   personal-dimension scan (layer 3) exists specifically to still police that one open object.
 2. **`event_id` recomputation** — a reader MUST independently recompute it via the recipe
-   above and reject the event on mismatch; the declared value is never trusted as-is.
-3. **Personal-dimension scan** — independent of schema validation, because `payload` is
-   schema-unconstrained (see Format).
+   above (checking required-field presence first, never hashing an incomplete identity) and
+   reject the event on mismatch; the declared value is never trusted as-is. This layer also
+   covers the self-reference check and the `from_ref`/`to_ref` ↔ `task_run_id`/`session_id`
+   consistency check, neither of which is a plain schema constraint.
+3. **Personal-dimension scan** — independent of schema validation, because `payload` is the
+   one schema-unconstrained object (see layer 1).
 
 **A writer MUST:**
 
-- Compute `event_id` via the exact recipe above before appending.
-- Convert `occurred_at` to UTC before emitting; never emit a local-offset timestamp.
+- Compute `event_id` via the exact recipe above before appending, including
+  `supersedes_event_id` in the identity object whenever the event carries one.
+- Never set `supersedes_event_id` equal to the event's own `event_id`.
+- Convert `occurred_at` (and, for `usage_imported`, `payload.window.since`/`until`) to UTC
+  before emitting; never emit a local-offset timestamp. Ensure `window.since < window.until`.
+- Keep `from_ref`/`to_ref`'s `logical_id` consistent with `task_run_id`/`session_id` for
+  `session_bound`, `usage_imported`, and `task_run_started`.
 - Never rewrite or delete a past line; a correction is always a new line with
   `supersedes_event_id` set.
 - Run the personal-dimension scan before appending, and refuse to append if it finds a
@@ -147,7 +181,16 @@ three stands in for another):
 
 **A reader MUST:**
 
-- Recompute `event_id` independently and reject the event on mismatch.
+- Check every identity field the event's `relation` requires is present before attempting to
+  recompute `event_id`; reject with a missing-field reason rather than hashing an incomplete
+  identity.
+- Recompute `event_id` independently (including `supersedes_event_id` in identity when
+  present) and reject the event on mismatch.
+- Reject an event whose `supersedes_event_id` equals its own `event_id`.
+- Cross-check `from_ref`/`to_ref`'s `logical_id` against `task_run_id`/`session_id` for the
+  relations where both are present, and reject on drift.
+- Reject a `usage_imported` event whose `payload.window.since` is not strictly earlier than
+  `payload.window.until`.
 - Accept `incident_observed`/`rolled_back_to` as valid `relation` values even though v1 ships
   no fixture for them (they are reserved, not deprecated-and-forbidden).
 - Not treat an unresolved `supersedes_event_id` as a validation failure at the single-event
@@ -180,6 +223,19 @@ An event exceeding either MUST be rejected, not truncated.
 
 ## Rejected designs
 
+- **Multi-source identity for `usage_imported` (sol architect-review round, main裁定).**
+  Considered: widening `usage_imported`'s identity to include something like `token_basis` so
+  that re-importing the *same window* under a *different* token-accounting basis would mint a
+  distinguishable new `event_id` rather than being treated as a correction of the same fact.
+  Rejected. `identity` stays exactly `{task_run_id, session_id, window.since, window.until}` —
+  a re-import of the same window is always the same fact (usage for that task_run/session over
+  that period), no matter which basis it was measured under; the fact that a *different*
+  measurement basis was used the second time is exactly what a correction (`supersedes_event_id`,
+  see Identity & idempotency) exists to represent. Widening identity to accommodate this would
+  turn every varying import parameter into a new identity axis, one per parameter someone
+  eventually wants to change independently — multi-source identity, not single-source-of-truth
+  identity. A re-import under a new basis is a `supersedes_event_id`-carrying correction of the
+  original `usage_imported` event, full stop.
 - **`occurred_at` (and `payload` as a whole) in `event_id` identity.** Would make every
   re-emission of the same fact mint a new id, turning an idempotent append into a silent
   duplicate generator on every retry. The one deliberate exception
