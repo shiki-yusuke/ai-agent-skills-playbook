@@ -9,7 +9,18 @@
     "orphan_usage": [],
     "measurement_incomplete": []
   },
-  "tokens": { "exact_attributed": 0, "total_measured": 0 },
+  "tokens": { "exact_attributed": null, "total_measured": null },
   "research_eligible": true,
-  "violations": []
+  "violations": [],
+  "author": "x",
+  "reviewer": "x",
+  "assignee": "x",
+  "owner": "x",
+  "user_id": "x",
+  "username": "x",
+  "email": "x",
+  "display_name": "x",
+  "handle": "x",
+  "chat_id": "x",
+  "real_name": "x"
 }

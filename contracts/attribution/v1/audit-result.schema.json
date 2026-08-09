@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/attribution/v1/audit-result.schema.json",
   "title": "attribution/v1 audit-result",
-  "description": "Output of an attribution audit over a time window: how many sessions were exactly attributed to a single task_run vs. unbound/mixed/orphaned, and whether the window is eligible for research use. See docs/protocols/attribution-v1.md. Two rules this schema alone cannot express, enforced instead as semantic checks in verify-fixtures.mjs: (1) `research_eligible` MUST be false if `violations` is non-empty (fail-closed, not advisory) -- see 'Rejected designs' for why this MUST is not softened to a warning. (2) when `sessions.measured` is 0, `tokens.exact_attributed`/`tokens.total_measured` MUST be null, never 0 (null-not-zero: 'nothing was measured' and 'zero tokens were measured' are different facts).",
+  "description": "Output of an attribution audit over a time window: how many sessions were exactly attributed to a single task_run vs. unbound/mixed/orphaned, and whether the window is eligible for research use. See docs/protocols/attribution-v1.md. There is deliberately no standalone session-count field anywhere in `sessions` -- every count (including the total number of sessions measured) is derived by summing the five lists' lengths, never independently declared and therefore never able to drift out of sync with the lists themselves. Rules this schema alone cannot express, enforced instead as semantic checks in verify-fixtures.mjs: (1) `research_eligible` MUST be false if `violations` is non-empty (fail-closed, not advisory) -- see 'Rejected designs' for why this MUST is not softened to a warning. (2) `tokens.exact_attributed`/`tokens.total_measured` MUST be null, never 0, when all five `sessions` lists are empty (null-not-zero: 'nothing was measured' and 'zero tokens were measured' are different facts). (3) `tokens.exact_attributed` MUST equal the sum of `sessions.exactly_attributed[].tokens`. (4) the five lists' session_ids MUST be pairwise disjoint. (5) every session_id in `unbound`/`mixed`/`orphan_usage`/`measurement_incomplete` MUST have a matching `violations[]` entry (same session_id, the corresponding reason_code) and vice versa -- a session sitting in one of these lists with no matching violation (or a violation referencing a session absent from its list) is rejected.",
   "type": "object",
   "required": [
     "schema_version",
@@ -30,11 +30,21 @@
     },
     "sessions": {
       "type": "object",
-      "description": "measured = total sessions observed in window. exactly_attributed = sessions cleanly resolved to exactly one task_run (the accounting principle this whole protocol exists to certify). The four lists are disjoint session_id lists explaining every session NOT in exactly_attributed -- their union's length plus exactly_attributed MUST equal measured (checked by verify-fixtures.mjs, not expressible as a JSON Schema constraint over sibling array lengths).",
-      "required": ["measured", "exactly_attributed", "unbound", "mixed", "orphan_usage", "measurement_incomplete"],
+      "description": "exactly_attributed = sessions cleanly resolved to exactly one task_run (the accounting principle this whole protocol exists to certify), carried as {session_id, tokens} pairs so tokens.exact_attributed can be independently verified as their sum. The other four are disjoint session_id lists explaining every session NOT in exactly_attributed. There is no `measured` count field -- the total number of sessions audited is always sessions.exactly_attributed.length + the four lists' combined length, derived, never separately declared (sol architect-review must4: a separately-declared count is a second source of truth that can silently drift from the lists it's supposed to summarize).",
+      "required": ["exactly_attributed", "unbound", "mixed", "orphan_usage", "measurement_incomplete"],
       "properties": {
-        "measured": { "type": "integer", "minimum": 0 },
-        "exactly_attributed": { "type": "integer", "minimum": 0 },
+        "exactly_attributed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["session_id", "tokens"],
+            "properties": {
+              "session_id": { "type": "string", "minLength": 1 },
+              "tokens": { "type": "integer", "minimum": 0 }
+            },
+            "additionalProperties": false
+          }
+        },
         "unbound": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "mixed": { "type": "array", "items": { "type": "string", "minLength": 1 } },
         "orphan_usage": { "type": "array", "items": { "type": "string", "minLength": 1 } },
@@ -44,7 +54,7 @@
     },
     "tokens": {
       "type": "object",
-      "description": "exact_attributed = total tokens from sessions.exactly_attributed sessions only. total_measured = total tokens across every measured session (exactly_attributed + unbound + mixed + orphan_usage + measurement_incomplete), still just a measured total -- NEVER a mixed-session apportionment (see docs/protocols/attribution-v1.md 'Rejected designs': splitting a mixed session's tokens by time ratio between its tasks is a fabrication this protocol forbids, not merely discourages). Both fields are null, not 0, when sessions.measured is 0.",
+      "description": "exact_attributed = sum of sessions.exactly_attributed[].tokens, independently verified (verify-fixtures.mjs recomputes the sum and rejects on mismatch -- the field is never just trusted). total_measured = total tokens across every measured session (exactly_attributed + unbound + mixed + orphan_usage + measurement_incomplete), still just a measured total -- NEVER a mixed-session apportionment (see docs/protocols/attribution-v1.md 'Rejected designs': splitting a mixed session's tokens by time ratio between its tasks is a fabrication this protocol forbids, not merely discourages). Both fields are null, not 0, when all five `sessions` lists are empty.",
       "required": ["exact_attributed", "total_measured"],
       "properties": {
         "exact_attributed": { "type": ["integer", "null"], "minimum": 0 },
