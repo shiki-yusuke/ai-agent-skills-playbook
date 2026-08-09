@@ -118,6 +118,41 @@
       "expected": "reject",
       "reason_code": "$.cohort.routing_policy_digest",
       "notes": "sol architect-review must7: routing_policy_digest carries a \"sha256:\" prefix, which the tightened pattern (^[0-9a-f]{64}$, bare hex only) no longer accepts."
+    },
+    {
+      "id": "invalid-abstained-with-predicted",
+      "files": { "record": "invalid-abstained-with-predicted.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "sol architect-review 2nd round must B: decision.status==\"abstained\" but a top-level `predicted` object is present anyway. Schema-enforced via allOf/if-then-not (abstained forbids `predicted` from being present at all, not merely 'may be omitted') -- a point estimate alongside an admission that no prediction could be made is self-contradictory."
+    },
+    {
+      "id": "invalid-predicted-out-of-domain",
+      "files": { "record": "invalid-predicted-out-of-domain.json" },
+      "expected": "reject",
+      "reason_code": "$.applicability",
+      "notes": "sol architect-review 2nd round must B: decision.status==\"predicted\" but applicability.status==\"out_of_domain\". Part of the tagged-union state machine: out_of_domain implies the decision must abstain -- there is no confident point estimate for a surface the population math says is out of domain. Schema-enforced via allOf/if-then-not."
+    },
+    {
+      "id": "invalid-interval-insufficient-data-with-values",
+      "files": { "record": "invalid-interval-insufficient-data-with-values.json" },
+      "expected": "reject",
+      "reason_code": "$.prediction_interval",
+      "notes": "sol architect-review 2nd round must B: prediction_interval.status==\"insufficient_data\" but level/lower/upper are present anyway. The \"insufficient_data\" branch is now closed to only `status` (schema if/then/else, the else side of the same conditional that freezes \"available\"'s full shape) -- these value fields are meaningless without enough calibration history to have computed them."
+    },
+    {
+      "id": "invalid-level-out-of-range",
+      "files": { "record": "invalid-level-out-of-range.json" },
+      "expected": "reject",
+      "reason_code": "$.prediction_interval.level",
+      "notes": "sol architect-review 2nd round must B: prediction_interval.level is 1.5 -- a confidence level is a fraction, exclusively between 0 and 1 (exclusiveMinimum/exclusiveMaximum; 0 and 1 themselves are also degenerate and excluded, not just values above 1)."
+    },
+    {
+      "id": "invalid-excluded-by-reason-sum-mismatch",
+      "files": { "record": "invalid-excluded-by-reason-sum-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "excluded_by_reason_sum_mismatch",
+      "notes": "sol architect-review 2nd round must B, main裁定 (exclusive primary-reason counting): candidate_count=42, eligible_count=38 (a gap of 4 excluded candidates), but excluded_by_reason=={} (sum 0). Every excluded candidate must be counted under exactly one reason -- an empty map claiming zero candidates needed a reason, when 4 were in fact excluded, silently drops the accounting."
     }
   ]
 }

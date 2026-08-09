@@ -29,12 +29,35 @@
       }
     },
     {
+      "description": "sol architect-review 2nd round must B: the tagged union's other direction -- an abstained decision must not carry a predicted object at all (not merely 'may omit it'). A predicted point estimate alongside an admission that no prediction could be made is self-contradictory.",
+      "if": { "properties": { "decision": { "properties": { "status": { "const": "abstained" } } } } },
+      "then": { "not": { "required": ["predicted"] } }
+    },
+    {
+      "description": "sol architect-review 2nd round must B: applicability.status==\"out_of_domain\" is part of the state machine, not just informational -- out-of-domain implies the decision must abstain (there is no such thing as a confident point estimate for a surface the population math says is out of domain).",
+      "if": { "properties": { "decision": { "properties": { "status": { "const": "predicted" } } } } },
+      "then": {
+        "properties": {
+          "applicability": { "not": { "properties": { "status": { "const": "out_of_domain" } } } }
+        }
+      }
+    },
+    {
       "description": "sol architect-review must6: prediction_interval's \"available\" state is frozen in full -- every field required together, not left partially specified.",
       "if": { "properties": { "prediction_interval": { "properties": { "status": { "const": "available" } } } } },
       "then": {
         "properties": {
           "prediction_interval": {
             "required": ["level", "lower", "upper", "method", "calibration_sample_size"]
+          }
+        }
+      },
+      "else": {
+        "description": "sol architect-review 2nd round must B: the other side of the tagged union -- when status==\"insufficient_data\", none of the \"available\"-only value fields may be present either (closed to only `status` in this branch), not merely optional.",
+        "properties": {
+          "prediction_interval": {
+            "additionalProperties": false,
+            "properties": { "status": {} }
           }
         }
       }
@@ -137,7 +160,7 @@
         "candidate_count": { "type": "integer", "minimum": 0 },
         "eligible_count": { "type": "integer", "minimum": 0 },
         "excluded_by_reason": {
-          "description": "Map of reason_code (same closed set as decision.reason_codes) to excluded count. Left schema-unconstrained as to keys/values (this repo's minimal validator subset does not support per-value schema validation of arbitrary-keyed maps) -- sol architect-review must7 enforces both as semantic checks in verify-fixtures.mjs instead: every key must be one of the 12 reason_codes, and every value must be a non-negative integer.",
+          "description": "Map of reason_code (same closed set as decision.reason_codes) to excluded count. Counting rule (sol architect-review 2nd round must B, main裁定 -- EXCLUSIVE primary-reason counting): each excluded candidate is counted under exactly ONE reason_code -- the first one, in the reason_codes enum's declared order, that applies to it. A candidate is never counted twice under two different reasons. Consequently sum(excluded_by_reason values) MUST equal candidate_count - eligible_count exactly (verify-fixtures.mjs enforces this; an excluded_by_reason that sums to less than the gap is silently dropping candidates with no recorded reason, which this rule forbids). Left schema-unconstrained as to keys/values individually (this repo's minimal validator subset does not support per-value schema validation of arbitrary-keyed maps) -- sol architect-review must7 enforces per-key/value shape as semantic checks in verify-fixtures.mjs: every key must be one of the 12 reason_codes, every value a non-negative integer, and (this round) the sum must reconcile with candidate_count - eligible_count.",
           "type": "object"
         }
       },
@@ -150,9 +173,10 @@
       "properties": {
         "status": { "enum": ["available", "insufficient_data"] },
         "level": {
-          "description": "Confidence level as a fraction, e.g. 0.8 for an 80% interval.",
+          "description": "Confidence level as a fraction, e.g. 0.8 for an 80% interval. Exclusive range (0, 1) -- 0 and 1 are both degenerate (sol architect-review 2nd round must B: 1.5 and other out-of-[0,1] values were already excluded by `minimum`, but that alone let 0 and 1 themselves and anything above 1 up to a boundary slip through; exclusiveMinimum/exclusiveMaximum close both ends).",
           "type": "number",
-          "minimum": 0
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
         },
         "lower": { "type": "number", "minimum": 0 },
         "upper": { "type": "number", "minimum": 0 },
