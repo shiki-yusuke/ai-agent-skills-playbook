@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/trace/v1/trace-event.schema.json",
+  "title": "trace/v1 event (one JSONL line = one event)",
+  "description": "One edge in the append-only Decision-Evidence trace ledger. See docs/protocols/trace-v1.md. A ledger is a sequence of these objects, one per line (JSONL); this schema validates a single event object, not the file as a whole. Corrections are new events carrying `supersedes_event_id` -- a conformant writer/reader MUST NOT rewrite or delete a past line.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "relation",
+    "from_ref",
+    "to_ref",
+    "occurred_at",
+    "actor"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "trace/v1"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Deterministic, idempotent identity: \"tr1_\" + lowercase hex sha256 of the RFC 8785 JCS canonicalization of {schema: \"trace/v1\", relation, identity}, where `identity` is the relation-specific field subset defined in docs/protocols/trace-v1.md section 3. A reader MUST recompute this and reject the event if it does not match the declared value.",
+      "pattern": "^tr1_[0-9a-f]{64}$"
+    },
+    "relation": {
+      "description": "Closed set. `incident_observed` and `rolled_back_to` are reserved for future use (no v1 fixture exercises them, but they are valid values a v1 reader MUST accept, not reject).",
+      "enum": [
+        "declares",
+        "refines",
+        "acknowledges",
+        "critiques",
+        "implements",
+        "verifies",
+        "produced_by",
+        "incurred_usage",
+        "attributed_to",
+        "deployed_as",
+        "supersedes",
+        "invalidates",
+        "session_observed",
+        "session_bound",
+        "task_run_started",
+        "usage_imported",
+        "incident_observed",
+        "rolled_back_to"
+      ]
+    },
+    "from_ref": { "$ref": "#/$defs/ref" },
+    "to_ref": { "$ref": "#/$defs/ref" },
+    "occurred_at": {
+      "type": "string",
+      "description": "UTC only. This ledger has no concept of a local-offset timestamp -- every writer MUST convert to UTC and render with a literal \"Z\" suffix before emitting.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "actor": { "$ref": "#/$defs/actor" },
+    "trace_id": { "type": "string", "minLength": 1 },
+    "span_id": { "type": "string", "minLength": 1 },
+    "parent_span_id": { "type": "string", "minLength": 1 },
+    "lane_id": { "type": "string", "minLength": 1 },
+    "task_run_id": { "type": "string", "minLength": 1 },
+    "phase_run_id": { "type": "string", "minLength": 1 },
+    "session_id": { "type": "string", "minLength": 1 },
+    "causation_event_id": {
+      "type": "string",
+      "description": "event_id of the event that caused this one (a different relationship than supersedes_event_id, which is about correction, not causation).",
+      "pattern": "^tr1_[0-9a-f]{64}$"
+    },
+    "payload": {
+      "type": "object",
+      "description": "Relation-specific body. Left unconstrained here (each relation defines its own shape informally in docs/protocols/trace-v1.md); it is deliberately excluded from the event_id identity computation as a whole so an emitter-version bump or additional diagnostic field never changes an event's id. A relation MAY still name specific payload sub-fields as identity inputs (see usage_imported's window.since/window.until in the protocol doc) -- that is a named exception per relation, not a general inclusion of payload."
+    },
+    "supersedes_event_id": {
+      "type": "string",
+      "description": "event_id of the event this one corrects. The superseded event is never rewritten or removed -- both rows remain in the ledger permanently. A reader MAY find no event with this id in the segment it has loaded (the original could be in an earlier ledger segment/file it hasn't read); that MUST NOT be treated as a validation failure at the single-event level (see docs/protocols/trace-v1.md section 9).",
+      "pattern": "^tr1_[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "description": "Identifies one endpoint of an edge. An artifact_revision node's logical_id is the bare logical id (e.g. \"intent.yaml\"); its content_digest pins one specific revision, together forming the <logical_id>@sha256:<digest> two-part node identity described in the platform's Decision-Evidence Graph design. A runtime_entity node (a run, a session, a release, ...) has no content revision, so content_digest is absent and logical_id alone (e.g. \"run:<id>\", \"session:<id>\") is the whole identity.",
+      "required": ["logical_id"],
+      "properties": {
+        "logical_id": { "type": "string", "minLength": 1 },
+        "content_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["human", "agent", "cli", "ci"] },
+        "id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}
