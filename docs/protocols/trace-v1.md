@@ -50,7 +50,7 @@ One event is one JSON object (one line of a `.jsonl` file). Schema:
 | `relation` | yes | Closed set (below). |
 | `from_ref` / `to_ref` | yes | `{logical_id, content_digest?}` — the edge's two endpoints. `content_digest` is present for an artifact_revision endpoint, absent for a runtime_entity endpoint. For `session_bound`/`usage_imported`/`task_run_started`, `logical_id` on the relevant end MUST equal the `"task_run:<task_run_id>"`/`"session:<session_id>"`-derived string (a redundant encoding of `task_run_id`/`session_id`; a reader MUST cross-check the two never silently drift apart — see `invalid-ref-field-mismatch`). |
 | `occurred_at` | yes | UTC only, literal `Z` suffix. No local-offset timestamp is representable — a writer MUST convert before emitting. |
-| `actor` | yes | `{kind: human\|agent\|cli\|ci, id?, version?}`. |
+| `actor` | yes | `{kind: human\|agent\|cli\|ci, id?, version?}`. `actor.id` is audit provenance ("who/what recorded this fact," useful for debugging a specific bad write) — it is **not** a metrics dimension. A projection built from this ledger (dashboard, report, aggregate query) MUST NOT use `actor.id` as a group-by/aggregation axis; doing so would quietly turn a provenance field into the same kind of per-individual metric agent-metrics/v1's personal-dimension ban exists to rule out (see [`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model)) — `actor.id` just isn't in that closed set because it's routinely a tool/agent identifier (`"claude-code"`), not a person, so the ban doesn't mechanically catch every misuse of it. |
 | `trace_id` / `span_id` / `parent_span_id` | no | Distributed-tracing correlation, orthogonal to the ledger's own identity. |
 | `lane_id` / `task_run_id` / `phase_run_id` / `session_id` | conditionally | Delivery-pipeline correlation fields. `task_run_id`/`session_id` become **required** for specific `relation` values per the identity table below (`session_bound`, `task_run_started`, `attributed_to`, `usage_imported`) — enforced structurally via `if`/`then` in the schema, not left as a convention. |
 | `causation_event_id` | no | `event_id` of the event that *caused* this one — a different relationship from `supersedes_event_id` (correction, not causation). |
@@ -199,15 +199,28 @@ three stands in for another):
 
 ## Versioning
 
-`trace/v1` → `v2` covers a change to the `event_id` recipe (the identity table above) or to
-any *required* field — anything that would silently change what an existing reader computes
-from the same bytes, or that would make an existing reader's recomputed `event_id` for
-already-written events wrong.
+**`trace/v1` is fully immutable once frozen (sol architect-review round, main裁定).** No
+change of any kind — not a new optional field, not a new `relation` value, not a widened
+`enum`, not a loosened `additionalProperties` — is permitted within v1 after freeze. Any
+addition whatsoever is `trace/v2`, full stop. This is stricter than a typical "additive
+changes are free" versioning policy, and deliberately so: this repo's strict-reader posture
+(`additionalProperties: false` on every object except the one deliberately open `payload`)
+means a reader that validates strictly today would already reject a payload from a
+hypothetical "v1.1" that added a field — so there is no such thing as a backward-compatible
+additive change to police here in the first place. A version number that could still mean two
+different shapes is a version number that isn't doing its job.
 
-Within v1, only **additive, optional** field/relation changes are allowed: a new optional
-field, or a new reserved `relation` value (as `incident_observed`/`rolled_back_to` already are
-in this same version), does not require a version bump. The personal-dimension closed set may
-only be extended, never shrunk, within v1 or across a version bump.
+`incident_observed` and `rolled_back_to` being reserved-but-unexercised is not an exception to
+this: both values were already part of v1's `relation` enum **at the moment v1 was frozen** —
+nothing is being added to the set after the fact, a fixture is merely deferred. Exercising them
+with a real fixture later does not require a version bump; adding a thirteenth value would.
+
+The personal-dimension closed set's own "may extend, never shrink" rule
+([`agent-metrics-v1.md` section 7](agent-metrics-v1.md#7-trust-model)) is a property of *that*
+document, inherited here by reference — it is not an exception carved into trace/v1's own
+versioning axis, which has none. There is no "extensions" namespace or escape-hatch field
+anywhere in this schema for future growth to land in without a version bump; there never will
+be one within v1.
 
 ## Limits
 
