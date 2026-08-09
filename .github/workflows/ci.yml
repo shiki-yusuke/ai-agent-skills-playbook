@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Run every contract's fixture verification (zero npm deps by design)
+        run: |
+          set -euo pipefail
+          status=0
+          # Discover every contracts/<name>/<version>/verify-fixtures.mjs rather than
+          # hardcoding a list, so a new contract directory is picked up automatically
+          # without an edit to this workflow.
+          while IFS= read -r script; do
+            echo "::group::$script"
+            if ! node "$script"; then
+              status=1
+            fi
+            echo "::endgroup::"
+          done < <(find contracts -type f -name "verify-fixtures.mjs" | sort)
+          exit "$status"
