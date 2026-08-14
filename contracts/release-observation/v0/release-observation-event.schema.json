@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/release-observation/v0/release-observation-event.schema.json",
+  "title": "release-observation/v0 event",
+  "description": "One record of a release's observed outcome -- deliberately OBSERVATION ONLY. See docs/protocols/release-observation-v0.md. v0 does not enforce a state machine, does not drive automatic promotion, and does not execute a deploy; it exists to start growing the `intent -> decision -> implementation -> cost -> release -> incident/rollback` observation chain before that state machine (D5's deployment state machine v1, an E-phase/release-evidence concern) is built. A conformant record is produced after a release has already happened (by a human running a CLI, or by an incident-response skill), not by this schema driving the release itself. `artifact_digest`, `lane_id`, and `rollback_of` MAY be null or absent -- see each field's own description for the exact null-vs-absent-vs-present distinction; they are not interchangeable spellings of 'unknown'.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "release_id",
+    "source_tree_digest",
+    "artifact_digest",
+    "environment",
+    "deployed_at",
+    "verification_status",
+    "quality_status"
+  ],
+  "properties": {
+    "schema_version": { "const": "release-observation/v0" },
+    "release_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for this specific release. No fixed grammar is enforced (a release is not always a registry package -- a static-site content-root deploy has no natural '<name>@<version>' shape either), but the recommended convention for a registry-published package is '<distribution-name>@<version>' (e.g. \"coding-agent-cost@0.1.0\", using the distribution name actually registered with the registry, not necessarily the source repo's own name -- see docs/protocols/release-observation-v0.md)."
+    },
+    "lane_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Present when this release traces to exactly one delivery-lane run's lane_id. Absent when it does not -- which covers two different real situations v0 deliberately does not try to tell apart: (a) no lane was involved in producing this release at all, or (b) more than one lane's work is bundled into this one release (a real case observed in this contract's own fixtures: a single version can aggregate several already-merged lane runs, with no single lane_id able to claim the release without misrepresenting the others). A future version may add a lane_ids array to represent (b) precisely; v0 does not, and a consumer MUST NOT read an absent lane_id as proof that no lane was involved."
+    },
+    "source_tree_digest": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$",
+      "description": "The git tree object id this release was built from -- i.e. the actual output of `git rev-parse <tag-or-commit>^{tree}`, dereferenced through an annotated tag if the release tag is one (never the tag object id or the commit id itself, both of which are different objects from the tree). 40 lowercase hex characters for a SHA-1 git repository (git's current default, and what every real fixture in this directory actually uses -- `git rev-parse --show-object-format` on each source repo confirms `sha1`), or 64 for a repository that has migrated to SHA-256 object format (`git rev-parse --show-object-format` reports `sha256`) -- this schema accepts either length because the underlying fact (git's own object id) is real either way, not because v0 has observed a SHA-256 repository."
+    },
+    "artifact_digest": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Content digest of the artifact this release actually shipped (a package tarball, a wheel, a container image, a content-root manifest, ...), in the same 'sha256:<64 hex>' form trace/v1's ref.content_digest uses. REQUIRED to be present on every event -- but its value MAY be `null`, and null is not the same fact as omitting the field (the field cannot be omitted at all; this key's absence is a schema violation, not a valid 'unrecorded' state). `null` means an explicit, positive claim: 'this release form has no single content-addressable artifact to digest' (e.g. a deploy that is itself just a git-tree checkout with no separate build step). A real digest string means 'here is the one artifact this release shipped, and its content digest, so a later audit can independently recompute and compare it.' Forcing every event to make one of these two explicit choices -- never leaving the question simply unanswered -- is this contract's null-not-zero application: 'genuinely has no artifact' and 'someone forgot to record the artifact' must never collapse into the same absent value the way they would if this field were merely optional. The `pattern` below only ever applies when the value actually is a string (this repo's shared validator guards every `pattern` check on `typeof instance === \"string\"`), so it never fires against a legitimate `null`."
+    },
+    "environment": {
+      "enum": ["preview", "staging", "production"],
+      "description": "Closed set, matching the same three environment names D5's future deployment-state-machine design already uses (prepared -> preview_deployed -> ... -> production_deployed) -- v0 reuses the vocabulary without importing any of that state machine's transition logic. A registry package publish (npm/PyPI) is 'production': it is the one environment the wider ecosystem can actually install from, with no separate preview/staging stage of its own."
+    },
+    "deployed_at": {
+      "type": "string",
+      "description": "UTC only, literal 'Z' suffix -- same convention trace/v1's occurred_at and attribution/v1's bound_at both use (this is a repo-owned protocol, unlike measure/v1, which mirrors an external producer's own '+00:00'-offset convention instead; see docs/protocols/release-observation-v0.md). The instant the artifact actually became reachable in the named environment (a registry's own recorded publish timestamp for a package release, not the merge-commit time or the moment a human ran the recording CLI afterward).",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "verification_status": {
+      "enum": ["not_measured", "verified", "failed"],
+      "description": "Whether the deployed artifact was actually exercised post-deploy (e.g. installed from the live registry into a clean environment and its CLI/entry point run) and found to work. `not_measured` is an explicit, honest value for 'nobody checked' -- never conflated with `verified` by assuming success, and never represented by simply omitting this required field. v0 does not define who performs this check or how; it only requires the outcome be stated, not silently assumed."
+    },
+    "rollback_of": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The release_id of the release this one rolls back, when this release IS a rollback. Absent (not null) when it is not -- same optional-reference convention as trace/v1's supersedes_event_id: a rollback is a well-known fact at deploy time (nobody discovers after the fact that a deploy secretly was a rollback), so there is no 'forgot to record' ambiguity here the way there is for artifact_digest, and no null-vs-absent distinction is needed. A reader MUST treat a rollback_of value that does not match any release_id it has observed as invalid within a checked collection of events (see verify-fixtures.mjs's dangling-reference check) -- unlike trace/v1's supersedes_event_id, which explicitly tolerates an unresolved cross-segment reference, v0's release ledger is expected to be small and locally complete enough that a rollback should always be checkable against what is already on record."
+    },
+    "quality_status": {
+      "enum": ["not_measured", "pass", "fail"],
+      "description": "Whether this release's shipped quality (correctness/regressions observed after deploy, as distinct from verification_status's narrower 'did it install and run at all') has been assessed. `not_measured` is the expected v0 value for every release recorded so far -- v0 is observation-only and does not itself run or require a quality assessment; it only requires the field be stated honestly rather than defaulted to a value implying quality was checked when it was not. Named to match the existing dashboard design's own `quality status` concept (D9) so a future projection built from this ledger does not need a second vocabulary for the same idea."
+    }
+  },
+  "additionalProperties": false
+}

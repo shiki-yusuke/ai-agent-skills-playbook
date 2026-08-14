@@ -1,0 +1,10 @@
+{
+  "schema_version": "release-observation/v0",
+  "release_id": "evidence-docs@0.1.0",
+  "source_tree_digest": "dc6279d19540715be2076e1c6968c8b51673fb93",
+  "artifact_digest": "sha256:b4b59b281883b5b484280e7aeb6bbd96c220539ed8ec0d8cf43d1d5303e3de16",
+  "environment": "production",
+  "deployed_at": "2026-08-14T21:57:50.219235Z",
+  "verification_status": "verified",
+  "quality_status": "not_measured"
+}
