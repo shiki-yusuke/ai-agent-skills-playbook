@@ -35,7 +35,7 @@ Two schema-level guardrails apply at every stage that touches a payload, not jus
 
 ## The other axis: verification and evaluation
 
-These three tools don't sit in the cost pipeline above — they answer a different question (did the work actually happen as claimed / is a claim's provenance real / does a judge react correctly to a meaningful change) and can be adopted independently of it.
+These three tools don't sit in the measurement pipeline above — they answer a different question (did the work actually happen as claimed / is a claim's provenance real / does a judge react correctly to a meaningful change) and can be adopted independently of it.
 
 | Tool | What it verifies | What it does *not* verify |
 |---|---|---|
