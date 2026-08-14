@@ -1,0 +1,71 @@
+{
+  "protocol_version": "release-observation/v0",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. Each entry's `type` selects which check applies: \"event\" (a single release-observation event, checked against the schema plus the personal-dimension scan) or \"collection\" (an array of events checked together, the only way to express the rollback_of dangling-reference check -- same convention attribution/v1 uses for its own \"binding-collection\" type). `reason_code` for a \"reject\" fixture is either a named semantic-check code (e.g. \"dangling_rollback_of_reference\") or a raw schema-validator JSON-path (e.g. \"$.environment\"), same leading-token convention as this repo's other contracts. `all_forbidden_keys_flagged: true` means: instead of checking a single `reason_code`, verify that every key in contracts/shared/personal-dimensions.mjs's forbidden set is individually flagged. PROVENANCE: every accept fixture is a real release published today (2026-08-15 JST / 2026-08-14 UTC), not a hand-authored example. Each one's `source_tree_digest` is the actual `git rev-parse <tag>^{tree}` output from the release's own source repo (verified against each repo's own `git rev-parse --show-object-format`, which reported `sha1` for all three -- hence the 40-hex-character digests). Each one's `artifact_digest` is a real sha256 independently computed by this task: the npm tarball was downloaded from the live registry and hashed with `shasum -a 256` (its sha1 also cross-checked against the registry's own declared `dist.shasum`, which matched exactly); the two PyPI wheel digests were read directly from `https://pypi.org/pypi/<project>/<version>/json`'s `urls[].digests.sha256` field, PyPI's own recorded value, not recomputed locally. `deployed_at` on every accept fixture is the registry's own recorded publish timestamp (npm's `time['<version>']`, PyPI's `urls[].upload_time_iso_8601` for the wheel), not the source repo's merge-commit time. `verification_status: \"verified\"` on every accept fixture was independently reproduced by this task -- not merely asserted -- by installing each package from its live registry into a clean, empty environment (`npm install spec-lane@0.5.2` in an empty directory; `pip install evidence-docs==0.1.0 coding-agent-cost==0.1.0` into a fresh venv) and running its CLI entry point (`lane --version` / `--help`; `evidence-docs --help`; `agent-cost --help`), all of which succeeded. None of the three accept fixtures carries a `lane_id`: spec-lane@0.5.2 and evidence-docs@0.1.0 have no lane-state.json anywhere in their release tree at all (confirmed via `git grep lane_id <tag>` and `git ls-tree -r <tag>`, both empty); coding-agent-cost@0.1.0's tree at v0.1.0 in fact contains THREE distinct lane-state.json artifacts (I-2026-08-15-ac-gap01-claude-reader-ttl-leftover, I-2026-08-15-ac-gap02-pricing-status-aggregation, I-2026-08-15-agent-cost-claims-corpus, none at phase 5_done as of the tag), so no single lane_id could be assigned to that release without arbitrarily picking one and misrepresenting the other two -- omitted rather than guessed, per this schema's own lane_id description. Every reject fixture is a deliberate, clearly synthetic mutation -- either of a real accept fixture (personal-dimension planting, the missing-artifact_digest omission, the non-UTC timestamp, the unknown environment value) or, for the one \"collection\" fixture, two clearly-labeled synthetic `demo-release@...` events invented specifically to exercise the cross-record dangling-reference check (no real release rolls back another as of this writing, so this case could not be sourced from real data).",
+  "fixtures": [
+    {
+      "id": "accept-spec-lane-0-5-2",
+      "type": "event",
+      "files": { "record": "accept-spec-lane-0-5-2.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "npm release spec-lane@0.5.2 (repo shiki-yusuke/spec-lane, tag v0.5.2, merge commit ef1dacc4). source_tree_digest = git rev-parse v0.5.2^{tree}. artifact_digest independently computed by downloading the published tarball and running shasum -a 256 (its sha1 also matched the registry's own dist.shasum e4c767b90f87db80ea7d4916d86837d3d09ea6a3). deployed_at = npm's own recorded publish instant for this version. verification_status=\"verified\" reproduced by this task: `npm install spec-lane@0.5.2` into an empty directory succeeded and `lane --version`/`--help` ran correctly. No lane_id: this release's own tree has no lane-state.json at all."
+    },
+    {
+      "id": "accept-evidence-docs-0-1-0",
+      "type": "event",
+      "files": { "record": "accept-evidence-docs-0-1-0.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "PyPI release evidence-docs 0.1.0 (repo shiki-yusuke/evidence-docs, tag v0.1.0, merge commit f633feeb4e4777b4fc3470e13c0bec624bfc6a94). source_tree_digest = git rev-parse v0.1.0^{tree}. artifact_digest is the wheel's sha256 as recorded by PyPI's own JSON API (evidence_docs-0.1.0-py3-none-any.whl). deployed_at = PyPI's own recorded upload_time_iso_8601 for that wheel. verification_status=\"verified\" reproduced by this task: `pip install evidence-docs==0.1.0` into a fresh venv succeeded and `evidence-docs --help` ran correctly (also independently stated in this release's own GitHub release notes: 'published wheel verified from the live registry in a clean venv'). No lane_id: no lane-state.json anywhere in this release's tree."
+    },
+    {
+      "id": "accept-coding-agent-cost-0-1-0",
+      "type": "event",
+      "files": { "record": "accept-coding-agent-cost-0-1-0.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "PyPI release coding-agent-cost 0.1.0 (repo shiki-yusuke/agent-cost, tag v0.1.0, merge commit 2b24cd43e30114a6666cfcb284391f7c615213be; PyPI distribution name differs from the repo name because PyPI rejected agent-cost/agent-cost-cli as too similar to an unrelated existing project). source_tree_digest = git rev-parse v0.1.0^{tree}. artifact_digest is the wheel's sha256 as recorded by PyPI's own JSON API. deployed_at = PyPI's own recorded upload_time_iso_8601 for that wheel. verification_status=\"verified\" reproduced by this task: `pip install coding-agent-cost==0.1.0` into a fresh venv succeeded and `agent-cost --help` ran correctly (also independently stated in this release's own GitHub release notes: 'published wheel verified from the live registry in a clean venv'). lane_id omitted, not guessed: this release's tree contains three distinct lane-state.json artifacts, none reaching phase 5_done -- see this file's top-level description."
+    },
+    {
+      "id": "invalid-personal-dimension",
+      "type": "event",
+      "files": { "record": "invalid-personal-dimension.json" },
+      "expected": "reject",
+      "all_forbidden_keys_flagged": true,
+      "notes": "All 11 forbidden personal-dimension keys planted at once (as extra top-level properties) on top of the real accept-spec-lane-0-5-2 record. Also independently caught 11 times over by additionalProperties:false (this schema's top level is fully closed, unlike measure/v1's deliberately open one) -- this fixture is about proving the scan itself flags every one of the 11 keys individually, not about needing an open field for it to matter."
+    },
+    {
+      "id": "invalid-missing-artifact-digest",
+      "type": "event",
+      "files": { "record": "invalid-missing-artifact-digest.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "artifact_digest is omitted entirely (not set to null) -- the specific failure mode the null-not-zero design of this field exists to reject. A producer MUST make an explicit choice (a real digest, or null to state 'no artifact for this release form'); silently leaving the key out is never valid, unlike an ordinary optional field. Caught by the schema's `required` list, at the top-level object path ($), since artifact_digest is a top-level (non-nested) required property."
+    },
+    {
+      "id": "invalid-non-utc-deployed-at",
+      "type": "event",
+      "files": { "record": "invalid-non-utc-deployed-at.json" },
+      "expected": "reject",
+      "reason_code": "$.deployed_at",
+      "notes": "deployed_at uses a numeric \"+00:00\" UTC offset (measure/v1's own convention, since that schema mirrors an external producer's literal Python isoformat() output) instead of the literal \"Z\" suffix this repo-owned protocol requires -- matching trace/v1's occurred_at and attribution/v1's bound_at convention, not measure/v1's, since release-observation/v0 is designed by this repo, not tracking an external producer's own format."
+    },
+    {
+      "id": "invalid-unknown-environment",
+      "type": "event",
+      "files": { "record": "invalid-unknown-environment.json" },
+      "expected": "reject",
+      "reason_code": "$.environment",
+      "notes": "environment=\"prod\" is not in the v0 closed set (preview | staging | production) -- an abbreviation is still a different string from the enum member, and this schema does not normalize input."
+    },
+    {
+      "id": "dangling-rollback-of-collection",
+      "type": "collection",
+      "files": { "records": ["dangling-rollback-of-collection-1.json", "dangling-rollback-of-collection-2.json"] },
+      "expected": "reject",
+      "reason_code": "dangling_rollback_of_reference",
+      "notes": "Two synthetic (clearly non-real, demo-release@*) events, both individually schema-valid: demo-release@1.0.1's rollback_of points to \"demo-release@0.9.9\", a release_id that appears nowhere in this collection (only demo-release@1.0.0 and demo-release@1.0.1 do). Invented rather than sourced from real data because none of today's three real releases is a rollback of anything -- this case could not be populated from actual observations yet."
+    }
+  ]
+}
