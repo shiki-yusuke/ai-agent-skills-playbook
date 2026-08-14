@@ -1,6 +1,8 @@
 // Shared minimal JSON Schema (draft 2020-12 subset) validator: type, const, enum, pattern,
 // minLength, minimum, exclusiveMinimum, exclusiveMaximum, maxItems, minItems, uniqueItems,
-// required, properties, additionalProperties, items, allOf, if/then/else, not, and $ref (to a
+// required, properties, additionalProperties (boolean `false`, closing an object, or a schema,
+// applied to every instance property not named in `properties` -- e.g. a session_id-keyed
+// dictionary), items, allOf, if/then/else, not, and $ref (to a
 // sibling schema file, or to a local #/$defs/... pointer). Extracted out
 // of contracts/agent-metrics/v1/verify-fixtures.mjs so every contract's verify script shares
 // one implementation instead of re-implementing it. This is exactly the subset this repo's
@@ -158,6 +160,19 @@ export function createValidator(schemaDir) {
         const known = new Set(Object.keys(schema.properties || {}));
         for (const key of Object.keys(instance)) {
           if (!known.has(key)) errors.push(`${pathStr}: additional property "${key}" not allowed`);
+        }
+      } else if (schema.additionalProperties && typeof schema.additionalProperties === "object") {
+        // measure/v1 addition: a dictionary keyed by an arbitrary runtime value (e.g.
+        // session_id), where every value must match one shared schema -- draft 2020-12's
+        // ordinary meaning of `additionalProperties` as a schema, not just the boolean-false
+        // "closed object" form every other schema in this repo has used so far. Safe to add:
+        // no existing schema file sets `additionalProperties` to anything but `false` (or
+        // leaves it unset), so this branch is unreachable for every previously-frozen
+        // contract and only activates for a schema that opts into it.
+        const known = new Set(Object.keys(schema.properties || {}));
+        for (const [key, value] of Object.entries(instance)) {
+          if (known.has(key)) continue;
+          validateAgainst(schema.additionalProperties, value, currentDoc, `${pathStr}.${key}`, errors);
         }
       }
     }
