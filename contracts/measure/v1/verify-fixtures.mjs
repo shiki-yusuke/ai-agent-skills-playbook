@@ -12,8 +12,20 @@
 //     session's own `totals` (measure's `total` is the union of exactly the requested sessions)
 //   - `session_ids` and the keys of `sessions` MUST be the same set
 //   - `data_quality.unpriced_tokens` MUST equal the sum of `total.rows[].unpriced_tokens`
+//   - a session entry with matched:false MUST have an empty rows array and all-zero totals
+//     (sol review must2: "no usage matched" and "usage matched but netted to zero" are
+//     different facts, and nothing above compares `matched` against its own siblings)
+//   - the top-level total.rows MUST equal the (agent, model, token_kind)-dimensional
+//     re-aggregation of every sessions[*].rows, not just a scalar totals sum (sol review must2:
+//     two payloads can share identical total.totals scalars while total.rows attributes the
+//     same tokens to the wrong agent/model/token_kind bucket -- the totals-sum check above
+//     cannot see that, only a per-dimension recomputation can)
 //   - the personal-dimension scan (contracts/shared/personal-dimensions.mjs) -- measure/v1
 //     carries no per-actor identity at all, so any forbidden key anywhere is a contamination
+//
+// token_kind is deliberately OPEN (see the schema's own description and
+// docs/protocols/measure-v1.md) -- an unrecognized value is logged as a warning below, never
+// pushed into `reasons`, so it can never cause a fixture to be rejected (sol review must3).
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
@@ -36,6 +48,121 @@ function dedupe(arr) {
 const EPSILON = 1e-9;
 function approxEqual(a, b) {
   return Math.abs(a - b) < EPSILON;
+}
+
+// Currently-known token_kind values (agent_cost/facts.py's TOKEN_KINDS) -- informational only.
+// token_kind is an OPEN string in the schema (sol review must3): an unrecognized value here is
+// a console.warn, never a `reasons` push, so it can never flip a fixture's accept/reject call.
+const KNOWN_TOKEN_KINDS = new Set([
+  "input_nocache",
+  "cache_read",
+  "cache_write_5m",
+  "cache_write_1h",
+  "cache_write_unknown",
+  "output",
+]);
+
+const PRICING_STATUS_RANK = { unpriced: 0, lower_bound: 1, priced: 2 };
+
+// Groups a list of rows by the (agent, model, token_kind) dimensions measure always groups by,
+// summing the numeric fields and taking the worst pricing_status per bucket (mirrors
+// agent_cost/aggregate.py's build_rows own bucketing/ranking logic) -- used to recompute what
+// `total.rows` MUST equal from the union of every session's own rows.
+function aggregateRowsByDimension(rows) {
+  const buckets = new Map();
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const key = JSON.stringify([row.agent, row.model, row.token_kind]);
+    let bucket = buckets.get(key);
+    if (!bucket) {
+      bucket = {
+        agent: row.agent,
+        model: row.model,
+        token_kind: row.token_kind,
+        tokens: 0,
+        priced_tokens: 0,
+        unpriced_tokens: 0,
+        estimated_cost_usd: 0,
+        credits: 0,
+        pricing_status: "priced",
+      };
+      buckets.set(key, bucket);
+    }
+    if (typeof row.tokens === "number") bucket.tokens += row.tokens;
+    if (typeof row.priced_tokens === "number") bucket.priced_tokens += row.priced_tokens;
+    if (typeof row.unpriced_tokens === "number") bucket.unpriced_tokens += row.unpriced_tokens;
+    if (typeof row.estimated_cost_usd === "number") bucket.estimated_cost_usd += row.estimated_cost_usd;
+    if (typeof row.credits === "number") bucket.credits += row.credits;
+    const rank = PRICING_STATUS_RANK[row.pricing_status];
+    if (rank !== undefined && rank < PRICING_STATUS_RANK[bucket.pricing_status]) {
+      bucket.pricing_status = row.pricing_status;
+    }
+  }
+  return buckets;
+}
+
+function checkTotalRowsMatchDimensionalAggregate(sessions, totalRows, reasons) {
+  const allSessionRows = [];
+  for (const entry of Object.values(sessions)) {
+    if (entry && Array.isArray(entry.rows)) allSessionRows.push(...entry.rows);
+  }
+  const expected = aggregateRowsByDimension(allSessionRows);
+  const actual = aggregateRowsByDimension(Array.isArray(totalRows) ? totalRows : []);
+
+  const allKeys = new Set([...expected.keys(), ...actual.keys()]);
+  for (const key of allKeys) {
+    const [agent, model, tokenKind] = JSON.parse(key);
+    const label = `agent=${agent}, model=${model}, token_kind=${tokenKind}`;
+    const exp = expected.get(key);
+    const act = actual.get(key);
+    if (!exp) {
+      reasons.push(
+        `total_rows_dimension_mismatch: total.rows has a bucket (${label}) not present in the union of sessions[*].rows`,
+      );
+      continue;
+    }
+    if (!act) {
+      reasons.push(
+        `total_rows_dimension_mismatch: total.rows is missing a bucket (${label}) present in the union of sessions[*].rows`,
+      );
+      continue;
+    }
+    for (const field of ["tokens", "priced_tokens", "unpriced_tokens"]) {
+      if (exp[field] !== act[field]) {
+        reasons.push(
+          `total_rows_dimension_mismatch: total.rows (${label}).${field} = ${act[field]}, expected ${exp[field]} (recomputed from the union of sessions[*].rows)`,
+        );
+      }
+    }
+    for (const field of ["estimated_cost_usd", "credits"]) {
+      if (!approxEqual(exp[field], act[field])) {
+        reasons.push(
+          `total_rows_dimension_mismatch: total.rows (${label}).${field} = ${act[field]}, expected ${exp[field]} (recomputed from the union of sessions[*].rows)`,
+        );
+      }
+    }
+    if (exp.pricing_status !== act.pricing_status) {
+      reasons.push(
+        `total_rows_dimension_mismatch: total.rows (${label}).pricing_status = "${act.pricing_status}", expected "${exp.pricing_status}"`,
+      );
+    }
+  }
+}
+
+// A matched:false session entry MUST have an empty rows array and all-zero totals -- "no usage
+// matched" and "usage matched but netted to zero" are different facts (sol review must2).
+function checkMatchedFalseIsEmpty(label, entry, reasons) {
+  if (entry.matched !== false) return;
+  if (Array.isArray(entry.rows) && entry.rows.length > 0) {
+    reasons.push(`matched_false_must_have_no_rows: ${label}.matched is false but rows has ${entry.rows.length} entrie(s)`);
+  }
+  if (entry.totals && typeof entry.totals === "object") {
+    for (const key of ["tokens", "priced_tokens", "unpriced_tokens", "estimated_cost_usd", "credits"]) {
+      if (typeof entry.totals[key] === "number" && entry.totals[key] !== 0) {
+        reasons.push(`matched_false_must_have_zero_totals: ${label}.matched is false but totals.${key} = ${entry.totals[key]}`);
+      }
+    }
+  }
 }
 
 // Recomputes a `totals` dict (rows_totals()'s 5 keys) from a list of rows and compares against
@@ -89,6 +216,13 @@ function checkRows(label, rows, reasons) {
         );
       }
     }
+    // token_kind is OPEN (sol review must3) -- an unrecognized value is informational only,
+    // never a rejection reason.
+    if (typeof row.token_kind === "string" && !KNOWN_TOKEN_KINDS.has(row.token_kind)) {
+      console.warn(
+        `[warn] ${label}.rows[${i}].token_kind "${row.token_kind}" is not in the currently-known set (${[...KNOWN_TOKEN_KINDS].join(", ")}) -- informational only, not a rejection (agent-cost may add a token_kind additively within measure/v1).`,
+      );
+    }
   });
 }
 
@@ -119,11 +253,13 @@ function checkMeasureOutput(payload) {
     const label = `sessions.${sid}`;
     checkRows(label, entry.rows, reasons);
     checkTotalsMatchRows(label, entry.rows, entry.totals, reasons);
+    checkMatchedFalseIsEmpty(label, entry, reasons);
   }
 
   if (payload.total && typeof payload.total === "object") {
     checkRows("total", payload.total.rows, reasons);
     checkTotalsMatchRows("total", payload.total.rows, payload.total.totals, reasons);
+    checkTotalRowsMatchDimensionalAggregate(sessions, payload.total.rows, reasons);
 
     // total.totals MUST equal the sum, across every requested session, of that session's own
     // totals -- measure's `total` is the union of exactly the requested sessions, never a
