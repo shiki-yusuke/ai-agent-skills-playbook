@@ -43,9 +43,9 @@ EOF
 export CLAUDE_HOME="$(pwd)/fake-claude-home"
 export CODEX_HOME="$(pwd)/fake-codex-home"
 
-pip install git+https://github.com/shiki-yusuke/agent-cost
-# (not yet published to PyPI at the time of writing -- installing from the repo
-#  was verified in a clean venv; `pip install -e <local checkout>` also works)
+pip install coding-agent-cost
+# (the PyPI distribution name differs from the repo name -- `agent-cost` is blocked
+#  by PyPI's similarity rule against an unrelated project; the command is still `agent-cost`)
 agent-cost doctor
 agent-cost report --format table
 ```
@@ -204,8 +204,7 @@ agent-metrics-report: unrecognized command "" -- the only supported command is "
 **Use when:** you want a claim about the codebase ("this always does X") to carry provenance a machine can re-check, instead of trusting prose.
 
 ```bash
-pip install git+https://github.com/shiki-yusuke/evidence-docs
-# (not yet published to PyPI at the time of writing -- verified in a clean venv)
+pip install evidence-docs
 evidence-docs init docs/claims
 # ... author topics/*.yaml and observations/*.yaml, registering IDs in id-registry.yaml first ...
 evidence-docs validate docs/claims --repo-commit <full-git-sha> --repo-root <path-to-repo>
