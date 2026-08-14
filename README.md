@@ -6,6 +6,8 @@ AIエージェント（Claude / Codex等）を使った開発で再利用して�
 
 スキル集が中心のリポジトリだが、他の公開OSSが依拠する標準仕様（protocol）の正本（SSOT）を1本含む（→ [Public interoperability protocols](#public-interoperability-protocols)）。
 
+**初めての場合**: [`docs/getting-started.md`](docs/getting-started.md) に、目的別に使うツールを選ぶための入り口（Recipes、実行確認済みの最小コマンド）がある。全体がどう繋がるかは [`docs/architecture-tour.md`](docs/architecture-tour.md) を参照。
+
 ## 収録スキル
 
 | スキル | 一言で言うと | 詳細 |
