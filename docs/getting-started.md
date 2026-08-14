@@ -2,15 +2,15 @@
 
 このリポジトリはスキル / protocol の正本（SSOT）であり、それ自体は測定パイプラインを実装しません。各ツールの実体は別リポジトリにあります。以下は「どのツールを、どの順で、どの最小コマンドで試すか」の入り口です。全部を導入する必要はありません — 自分の目的に合う行だけを選んでください。
 
-This page is the entry point into the tools this repository's protocols and skills are designed to interoperate with. **You do not need to adopt all of them.** Pick the row that matches what you actually need, run that one recipe, and stop there — every other tool is optional.
+This page is the entry point into a set of tools built around one idea — **evidence-bound delivery for coding agents**: a claim a change makes about itself (it works, its estimated cost was this much, it's done) should carry provenance a machine can re-check, not just prose. **You do not need to adopt all of them.** Pick the row that matches what you actually need, run that one recipe, and stop there — every other tool is optional.
 
 ## Choose your starting point
 
 | Goal | Tool |
 |---|---|
-| Measure token usage / cost only | [agent-cost](https://github.com/shiki-yusuke/agent-cost) |
+| Measure token usage / estimated cost only | [agent-cost](https://github.com/shiki-yusuke/agent-cost) |
 | Manage Intent / Spec / Verification for a change | [spec-lane](https://github.com/shiki-yusuke/spec-lane) |
-| Attribute cost to a specific task, not just a time window | spec-lane + agent-cost |
+| Attribute estimated cost to a specific task, not just a time window | spec-lane + agent-cost |
 | Transport telemetry to GitHub as a PR comment | [`agent-metrics:v1`](protocols/agent-metrics-v1.md) (the contract lives in this repo; spec-lane is the reference emitter) |
 | Collect / store / report that telemetry across a repo | [agent-metrics-harvester](https://github.com/shiki-yusuke/agent-metrics-harvester) |
 | Evidence-backed codebase documentation | [evidence-docs](https://github.com/shiki-yusuke/evidence-docs) |
@@ -19,9 +19,11 @@ This page is the entry point into the tools this repository's protocols and skil
 
 If you're unsure where to start: **agent-cost alone (Recipe A) is the smallest possible commitment** — one `pip install`, no repo changes, no schema to learn. Everything else builds on top of it or runs independently.
 
+**Fastest possible verified result, zero installs:** if you've just cloned this repo, `node contracts/measure/v1/verify-fixtures.mjs` runs in under a second against fixtures already checked into `contracts/`, with no dependency beyond Node — see [`architecture-tour.md`](architecture-tour.md#reading-the-fixtures-yourself) for what it's actually checking.
+
 ## Recipes
 
-Each recipe below was run end-to-end in a fresh temporary directory while writing this page; the commands and output are real, not illustrative. Several recipes deliberately show a **correct rejection** as the first result — an honest "I can't verify this" is exactly what these tools are supposed to say when the input doesn't support a claim, and it's usually the first thing you'll see too.
+Each recipe below was run end-to-end in a fresh temporary directory while writing this page; the commands and output are real, not illustrative. Each is a short, direct path — the goal is a first verified result within a few minutes of starting, not a full tour of the tool's command surface (see each tool's own README for that). Several recipes deliberately show a **correct rejection** as the first result — an honest "I can't verify this" is exactly what these tools are supposed to say when the input doesn't support a claim, and it's usually the first thing you'll see too.
 
 Two environment variables make it possible to run agent-cost and spec-lane against synthetic data instead of your real history — use them for a first try:
 
@@ -77,9 +79,9 @@ The `[warn]` line above is itself a correct result: no Codex logs exist in this 
 > that either protocol has graduated past contract-only — check each protocol document's own
 > `Status` field for the authoritative, up-to-date answer.
 
-### B. Evidence-first delivery (spec-lane)
+### B. Pre-implementation gates (spec-lane)
 
-**Use when:** you want a change to be blocked before implementation if its premise, acceptance criteria, or a cross-cutting dependency was never actually checked — independent of any cost measurement.
+**Use when:** you want a change to be blocked before implementation if its premise, acceptance criteria, or a cross-cutting dependency was never actually checked — independent of estimating cost at all.
 
 ```bash
 git init demo-repo && cd demo-repo
@@ -111,9 +113,9 @@ with a negation test, before publishing a PR (design.md §3.9 gate 2).
 
 Both warnings are correct: nothing has been written yet beyond `intent.yaml`. `lane validate` never blocks by itself — it's early feedback. `lane advance` is the actual gate; see [`spec-lane`'s README](https://github.com/shiki-yusuke/spec-lane#quick-start) for the rest of the intent → spec → implement → verify → done walk (this recipe stops at the first gate on purpose — the full flow is spec-lane's own documentation, not duplicated here).
 
-### C. Task-level cost attribution (spec-lane + agent-cost)
+### C. Task-level attribution of estimated cost (spec-lane + agent-cost)
 
-**Use when:** Recipe A tells you *how much* was spent in a window, but you need to know *which task* it was spent on.
+**Use when:** Recipe A tells you the *estimated cost* in a window, but you need to know *which task* it belongs to.
 
 ```bash
 export LANE_DATA_DIR="$(pwd)/.lane-data"   # scope the attribution ledger to this demo
@@ -160,7 +162,7 @@ This is the honest result for a `session_id` that was bound manually rather than
 
 ### D. Full measurement pipeline (emit-metrics → harvester → report)
 
-**Use when:** you want token/cost telemetry to live on the PR itself, collected centrally, without any developer holding a credential.
+**Use when:** you want token usage / estimated-cost telemetry to live on the PR itself, collected centrally, without any developer holding a credential.
 
 ```bash
 lane emit-metrics I-2026-08-14-demo --repository demo-org/demo-repo
@@ -234,21 +236,21 @@ corpus_digest=8c973900...
 
 ```bash
 git clone https://github.com/shiki-yusuke/evigate.git
-cd evigate && npm install && npm run build && npm link
+cd evigate && npm install && npm run build
 
-evigate ingest fixtures/synthetic/session-basic.jsonl --db ./evigate.db
-evigate audit --all --db ./evigate.db --out ./audit-reports
+node dist/cli.js ingest fixtures/synthetic/session-basic.jsonl --db ./evigate.db
+node dist/cli.js audit --all --db ./evigate.db --out ./audit-reports
 ```
 
-(`fixtures/synthetic/` ships in the evigate repo itself — a synthetic transcript, not a real session — which is what was used to produce the output below.)
+(`fixtures/synthetic/` ships in the evigate repo itself — a synthetic transcript, not a real session — which is what was used to produce the output below. `npm link` — exposing the `evigate` command globally — is optional and skipped here to keep the path short; see the repo's own README if you want it.)
 
 **First verified result:**
 
 ```
-$ evigate ingest fixtures/synthetic/session-basic.jsonl --db ./evigate.db
+$ node dist/cli.js ingest fixtures/synthetic/session-basic.jsonl --db ./evigate.db
 [ok] session-basic events=4 skipped_lines=2/9 redactions=6
 
-$ evigate audit --all --db ./evigate.db --out ./audit-reports
+$ node dist/cli.js audit --all --db ./evigate.db --out ./audit-reports
 [audit] session-basic claims=2 proven=1 unknown=1
 Done. sessions=1 claims=2 no_claims_sessions=0
 verdict distribution: {"proven":1,"unknown":1}
@@ -278,6 +280,18 @@ generated 9 case(s) into ./acyclic-eval-out
 ```
 
 This is a reproducibility demonstration on a toy corpus, not an accuracy claim about any real judge — see the acyclic-eval README's "Evaluation and evidence" section for what its own numbers do and don't establish, and [`evigate`](https://github.com/shiki-yusuke/evigate)'s mutation-testing harness (Recipe F's tool) for a real adapter built on top of it.
+
+## Relation to adjacent ecosystems
+
+This stack overlaps in subject matter with a few larger, unrelated efforts. It does not replace any of them, and makes no claim of conformance to them:
+
+| Ecosystem | What it defines | Where this stack is narrower |
+|---|---|---|
+| [GitHub Spec Kit](https://github.com/github/spec-kit) | An intent → spec → plan → tasks workflow where a specification becomes the artifact an implementation is generated from | spec-lane's Intent/Spec/Verify gates block a change on missing evidence; they don't generate an implementation from a spec |
+| [OpenTelemetry GenAI semantic conventions](https://github.com/open-telemetry/semantic-conventions-genai) | A general-purpose, vendor-neutral span/attribute vocabulary for tracing LLM and agent calls | `trace:v1` here is a closed-relation-set decision/evidence graph scoped to one delivery lane, not a general tracing vocabulary — there is no mapping between the two today |
+| [FOCUS](https://focus.finops.org/) (FinOps Open Cost and Usage Specification) | Normalized *billed* usage/cost datasets across cloud, SaaS, and AI vendors | `measure:v1` / `agent-metrics:v1` estimate token-based cost from local agent logs, not billing invoices, and don't claim FOCUS conformance |
+
+What this stack actually decides, per change, is narrower than any of the above: what can be claimed about it, and what remains unknown, backed by evidence a machine can re-check — not tracing, not billing normalization, and not spec-to-code generation.
 
 ## Where to go next
 
