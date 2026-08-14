@@ -1,0 +1,11 @@
+{
+  "schema_version": "release-observation/v0",
+  "release_id": "demo-release@1.0.1",
+  "source_tree_digest": "0000000000000000000000000000000000000002",
+  "artifact_digest": null,
+  "environment": "production",
+  "deployed_at": "2026-08-02T00:00:00Z",
+  "verification_status": "failed",
+  "quality_status": "not_measured",
+  "rollback_of": "demo-release@0.9.9"
+}
