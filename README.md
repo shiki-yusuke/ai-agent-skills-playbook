@@ -96,6 +96,14 @@ Decision–Evidence Graph の正本エッジ（append-only JSONL、1行=1イベ�
 - Protocol document: [`docs/protocols/estimate-v2.md`](docs/protocols/estimate-v2.md)
 - Conformance fixtures: [`contracts/estimate/v2/`](contracts/estimate/v2/)
 
+### measure:v1
+
+`agent-cost measure --format json` の cross-language conformance contract（D11: 多言語スタック対応の v1 やり方）。他の protocol と異なり、このリポジトリは producer（[agent-cost](https://github.com/shiki-yusuke/agent-cost)、Python）を所有していない — schema/fixture の SSOT はこのリポジトリだが、散文契約・実装・バージョニング判断は agent-cost 側にある。
+
+- Status: **versioned tracking (compatibility floor)**（他の protocol の "immutable freeze" とは異なる方針。required 集合は v1 内で固定 floor、将来の追加フィールドは optional のみ — 詳細は protocol 文書の Versioning 節）
+- Protocol document: [`docs/protocols/measure-v1.md`](docs/protocols/measure-v1.md)
+- Conformance fixtures: [`contracts/measure/v1/`](contracts/measure/v1/)
+
 ### この protocol を含む計測パイプラインでの責務分担
 
 同じパイプラインを構成する各リポジトリは責務が独立しており、重複しない:
