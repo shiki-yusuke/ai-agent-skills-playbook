@@ -1,0 +1,10 @@
+{
+  "schema_version": "release-observation/v0",
+  "release_id": "coding-agent-cost@0.1.0",
+  "source_tree_digest": "1f103f8188ec176b0dd0f227895d4aea2b751a1f",
+  "artifact_digest": "sha256:bcc8e09e9bbfac7cee4c823266bfaf99807a0fe313a9db34f5f9eee7b9e3b973",
+  "environment": "production",
+  "deployed_at": "2026-08-14T22:06:54.654854Z",
+  "verification_status": "verified",
+  "quality_status": "not_measured"
+}
