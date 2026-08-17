@@ -2,15 +2,18 @@
   "schema_version": "decision/v1",
   "decision_id": "living-twin-decision-02-thresholds",
   "intent_ref": {
-    "logical_id": "living-twin-decision-01-pivot-and-scope",
+    "logical_id": "living-twin:user-authored-investigation-brief-prose",
     "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options_ref": {
     "logical_id": "living-twin-discovery-thresholds-2026-08-17",
-    "content_digest": "sha256:48a2bed9fe9936d54ef972fa0c2111a0870469c1635755ad829bdd8b2b4540e6"
+    "uri": "contracts/design-options/v1/fixtures/accept-living-twin-discovery-thresholds-options.json",
+    "content_digest": "sha256:99cb0c5c1a2ea55bab6fb6e92a456fc42a722503ad69c89aa7d29949592c9f1e"
   },
   "critic_ref": {
-    "logical_id": "living-twin-discovery-thresholds-2026-08-17",
+    "logical_id": "living-twin:terra-independent-threshold-derivation",
+    "uri": "docs/research/critic/terra-independent-threshold-derivation.txt",
+    "source_repo": "living-twin",
     "content_digest": "sha256:02966e8b9c1691aff48b052411a91047940958454f07ed0b29d0d498a6b7e4a1"
   },
   "selected_option_id": "terra_independent_thresholds",
