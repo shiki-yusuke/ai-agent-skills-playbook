@@ -93,11 +93,14 @@ field exists for any I-shadow case, not just the one it was sourced from.
 ## `artifact_ref` vs `decision_ref`
 
 `$defs/ref` (a single shared `{logical_id, content_digest?}` shape) was split into two distinct
-types, then further hardened, after review of a real PR's fixtures turned up two related but
-distinct defects (see "Editing order..." above and this file's own Provenance section for the
-corrected account -- an earlier round of review initially mischaracterized this as fabricated
-digests; it was not: every digest value was real, the defect was in what each ref recorded about
-ITSELF). An independent-review directive (this repo calls this "sol architect-review") required
+types, then further hardened, after review of this repo's own fixtures turned up an
+unresolvable-pointer defect (see "Editing order..." above and this file's own Provenance section
+for the full corrected account): a `content_digest` with no recorded `uri` cannot be verified OR
+refuted by anyone. An earlier round of review, unable to locate what an undocumented digest was
+even for, initially concluded some of the digest VALUES themselves must be false -- they were not;
+every value was real throughout, and the actual defect was in what each ref recorded about ITSELF
+(no path, and two refs sharing one identifier despite naming different real documents), not in
+the hash. An independent-review directive (this repo calls this "sol architect-review") required
 closing the gap with these changes:
 
 - **`$defs/artifact_ref`** -- points at a file OUTSIDE this ledger (`intent_ref`, `options_ref`,
@@ -229,16 +232,21 @@ derivation.txt`, or `sol-round2-self-attack.txt`, the last shared correctly by `
 verify-artifact-digests.mjs`, never silently accepted.
 
 > **Resolved: an earlier version of this Provenance paragraph, and an earlier version of these
-> four fixtures, both had a real defect (now fixed).** The fixtures gave `options_ref` and
-> `critic_ref` the SAME `logical_id` despite the two pointing at different real documents, and
-> gave `intent_ref` a `content_digest` for a brief that was never filed as a document at all --
-> and there was no `uri` field anywhere to record what any of these digests were even claims
-> ABOUT. All seven digest VALUES were, throughout, real `sha256sum`s of real files (0 fabricated,
-> 0 mismatches against their true targets) -- the defect was entirely on the identifier/pointer
-> side, not the hash side, which is exactly why it looked like a digest problem (a reviewer
-> without `uri` to go on had to brute-force sha256-scan an external repo to guess what a
-> mislabeled digest was for, and briefly misattributed one in the process before this was caught
-> and fixed). `$defs/artifact_ref` now requires `uri` whenever `content_digest` is present, and
+> four fixtures, both had a real defect (now fixed) -- but it was not the defect it first looked
+> like.** The fixtures gave `options_ref` and `critic_ref` the SAME `logical_id` despite the two
+> pointing at different real documents, and gave `intent_ref` a `content_digest` for a brief that
+> was never filed as a document at all -- and there was no `uri` field anywhere to record what any
+> of these digests were even claims ABOUT. **What actually happened:** unable to locate what an
+> undocumented digest referred to, a reviewer had to guess by brute-force sha256-scanning an
+> external repo; when nothing in that one repo matched, the reviewer wrongly concluded the value
+> itself was false and overwrote a correct digest with an incorrect one, before this was caught
+> and the record corrected. Re-verified byte-for-byte end to end: all seven digest VALUES were,
+> throughout, real `sha256sum`s of real files -- 0 mismatches against their true targets. The
+> defect was entirely on the identifier/pointer side (no `uri`, and one `logical_id` doing double
+> duty for two different documents), not the hash side. **The lesson is structural, not personal:**
+> a pointer that does not record where it points cannot be verified OR refuted by anyone, and an
+> undecidable check does not fail safe -- it can actively mislead a reviewer into destroying
+> correct data. `$defs/artifact_ref` now requires `uri` whenever `content_digest` is present, and
 > adds an optional `source_repo` for exactly the `critic_ref` case above, so this class of defect
 > can no longer occur silently -- see "`artifact_ref` vs `decision_ref`" above.
 

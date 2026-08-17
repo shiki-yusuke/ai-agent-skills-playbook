@@ -16,8 +16,9 @@
 //   4. every artifact_ref (intent_ref / options_ref / critic_ref / estimate_refs[]) whose
 //      content_digest names a file reachable inside this repo actually matches that file's real
 //      sha256 (contracts/shared/verify-artifact-digests.mjs) -- the check this contract was
-//      missing when a real PR's fixtures were found to carry a formally-valid but fabricated
-//      content_digest (sol architect-review must-fix 1). Refs whose uri is absent or points
+//      missing when its own fixtures carried content_digest values with no uri recorded beside
+//      them, leaving a reviewer unable to verify OR refute them (sol architect-review must-fix 1;
+//      see that module's header for what actually went wrong). Refs whose uri is absent or points
 //      outside this repo (e.g. the living-twin fixtures below) are reported as unverifiable, not
 //      silently accepted -- see that module's own header for the full null-not-zero rationale.
 //

@@ -26,7 +26,7 @@
     "description": "「Codexとも確認して妥当だと思える根拠があるのであれば進めて」というユーザーの委任に基づき、独立レビュー担当セッションが根拠を確認のうえ確定した(decision-01冒頭 decided_by)。"
   },
   "conflicts_with": [],
-  "rationale": "Synthetic mutation of accept-living-twin-decision-01-pivot.json for testing only: critic_ref.logical_id changed to be identical to options_ref.logical_id, while both refs keep their own distinct, individually-correct content_digest -- exercises contracts/shared/verify-artifact-digests.mjs's same-logical_id-different-digest check (M8/M11 finding: an identifier reused across two refs that provably point at different real files is the same root failure as a fabricated digest, just visible from the identifier side).",
+  "rationale": "Synthetic mutation of accept-living-twin-decision-01-pivot.json for testing only: critic_ref.logical_id changed to be identical to options_ref.logical_id, while both refs keep their own distinct, individually-correct content_digest -- exercises contracts/shared/verify-artifact-digests.mjs's same-logical_id-different-digest check (M8/M11 finding: an identifier reused across two refs that provably point at different real files is the identifier-side version of the same unrecorded-referent root cause, just visible from the other side of the reference).",
   "accepted_assumptions": [
     "Discoveryの数値閾値は未決(decision-02で確定する)まま、Pivot採用自体は先に確定してよい",
     "本レビューは『独立レビュー』ではなく『盲検再分析(同一エンジン系統)』であり、その呼称の下で根拠として使ってよい(D-4)"
