@@ -5,28 +5,7 @@
     "logical_id": "living-twin:user-authored-investigation-brief-prose",
     "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
-  "artifact_shapers": [
-    {
-      "engine_ref": {
-        "kind": "model",
-        "provider": "anthropic",
-        "family": "claude",
-        "unknown_fields": ["model_id"]
-      },
-      "how": "authored",
-      "how_note": "Claudeの調査セッションが二次調査report.mdの三段階提案(Version A/B/C)とPivot候補(i-shadow-record-01 §1)、および本fixtureの選択肢テキストへの構造化・要約を行った。どのClaudeモデルの版であったかは記録されていないためmodel_idはunknown_fields。"
-    },
-    {
-      "engine_ref": {
-        "kind": "model",
-        "provider": "openai",
-        "family": "gpt-5.6",
-        "model_id": "gpt-5.6-sol",
-        "session_ref": "01a00ed8-c9e0-78a3-a32d-1ae6a6dbebce"
-      },
-      "how": "reviewed_brief"
-    }
-  ],
+  "artifact_shapers": [],
   "options": [
     {
       "option_id": "original_go_unmodified",
@@ -124,7 +103,11 @@
         "content_digest": "sha256:8da62bdf3e1d2aa511589c75e420eab1a6bc713d5b94f45e617014f6c5beb2df"
       },
       "reviewed_at": "2026-08-17T00:00:00Z",
-      "target_option_ids": ["pivot_go", "kill", "alternative_pivot"]
+      "target_option_ids": [
+        "pivot_go",
+        "kill",
+        "alternative_pivot"
+      ]
     },
     {
       "critic": {
@@ -138,14 +121,22 @@
         "digest_omitted_reason": "decision-01 D-4によれば、このK1/K2/K3盲検再分析はsolを追加で2ラウンド実行して行われた('二次調査側も同じsolを2巡使用しており、私の2ラウンドと合わせて計4巡')。しかしその生出力はファイルとして保存されておらず、docs/research/critic/配下に該当ファイルが存在しない(存在するのはsol-round1/sol-round2/terra-independentの3件のみ、README.md参照)。捏造を避けるため参照先なしとして正直に記録する。"
       },
       "reviewed_at": "2026-08-17T00:00:00Z",
-      "target_option_ids": ["pivot_go", "kill", "alternative_pivot"]
+      "target_option_ids": [
+        "pivot_go",
+        "kill",
+        "alternative_pivot"
+      ]
     }
   ],
   "decision_request": {
     "open_questions": [
       "Pivot / Discovery GOを採るか(decision-input-4points §1 決定事項①)"
     ],
-    "option_ids": ["pivot_go", "kill", "alternative_pivot"],
+    "option_ids": [
+      "pivot_go",
+      "kill",
+      "alternative_pivot"
+    ],
     "what_would_change_the_answer": [
       "主試験で持続採用者が0〜1/20相当まで下振れする",
       "6〜8週の外部反復価値試験が原因修正後の再試験でも未達",
