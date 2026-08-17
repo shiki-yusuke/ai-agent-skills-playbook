@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/decision/v1/decision.schema.json",
+  "title": "decision/v1 record",
+  "description": "The platform design's D10 decision.yaml, extended with four fields the one real I-shadow case exposed as missing (`docs/protocols/i-shadow-record-01-living-twin-2026-08-17.md`): `retractions[]` (a decision's individual items can be partially retracted without the whole decision being superseded -- section 2(a)), `decision_items[]` (added so retractions[] has something non-dangling to point at -- there is no such field in D10 itself), `decision_channel` + `conflicts_with[]` (section 2(c), called the single most important finding: two agents received contradictory instructions on the same day, and D10's own `decision_maker: human` field cannot detect that, because it says WHO decided but not THROUGH WHICH CHANNEL the instruction arrived), and `no_action_rationale` (paired with a nullable `no_action_option_id`, applying this repo's own null-not-zero principle -- see `docs/protocols/decision-v1.md` -- to the case where a decision genuinely never had a distinct 'do nothing' option framed for it). `decision_maker` is fixed to the literal `\"human\"` for the whole of v1: this contract exists to record I-shadow's shadow-mode decisions specifically (generate options -> independent critic -> HUMAN decides -> no autonomous execution, per the platform design's own I-shadow milestone), and a decision made autonomously by an agent is out of this contract's scope entirely, not a value this enum needs to represent. A decision, once recorded, is immutable (docs/protocols/decision-v1.md's Versioning section): a re-decision is always a NEW decision/v1 record with `status: \"active\"` and a `superseded_by`-pointing predecessor, never an edit to this one.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "decision_id",
+    "intent_ref",
+    "options_ref",
+    "critic_ref",
+    "selected_option_id",
+    "no_action_option_id",
+    "no_action_rationale",
+    "decided_at",
+    "decision_maker",
+    "decision_channel",
+    "conflicts_with",
+    "rationale",
+    "accepted_assumptions",
+    "accepted_unknowns",
+    "rejected_options",
+    "decision_items",
+    "retractions",
+    "estimate_refs",
+    "evidence_snapshot_digest",
+    "status"
+  ],
+  "allOf": [
+    {
+      "description": "status==\"superseded\" MUST carry a superseded_by ref (which new decision replaced this one) -- the exact gap i-shadow-record-01's own recorded case would otherwise leave silent (decision-03 was superseded by decision-04, and that fact must be a structural pointer, not just prose).",
+      "if": { "properties": { "status": { "const": "superseded" } } },
+      "then": { "required": ["superseded_by"] }
+    },
+    {
+      "description": "The other direction of the same tagged union (mirrors estimate/v2's own predicted/abstained if/then pair): an active decision has not been superseded by anything, so superseded_by must not be present at all, not merely optional.",
+      "if": { "properties": { "status": { "const": "active" } } },
+      "then": { "not": { "required": ["superseded_by"] } }
+    },
+    {
+      "description": "null-not-zero for estimate_refs (i-shadow-record-01 section 4, 'finding 3'): an empty estimate_refs[] MUST carry estimate_refs_omitted_reason explaining why no estimate is attached, so 'not estimated' and 'forgot to attach the estimate' never collapse into the same silent empty array.",
+      "if": { "properties": { "estimate_refs": { "maxItems": 0 } } },
+      "then": { "required": ["estimate_refs_omitted_reason"] }
+    }
+  ],
+  "properties": {
+    "schema_version": { "const": "decision/v1" },
+    "decision_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for this specific decision record (e.g. \"living-twin-decision-01-pivot-and-scope\"). One D10 conceptual decision.yaml MAY end up as several decision/v1 records over time if it is revisited -- see the Versioning section of docs/protocols/decision-v1.md for why v1 does not force a single-file-per-topic model (the real recorded case split into four, i-shadow-record-01 section 2(a))."
+    },
+    "intent_ref": { "$ref": "#/$defs/ref", "description": "Same field as design-options/v1's own intent_ref -- the intent this decision (via its options) ultimately serves." },
+    "options_ref": {
+      "$ref": "#/$defs/ref",
+      "description": "The design-options/v1 document `selected_option_id`, `no_action_option_id`, and `rejected_options[].option_id` are all resolved against. NOT cross-checked against an actual design-options/v1 fixture by this contract's own verify-fixtures.mjs -- each contract in this repo validates only within its own fixtures directory (see docs/protocols/decision-v1.md's 'Relationship to design-options/v1' section for why a cross-contract referential check is deliberately out of scope for v1)."
+    },
+    "critic_ref": {
+      "$ref": "#/$defs/ref",
+      "description": "Per this repo's v1 consolidation (see design-options/v1's own top-level description), critic material lives inside the SAME design-options/v1 document as the options themselves (that document's own critic_reviews[]) -- so critic_ref and options_ref MAY legitimately resolve to the identical {logical_id, content_digest}. This is not a schema bug or a redundant field; D10 named these as two separate artifacts (design/critic.yaml vs design/options-final.yaml) because it expected them to be produced by separate steps, and v1 keeps both field names (for forward compatibility with a future version that DOES split them back out) while allowing them to point at the same place today."
+    },
+    "selected_option_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The option_id (from the document options_ref points at) that was actually chosen."
+    },
+    "no_action_option_id": {
+      "type": ["string", "null"],
+      "description": "The option_id representing 'do not proceed with this decision's action at all' (e.g. a Kill option), when one was explicitly framed among the considered options. NULL, not omitted, when no such option was distinctly framed -- null-not-zero (docs/protocols/decision-v1.md): 'a clean do-nothing option existed and its id is X' and 'nobody framed a do-nothing option for this decision' are different facts, and the field must say which. See no_action_rationale, which is required either way."
+    },
+    "no_action_rationale": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED unconditionally, whether no_action_option_id is a real id or null. When no_action_option_id names an option, this explains why THAT option is the right stand-in for 'no action' (e.g. why a Kill option counts as doing nothing further). When no_action_option_id is null, this explains why no distinct do-nothing option was ever framed for this decision -- the recorded case shows this happens legitimately (a decision about which of two independently-derived numeric threshold sets to freeze has no natural 'freeze nothing' alternative once the decision to pre-register thresholds at all has already been made elsewhere)."
+    },
+    "decided_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "UTC only, literal 'Z' suffix -- same repo-owned-protocol convention as trace/v1, attribution/v1, and release-observation/v0."
+    },
+    "decision_maker": {
+      "const": "human",
+      "description": "Fixed for the whole of v1 -- see this schema's top-level description for why (I-shadow is shadow-mode only)."
+    },
+    "decision_channel": {
+      "type": "object",
+      "required": ["channel_id", "description"],
+      "properties": {
+        "channel_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A stable identifier for the session/route this decision's instruction actually arrived through (e.g. \"independent-review-session\", \"tertiary-phase-direct-instruction\"). Deliberately a free string, not a ref requiring resolution -- i-shadow-record-01 section 2(c)'s recorded conflict involved an instruction channel (a direct instruction to a different agent) that never produced its own citable decision/v1 record at all; requiring channel_id to resolve to something would make that exact real scenario impossible to record honestly."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable account of which session/agent/path issued the instruction that led to this decision."
+        }
+      },
+      "additionalProperties": false
+    },
+    "conflicts_with": {
+      "type": "array",
+      "description": "REQUIRED (may be empty). This is the field i-shadow-record-01 section 2(c) calls the single most important gap D10 left: `decision_maker: human` alone cannot detect that two different channels gave contradictory instructions on the same day. An empty array is an explicit, positive claim -- 'checked, no conflicting decision_channel was found for this decision's scope' -- not silence about whether the check was ever done; a producer that never checked MUST NOT emit an empty array as if it had (this is a process discipline this schema cannot enforce mechanically, the same limits every other 'state an honest not_measured/not_checked value' field in this repo's contracts has).",
+      "items": { "$ref": "#/$defs/conflict" }
+    },
+    "rationale": { "type": "string", "minLength": 1 },
+    "accepted_assumptions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Assumptions this decision explicitly accepts as unverified rather than treating as established (D10's own field; e.g. decision-02's own 'p0=10%/p1=30% are terra's judgment, not derived from real prior data')."
+    },
+    "accepted_unknowns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Things this decision explicitly leaves unresolved rather than silently assuming resolved (D10's own field)."
+    },
+    "rejected_options": {
+      "type": "array",
+      "description": "May be empty (a decision that only ever had one option under consideration rejects nothing). Each entry names why one specific option was not chosen.",
+      "items": {
+        "type": "object",
+        "required": ["option_id", "reason_codes", "notes"],
+        "properties": {
+          "option_id": { "type": "string", "minLength": 1 },
+          "reason_codes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "EVIDENCE_CONTRADICTED",
+                "UNVALIDATED_CORE_ASSUMPTION",
+                "PRIOR_ART_FAILURE_PRECEDENT",
+                "REGULATORY_OR_LEGAL_RISK",
+                "STATISTICALLY_UNDERPOWERED",
+                "GATE_TOO_PERMISSIVE_RISK_OF_FALSE_PASS",
+                "ALTERNATIVE_OPTION_STRONGER_ON_NET",
+                "OUTDATED_EVALUATION_CRITERION",
+                "OTHER"
+              ]
+            },
+            "description": "A closed set grounded in the recorded case's own actual rejections (docs/protocols/decision-v1.md documents which real rejection each code traces to). EVIDENCE_CONTRADICTED = direct evidence against the option's core premise (decision-01 rejecting the unmodified original plan: 3 of 4 differentiation hypotheses falsified). UNVALIDATED_CORE_ASSUMPTION = the option depends on a mechanism never established (same rejection: the core 'self-discovery' experience unproven, r ~= 0.3). PRIOR_ART_FAILURE_PRECEDENT = the option's category has a documented track record of failure (decision-01 rejecting the AI-Social pivot: three prior AI-only-SNS attempts all failed). REGULATORY_OR_LEGAL_RISK = the option carries legal/regulatory exposure judged too heavy (same rejection: companion-style dependency and regulatory risk). STATISTICALLY_UNDERPOWERED = the option's own judgment criterion cannot actually be evaluated at the sample size available (decision-02's Barnum-threshold rejection of the sol-proposed values: n=25 cannot reliably detect the claimed effect size). GATE_TOO_PERMISSIVE_RISK_OF_FALSE_PASS = the option's threshold would pass too easily to mean anything (decision-02 rejecting sol_proposed_thresholds in favor of terra's: sol's one-sided 80% CI would make the gate easier to pass in a way that undermines the point of pre-registration). ALTERNATIVE_OPTION_STRONGER_ON_NET = rejected for a comparative reason rather than an intrinsic flaw (decision-01 rejecting Kill: not because Kill was flawed, but because the selected option's opportunity/downside trade-off was judged better). OUTDATED_EVALUATION_CRITERION = the option would be correctly rejected only by a criterion that itself no longer applies after a pivot (decision-01 D-6's own warning against judging the post-pivot product by the pre-pivot core-experience gate). OTHER = any other reason, always paired with `notes` (required on every entry regardless of code, precisely so OTHER is never a bare, unexplained code)."
+          },
+          "notes": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "decision_items": {
+      "type": "array",
+      "minItems": 1,
+      "description": "This decision decomposed into its individual named sub-decisions (e.g. decision-01's own D-1..D-9, or decision-02's own §4(a)/(b)/(c) rows) -- NOT a D10 field. Added in v1 specifically so `retractions[].retracted_item_ref` has a real, checkable target: without some notion of 'item' inside a decision, a partial retraction (i-shadow-record-01 section 2(a)) has nothing non-dangling to point at.",
+      "items": {
+        "type": "object",
+        "required": ["item_id", "summary", "status"],
+        "properties": {
+          "item_id": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["active", "retracted"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "retractions": {
+      "type": "array",
+      "description": "May be empty (most decisions retract nothing). i-shadow-record-01 section 2(a)'s own finding: decision-02's Barnum threshold was retracted mid-document (its 追記v2) while the rest of that decision stayed active -- a fact D10's document-level status(active|superseded) alone cannot express.",
+      "items": {
+        "type": "object",
+        "required": ["retracted_item_ref", "retracted_at", "reason"],
+        "properties": {
+          "retracted_item_ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "MUST match some decision_items[].item_id in THIS SAME record, and that item's status MUST be \"retracted\" -- a semantic check (verify-fixtures.mjs); a retraction pointing at an item nobody declared, or at one still marked active, is a dangling/inconsistent reference this contract rejects."
+          },
+          "retracted_at": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+          },
+          "reason": { "type": "string", "minLength": 1 },
+          "superseded_by_item_ref": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional: another decision_items[].item_id (in this record, or -- as free text, not a resolved ref -- describing where the replacement lives) that replaces the retracted item, when the retraction is a replacement rather than a plain withdrawal. Absent when the retraction is a plain withdrawal with nothing replacing it (decision-02's own Barnum retraction: downgraded to an exploratory measurement with no gate replacing it)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "estimate_refs": {
+      "type": "array",
+      "description": "May be empty -- see estimate_refs_omitted_reason, required whenever it is (null-not-zero, i-shadow-record-01 section 4's 'finding 3'). When non-empty, each entry points at an option-specific estimate/v2 decision.",
+      "items": { "$ref": "#/$defs/ref" }
+    },
+    "estimate_refs_omitted_reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "REQUIRED when estimate_refs is empty (schema if/then above). Free text explaining why no estimate is attached -- e.g. \"estimate --adopt was never run for this decision; it was made outside spec-lane entirely\" (the recorded case's own actual reason, i-shadow-record-01 section 4)."
+    },
+    "evidence_snapshot_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "Content digest of the evidence this decision was actually based on at decision time (D10's own field). Unlike artifact_digest in release-observation/v0, this is not nullable in v1 -- a decision is always made on the strength of SOME evidence document that can be hashed; v1 has not yet observed a real case where that is not true."
+    },
+    "status": { "enum": ["active", "superseded"] },
+    "superseded_by": {
+      "$ref": "#/$defs/ref",
+      "description": "The decision_id (as a ref) of the decision/v1 record that superseded this one. Required exactly when status==\"superseded\" and forbidden exactly when status==\"active\" (schema if/then above)."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "required": ["logical_id"],
+      "properties": {
+        "logical_id": { "type": "string", "minLength": 1 },
+        "content_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "conflict": {
+      "type": "object",
+      "required": ["conflicting_decision_ref", "conflicting_channel_id", "detected_at", "resolution", "resolution_notes"],
+      "properties": {
+        "conflicting_decision_ref": {
+          "$ref": "#/$defs/ref",
+          "description": "The decision/v1 record this one was found to conflict with. When a collection of decision/v1 records is checked together, this MUST resolve to some other record's decision_id in that same collection (a semantic check, verify-fixtures.mjs, mirroring release-observation/v0's own rollback_of dangling-reference check) -- a conflict claimed against a decision nobody has on record is either a typo or a recording gap."
+        },
+        "conflicting_channel_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The decision_channel.channel_id the CONFLICTING instruction arrived through -- may be a channel that never produced its own decision/v1 record at all (i-shadow-record-01 section 2(c)'s real case: the tertiary-phase side received a direct instruction that was never formally recorded as a decision on its own, only surfaced as a conflict once detected)."
+        },
+        "detected_at": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+        },
+        "resolution": {
+          "enum": ["this_decision_supersedes_after_reconciliation", "reconciled_no_conflict_after_clarification", "unresolved"]
+        },
+        "resolution_notes": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

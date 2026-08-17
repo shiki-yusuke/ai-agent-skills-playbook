@@ -1,0 +1,43 @@
+{
+  "schema_version": "decision/v1",
+  "decision_id": "demo-decision-1",
+  "intent_ref": {
+    "logical_id": "demo:intent"
+  },
+  "options_ref": {
+    "logical_id": "demo:options"
+  },
+  "critic_ref": {
+    "logical_id": "demo:options"
+  },
+  "selected_option_id": "demo_option",
+  "no_action_option_id": null,
+  "no_action_rationale": "Synthetic demo record for the conflicts_with dangling-reference fixture only -- not sourced from any real decision.",
+  "decided_at": "2026-01-01T00:00:00Z",
+  "decision_maker": "human",
+  "decision_channel": {
+    "channel_id": "demo-channel",
+    "description": "Synthetic demo channel."
+  },
+  "conflicts_with": [],
+  "rationale": "Synthetic demo record, invented solely to exercise the cross-record conflicts_with dangling-reference check (no real recorded decision exhibits a dangling conflict as of this writing).",
+  "accepted_assumptions": [
+    "demo assumption"
+  ],
+  "accepted_unknowns": [
+    "demo unknown"
+  ],
+  "rejected_options": [],
+  "decision_items": [
+    {
+      "item_id": "demo-item",
+      "summary": "demo item",
+      "status": "active"
+    }
+  ],
+  "retractions": [],
+  "estimate_refs": [],
+  "estimate_refs_omitted_reason": "Synthetic demo record; no estimate applies.",
+  "evidence_snapshot_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "status": "active"
+}

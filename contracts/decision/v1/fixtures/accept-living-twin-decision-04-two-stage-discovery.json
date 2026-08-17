@@ -1,0 +1,59 @@
+{
+  "schema_version": "decision/v1",
+  "decision_id": "living-twin-decision-04-two-stage-discovery",
+  "intent_ref": {
+    "logical_id": "living-twin-decision-01-pivot-and-scope",
+    "content_digest": "sha256:a2ead0a6ed7fc50015924785ff789050971b5b04fd2dac7487ccbc05da174f60"
+  },
+  "options_ref": {
+    "logical_id": "living-twin-discovery-scope-2026-08-17",
+    "content_digest": "sha256:2699fcf680934ff1bf313a67f54958a8e5aed3eb918797cbe5bd6be2a8b46805"
+  },
+  "critic_ref": {
+    "logical_id": "living-twin-discovery-scope-2026-08-17",
+    "content_digest": "sha256:2699fcf680934ff1bf313a67f54958a8e5aed3eb918797cbe5bd6be2a8b46805"
+  },
+  "selected_option_id": "option_d_two_stage_wave",
+  "no_action_option_id": null,
+  "no_action_rationale": "この決定は正式なdesign-optionsの再ラウンド(新たなcritic passや事前登録されたdecision_request)を経ずに、ユーザー直接指示どうしの食い違いを検出・解消する形で生成された(decision-04 §0)。そのため、事前に列挙された『何もしない』相当の選択肢は存在しない。",
+  "decided_at": "2026-08-17T00:00:00Z",
+  "decision_maker": "human",
+  "decision_channel": {
+    "channel_id": "independent-review-session",
+    "description": "二つのチャネル間の食い違いを独立レビュー担当セッションが検出し、ユーザーに確認のうえ『Wave1 n=12→Wave2累計25で進めて下さい』が最新の指示であると確定した(decision-04 decided_by, §0)。実際の直接指示自体は三次フェーズ側チャネル(conflicts_with参照)に対して行われたものである。"
+  },
+  "conflicts_with": [
+    {
+      "conflicting_decision_ref": { "logical_id": "living-twin-decision-03-discovery-scope" },
+      "conflicting_channel_id": "tertiary-phase-direct-instruction",
+      "detected_at": "2026-08-17T00:00:00Z",
+      "resolution": "this_decision_supersedes_after_reconciliation",
+      "resolution_notes": "私(独立レビュー担当セッション)への回答(『25人集められるか』→No→選択肢C、decision-03として確定済み)と、三次フェーズ側への直接指示(Wave1 n=12→即時Kill非該当なら累計n=25まで拡張)が同日に食い違って存在していた。私が食い違いを検出して確認し、『Wave1→Wave2』が最新と確定した。両者は矛盾しない――『最初から25人一括は無理』と『段階的に25人まで拡張』は別のことである(decision-04 §0)。"
+    }
+  ],
+  "rationale": "Wave1(n=12)をkill専用にし、確認判定はWave2(累計n=25)の1回だけにする2段階設計を採用する。段階拡張で2回覗き見ると第一種の誤りが膨らむという統計的な罠を、Wave1を通過判定を出さないkill専用工程にすることで回避する(decision-04 §1)。2段階全体の第一種の誤り上限は0.0334でWave2単独と変わらず、検出力は約0.795でWave2単独から約1.1pt低下するのみである。",
+  "accepted_assumptions": [
+    "Wave1の12人が集まらずn=10〜11に落ちる場合も支払kill基準は0人のまま(真30%での確率はn=10で0.028、n=11で0.020とさらに小さくなるため保守的に安全)である(decision-04 §3)"
+  ],
+  "accepted_unknowns": [
+    "Wave2が保留(4〜5/25)に終わった場合の扱いはExternal Cohort Phaseへの持ち越しとするが、その後の需要判定がどうなるかは未定である(decision-04 §3)"
+  ],
+  "rejected_options": [
+    {
+      "option_id": "option_c_split_phases",
+      "reason_codes": ["ALTERNATIVE_OPTION_STRONGER_ON_NET"],
+      "notes": "decision-03を上書きする。両者は矛盾しない(『最初から25人一括は無理』と『段階的に25人まで拡張』は別のこと)が、Wave1→Wave2の2段階設計の方が統計的に清潔(第一種の誤りが膨らまない)であり、需要が未確認のまま42実装日に入るリスクを緩和できるため、こちらを採用する(decision-04 §1, §4)。"
+    }
+  ],
+  "decision_items": [
+    { "item_id": "wave1-kill-only", "summary": "Wave1(n=12)はkill専用。通過判定を出さない。支払0人/import完遂6/12以下でkill", "status": "active" },
+    { "item_id": "wave2-confirmation", "summary": "Wave2(累計n=25)が唯一の確認地点。通過6/25以上・不通過3/25以下・保留4〜5/25", "status": "active" },
+    { "item_id": "two-stage-error-control", "summary": "2段階全体の第一種の誤り上限は0.0334(Wave2単独と同じ)、検出力は約0.795", "status": "active" },
+    { "item_id": "no-third-wave-rule", "summary": "Wave2が保留に終わっても3回目のWaveは作らない(覗き見が3回になるため)", "status": "active" }
+  ],
+  "retractions": [],
+  "estimate_refs": [],
+  "estimate_refs_omitted_reason": "estimate --adopt は一度も実行していない。living-twinはspec-laneのlane外で走ったため、estimate/v2への接続点自体が存在しない(i-shadow-record-01 §4)。",
+  "evidence_snapshot_digest": "sha256:8b7231bea7d0d860e599a9205e27cf190520d4c13ccd786ebba362df75a5989e",
+  "status": "active"
+}
