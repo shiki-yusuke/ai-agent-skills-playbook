@@ -1,6 +1,6 @@
 {
   "schema_version": "design-options/v1",
-  "design_options_id": "demo-unknown-not-qualifying",
+  "design_options_id": "demo-derivation-different-lineage-qualifying",
   "intent_ref": {
     "logical_id": "this-repo:LICENSE",
     "uri": "LICENSE",
@@ -20,7 +20,7 @@
   "options": [
     {
       "option_id": "demo_option",
-      "summary": "Synthetic demo option, invented solely to demonstrate that an engine_ref with a legitimately-declared-unknown provider (unknown_fields) derives to independence_status=unknown -- because a provider that turns out to differ would be the one qualifying outcome (different_lineage), unlike family/model_id/session_ref, whose being unknown is skipped rather than treated as blocking (2026-08-18 refinement, see contracts/design-options/v1/CHANGELOG.md). unknown is never qualifying, even when prior_involvement independently clears (none_observed_in_recorded_scope). Not sourced from the living-twin case.",
+      "summary": "Synthetic demo option. This fixture is a purely synthetic derivation-table coverage case, NOT sourced from the living-twin case. No real fixture in this repo currently has a critic whose FINAL closest-across-all-shapers relationship is different_lineage (every real critic is closer to the Claude authoring shaper than that) -- this fixture exists so that branch, and the fully-qualifying outcome it enables, has at least one exercising case.",
       "key_assumptions": [
         "demo assumption"
       ],
@@ -40,9 +40,9 @@
     {
       "critic": {
         "kind": "model",
-        "family": "gpt-5.6",
-        "model_id": "gpt-5.6-mystery-variant",
-        "unknown_fields": ["provider"]
+        "provider": "anthropic",
+        "family": "claude",
+        "model_id": "claude-demo-variant"
       },
       "prior_involvement": "none_observed_in_recorded_scope",
       "observation_scope_ref": {
