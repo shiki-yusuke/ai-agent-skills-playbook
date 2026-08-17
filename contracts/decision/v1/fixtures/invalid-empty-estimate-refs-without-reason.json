@@ -7,10 +7,13 @@
   },
   "options_ref": {
     "logical_id": "living-twin-pivot-and-scope-2026-08-17",
-    "content_digest": "sha256:48a2bed9fe9936d54ef972fa0c2111a0870469c1635755ad829bdd8b2b4540e6"
+    "uri": "contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json",
+    "content_digest": "sha256:297f0bf126623dd0af95293b8f4fa6302f79f1a37645955d4d0304f1fb00d744"
   },
   "critic_ref": {
-    "logical_id": "living-twin-pivot-and-scope-2026-08-17",
+    "logical_id": "living-twin:independent-review-diff-2026-08-17",
+    "uri": "docs/decisions/independent-review-diff-2026-08-17.md",
+    "source_repo": "living-twin",
     "content_digest": "sha256:cd5f74ef788595fd9fd25ecb1ea2793bc683507898a34857c1db7dd51055c6c1"
   },
   "selected_option_id": "pivot_go",

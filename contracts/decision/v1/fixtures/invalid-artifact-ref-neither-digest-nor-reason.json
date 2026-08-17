@@ -6,10 +6,13 @@
     "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options_ref": {
-    "logical_id": "living-twin-pivot-and-scope-2026-08-17"
+    "logical_id": "living-twin-pivot-and-scope-2026-08-17",
+    "uri": "contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json"
   },
   "critic_ref": {
-    "logical_id": "living-twin-pivot-and-scope-2026-08-17",
+    "logical_id": "living-twin:independent-review-diff-2026-08-17",
+    "uri": "docs/decisions/independent-review-diff-2026-08-17.md",
+    "source_repo": "living-twin",
     "content_digest": "sha256:cd5f74ef788595fd9fd25ecb1ea2793bc683507898a34857c1db7dd51055c6c1"
   },
   "selected_option_id": "pivot_go",
