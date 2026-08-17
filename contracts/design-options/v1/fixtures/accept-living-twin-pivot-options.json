@@ -2,7 +2,8 @@
   "schema_version": "design-options/v1",
   "design_options_id": "living-twin-pivot-and-scope-2026-08-17",
   "intent_ref": {
-    "logical_id": "living-twin:user-authored-investigation-brief-prose"
+    "logical_id": "living-twin:user-authored-investigation-brief-prose",
+    "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options": [
     {

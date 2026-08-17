@@ -3,15 +3,15 @@
   "decision_id": "living-twin-decision-04-two-stage-discovery",
   "intent_ref": {
     "logical_id": "living-twin-decision-01-pivot-and-scope",
-    "content_digest": "sha256:a2ead0a6ed7fc50015924785ff789050971b5b04fd2dac7487ccbc05da174f60"
+    "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options_ref": {
     "logical_id": "living-twin-discovery-scope-2026-08-17",
-    "content_digest": "sha256:2699fcf680934ff1bf313a67f54958a8e5aed3eb918797cbe5bd6be2a8b46805"
+    "content_digest": "sha256:a083df5ad6658422599053ff436edeee82effc3168117e44416e50f8fb2ae2c2"
   },
   "critic_ref": {
     "logical_id": "living-twin-discovery-scope-2026-08-17",
-    "content_digest": "sha256:2699fcf680934ff1bf313a67f54958a8e5aed3eb918797cbe5bd6be2a8b46805"
+    "content_digest": "sha256:8da62bdf3e1d2aa511589c75e420eab1a6bc713d5b94f45e617014f6c5beb2df"
   },
   "selected_option_id": "option_d_two_stage_wave",
   "no_action_option_id": null,
@@ -24,7 +24,9 @@
   },
   "conflicts_with": [
     {
-      "conflicting_decision_ref": { "logical_id": "living-twin-decision-03-discovery-scope" },
+      "conflicting_decision_ref": {
+        "logical_id": "living-twin-decision-03-discovery-scope"
+      },
       "conflicting_channel_id": "tertiary-phase-direct-instruction",
       "detected_at": "2026-08-17T00:00:00Z",
       "resolution": "this_decision_supersedes_after_reconciliation",
@@ -41,15 +43,33 @@
   "rejected_options": [
     {
       "option_id": "option_c_split_phases",
-      "reason_codes": ["ALTERNATIVE_OPTION_STRONGER_ON_NET"],
+      "reason_codes": [
+        "ALTERNATIVE_OPTION_STRONGER_ON_NET"
+      ],
       "notes": "decision-03を上書きする。両者は矛盾しない(『最初から25人一括は無理』と『段階的に25人まで拡張』は別のこと)が、Wave1→Wave2の2段階設計の方が統計的に清潔(第一種の誤りが膨らまない)であり、需要が未確認のまま42実装日に入るリスクを緩和できるため、こちらを採用する(decision-04 §1, §4)。"
     }
   ],
   "decision_items": [
-    { "item_id": "wave1-kill-only", "summary": "Wave1(n=12)はkill専用。通過判定を出さない。支払0人/import完遂6/12以下でkill", "status": "active" },
-    { "item_id": "wave2-confirmation", "summary": "Wave2(累計n=25)が唯一の確認地点。通過6/25以上・不通過3/25以下・保留4〜5/25", "status": "active" },
-    { "item_id": "two-stage-error-control", "summary": "2段階全体の第一種の誤り上限は0.0334(Wave2単独と同じ)、検出力は約0.795", "status": "active" },
-    { "item_id": "no-third-wave-rule", "summary": "Wave2が保留に終わっても3回目のWaveは作らない(覗き見が3回になるため)", "status": "active" }
+    {
+      "item_id": "wave1-kill-only",
+      "summary": "Wave1(n=12)はkill専用。通過判定を出さない。支払0人/import完遂6/12以下でkill",
+      "status": "active"
+    },
+    {
+      "item_id": "wave2-confirmation",
+      "summary": "Wave2(累計n=25)が唯一の確認地点。通過6/25以上・不通過3/25以下・保留4〜5/25",
+      "status": "active"
+    },
+    {
+      "item_id": "two-stage-error-control",
+      "summary": "2段階全体の第一種の誤り上限は0.0334(Wave2単独と同じ)、検出力は約0.795",
+      "status": "active"
+    },
+    {
+      "item_id": "no-third-wave-rule",
+      "summary": "Wave2が保留に終わっても3回目のWaveは作らない(覗き見が3回になるため)",
+      "status": "active"
+    }
   ],
   "retractions": [],
   "estimate_refs": [],

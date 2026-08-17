@@ -3,15 +3,15 @@
   "decision_id": "living-twin-decision-02-thresholds",
   "intent_ref": {
     "logical_id": "living-twin-decision-01-pivot-and-scope",
-    "content_digest": "sha256:a2ead0a6ed7fc50015924785ff789050971b5b04fd2dac7487ccbc05da174f60"
+    "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options_ref": {
     "logical_id": "living-twin-discovery-thresholds-2026-08-17",
-    "content_digest": "sha256:d598b10be3ace72ba8f7cdf89cfad006f0adf44d6db64fbd68e5d2c22a5f3ded"
+    "content_digest": "sha256:48a2bed9fe9936d54ef972fa0c2111a0870469c1635755ad829bdd8b2b4540e6"
   },
   "critic_ref": {
     "logical_id": "living-twin-discovery-thresholds-2026-08-17",
-    "content_digest": "sha256:d598b10be3ace72ba8f7cdf89cfad006f0adf44d6db64fbd68e5d2c22a5f3ded"
+    "content_digest": "sha256:02966e8b9c1691aff48b052411a91047940958454f07ed0b29d0d498a6b7e4a1"
   },
   "selected_option_id": "terra_independent_thresholds",
   "no_action_option_id": null,
@@ -34,15 +34,34 @@
   "rejected_options": [
     {
       "option_id": "sol_proposed_thresholds",
-      "reason_codes": ["STATISTICALLY_UNDERPOWERED", "GATE_TOO_PERMISSIVE_RISK_OF_FALSE_PASS"],
+      "reason_codes": [
+        "STATISTICALLY_UNDERPOWERED",
+        "GATE_TOO_PERMISSIVE_RISK_OF_FALSE_PASS"
+      ],
       "notes": "solの閾値は通しやすく、terraの閾値は厳しく、terraは導出根拠を示している。特にBarnumのCIをsolは片側80%まで緩めており、これはgateを通しやすくする操作であり事前登録の意義を損なう方向である(decision-02 §2)。"
     }
   ],
   "decision_items": [
-    { "item_id": "main-trial-threshold", "summary": "主試験(有料Portability Replacement Test): n=25、予約金¥2,000、通過6/25以上・不通過3/25以下", "status": "active" },
-    { "item_id": "barnum-threshold-gate", "summary": "Barnum対照: dz≥0.50 かつ片側95%下限>0 をgateとする", "status": "retracted" },
-    { "item_id": "import-completion-threshold", "summary": "import完遂率: n=25、母比率下限80%、通過24/25以上(Wilson片側95%)", "status": "active" },
-    { "item_id": "sample-bias-handling", "summary": "標本バイアスの扱い: 募集前に4分類を固定し、非利害層8人以上を目標に層別結果を出す(terra)", "status": "active" }
+    {
+      "item_id": "main-trial-threshold",
+      "summary": "主試験(有料Portability Replacement Test): n=25、予約金¥2,000、通過6/25以上・不通過3/25以下",
+      "status": "active"
+    },
+    {
+      "item_id": "barnum-threshold-gate",
+      "summary": "Barnum対照: dz≥0.50 かつ片側95%下限>0 をgateとする",
+      "status": "retracted"
+    },
+    {
+      "item_id": "import-completion-threshold",
+      "summary": "import完遂率: n=25、母比率下限80%、通過24/25以上(Wilson片側95%)",
+      "status": "active"
+    },
+    {
+      "item_id": "sample-bias-handling",
+      "summary": "標本バイアスの扱い: 募集前に4分類を固定し、非利害層8人以上を目標に層別結果を出す(terra)",
+      "status": "active"
+    }
   ],
   "retractions": [
     {
