@@ -3,6 +3,8 @@
   "design_options_id": "living-twin-discovery-scope-2026-08-17",
   "intent_ref": {
     "logical_id": "living-twin:decision-01-pivot-and-scope",
+    "uri": "docs/decisions/decision-01-pivot-and-scope-2026-08-17.md",
+    "source_repo": "living-twin",
     "content_digest": "sha256:6d360ab47ef9c426d64e32b935646cce71a05902989106431b3fba05de843907"
   },
   "options": [
