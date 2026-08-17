@@ -11,34 +11,50 @@
 // (detected structurally -- see collectArtifactRefs below -- not via schema awareness, matching
 // this repo's existing contracts/shared/personal-dimensions.mjs style):
 //
-//   1. content_digest present + uri present + uri resolves to a real file INSIDE the given repo
-//      root -> the file is actually read and sha256'd; a mismatch is an ERROR.
-//   2. content_digest present + uri present + uri resolves inside the repo root but no such file
-//      exists there -> ERROR (an internal ref that claims to be checkable but is not is a broken
-//      ref, not merely an unverifiable external one).
-//   3. content_digest present + (uri absent, OR uri resolves outside the repo root) -> UNVERIFIABLE,
-//      not an error and not silently dropped -- null-not-zero (this repo's own recurring
-//      principle): "nobody could check this" and "it checked out fine" must never collapse into
-//      the same silent non-report. Deliberately independent of what happens to exist on the
-//      machine running this script: a uri outside the repo root is unverifiable in CI even if it
-//      happens to resolve locally, so the verdict does not depend on the runner's disk layout.
-//   4. digest_omitted_reason present -> not subject to digest verification at all, but the reason
+//   1. content_digest present + no uri -> ERROR. The schema itself requires uri whenever
+//      content_digest is present (added after a real incident: a reviewer, unable to tell what an
+//      undocumented digest was FOR, had to brute-force sha256-scan an external repo to guess it --
+//      and misattributed one, overwriting a correct value with a wrong one). This module re-checks
+//      it independently of schema validation so it still catches the case when used standalone
+//      (see CLI below) against JSON that was never schema-validated at all.
+//   2. content_digest present + uri present + `source_repo` present -> UNVERIFIABLE, always,
+//      regardless of whether `uri` happens to also resolve to something inside this repo root by
+//      coincidence -- `source_repo` is a declaration that `uri` is relative to a DIFFERENT repo,
+//      so resolving it against THIS repo's root would either find nothing or find the wrong file.
+//   3. content_digest present + uri present + no source_repo + uri resolves to a real file INSIDE
+//      the given repo root -> the file is actually read and sha256'd; a mismatch is an ERROR.
+//   4. content_digest present + uri present + no source_repo + uri resolves inside the repo root
+//      but no such file exists there -> ERROR (an internal ref that claims to be checkable but is
+//      not is a broken ref, not merely an unverifiable external one).
+//   5. content_digest present + uri present + no source_repo + uri resolves OUTSIDE the repo root
+//      -> UNVERIFIABLE (a uri that names an external path without declaring `source_repo` is still
+//      honestly unverifiable, never silently accepted). Deliberately independent of what happens to
+//      exist on the machine running this script: verifiability must not depend on the runner's
+//      local disk layout, only on the declared shape of the ref itself.
+//   6. digest_omitted_reason present -> not subject to digest verification at all, but the reason
 //      text itself must be non-empty (defense in depth: the schema's own minLength:1 already
 //      guarantees this when going through full schema validation, but this module is also meant
 //      to be usable standalone against arbitrary JSON, see CLI below).
-//   5. Within one record, the SAME content_digest attached to two DIFFERENT logical_id values is
+//   7. Within one record, the SAME content_digest attached to two DIFFERENT logical_id values is
 //      reported as a WARNING (never an error) -- this is legitimate when two refs really do point
 //      at the same underlying document (decision/v1's own options_ref/critic_ref consolidation
 //      note), but it is also the exact shape a fabricated-by-copy-paste digest takes, so it is
 //      always surfaced rather than only detected by accident.
+//   8. Within one record, the SAME logical_id attached to two DIFFERENT content_digest values is
+//      an ERROR, not a warning (unlike check 7's reverse direction): two refs claiming to be the
+//      SAME logical thing cannot honestly have two different real contents at once -- this is the
+//      exact failure mode of treating an identifier as "a field to fill in" rather than a name for
+//      a specific real document (the same root cause a fabricated digest has, just visible from
+//      the identifier side instead of the hash side).
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
 // Every string in the returned `errors` array is already prefixed with a stable reason-code
-// token before its first colon (`artifact_digest_mismatch`, `artifact_ref_uri_missing_file`, or
-// `artifact_digest_omitted_reason_empty`) -- callers can push these straight into a reasons list
-// that uses this repo's existing `reasonCodesOf` convention (split on the first colon) without
-// re-wrapping them in another prefix.
+// token before its first colon (`artifact_digest_mismatch`, `artifact_ref_uri_missing_file`,
+// `artifact_digest_omitted_reason_empty`, `artifact_ref_digest_without_uri`, or
+// `artifact_ref_logical_id_digest_conflict`) -- callers can push these straight into a reasons
+// list that uses this repo's existing `reasonCodesOf` convention (split on the first colon)
+// without re-wrapping them in another prefix.
 //
 // Usage as a library:
 //   import { verifyArtifactDigests } from "./verify-artifact-digests.mjs";
@@ -121,13 +137,19 @@ export function verifyArtifactDigests(records, { repoRoot = DEFAULT_REPO_ROOT } 
   for (const { label, record } of records) {
     const refs = collectArtifactRefs(record);
 
-    // Check 5: same content_digest, different logical_id, within this one record.
+    // Check 7: same content_digest, different logical_id, within this one record.
     const entriesByDigest = new Map();
+    // Check 8: same logical_id, different content_digest, within this one record.
+    const entriesByLogicalId = new Map();
     for (const { path: refPath, ref } of refs) {
       if (typeof ref.content_digest !== "string") continue;
-      const list = entriesByDigest.get(ref.content_digest) ?? [];
-      list.push({ path: refPath, logical_id: ref.logical_id });
-      entriesByDigest.set(ref.content_digest, list);
+      const byDigest = entriesByDigest.get(ref.content_digest) ?? [];
+      byDigest.push({ path: refPath, logical_id: ref.logical_id });
+      entriesByDigest.set(ref.content_digest, byDigest);
+
+      const byLogicalId = entriesByLogicalId.get(ref.logical_id) ?? [];
+      byLogicalId.push({ path: refPath, content_digest: ref.content_digest });
+      entriesByLogicalId.set(ref.logical_id, byLogicalId);
     }
     for (const [digest, entries] of entriesByDigest) {
       const distinctLogicalIds = new Set(entries.map((e) => e.logical_id));
@@ -137,8 +159,16 @@ export function verifyArtifactDigests(records, { repoRoot = DEFAULT_REPO_ROOT } 
         );
       }
     }
+    for (const [logicalId, entries] of entriesByLogicalId) {
+      const distinctDigests = new Set(entries.map((e) => e.content_digest));
+      if (distinctDigests.size > 1) {
+        errors.push(
+          `artifact_ref_logical_id_digest_conflict: ${label}: logical_id ${JSON.stringify(logicalId)} has ${distinctDigests.size} different content_digest values (${entries.map((e) => `${e.path}=${e.content_digest}`).join(", ")}) within the same record -- the same logical_id cannot honestly name two different real contents at once.`,
+        );
+      }
+    }
 
-    // Checks 1-4, per ref.
+    // Checks 1-6, per ref.
     for (const { path: refPath, ref } of refs) {
       const where = `${label} ${refPath} (logical_id=${JSON.stringify(ref.logical_id)})`;
 
@@ -152,7 +182,14 @@ export function verifyArtifactDigests(records, { repoRoot = DEFAULT_REPO_ROOT } 
 
       const uri = typeof ref.uri === "string" ? ref.uri : null;
       if (!uri) {
-        unverifiable.push(`${where}: content_digest ${ref.content_digest} given but no uri -- cannot check`);
+        errors.push(`artifact_ref_digest_without_uri: ${where}: content_digest ${ref.content_digest} given but no uri -- cannot be verified OR falsified by anyone`);
+        continue;
+      }
+      const sourceRepo = typeof ref.source_repo === "string" ? ref.source_repo : null;
+      if (sourceRepo) {
+        unverifiable.push(
+          `${where}: uri ${JSON.stringify(uri)} is relative to source_repo ${JSON.stringify(sourceRepo)}, not this repo -- cannot check`,
+        );
         continue;
       }
       const { abs, withinRepo } = resolveUri(uri, repoRoot);
