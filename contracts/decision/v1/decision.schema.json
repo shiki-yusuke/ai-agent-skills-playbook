@@ -30,34 +30,71 @@
   "allOf": [
     {
       "description": "status==\"superseded\" MUST carry a superseded_by ref (which new decision replaced this one) -- the exact gap i-shadow-record-01's own recorded case would otherwise leave silent (decision-03 was superseded by decision-04, and that fact must be a structural pointer, not just prose).",
-      "if": { "properties": { "status": { "const": "superseded" } } },
-      "then": { "required": ["superseded_by"] }
+      "if": {
+        "properties": {
+          "status": {
+            "const": "superseded"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "superseded_by"
+        ]
+      }
     },
     {
       "description": "The other direction of the same tagged union (mirrors estimate/v2's own predicted/abstained if/then pair): an active decision has not been superseded by anything, so superseded_by must not be present at all, not merely optional.",
-      "if": { "properties": { "status": { "const": "active" } } },
-      "then": { "not": { "required": ["superseded_by"] } }
+      "if": {
+        "properties": {
+          "status": {
+            "const": "active"
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "superseded_by"
+          ]
+        }
+      }
     },
     {
       "description": "null-not-zero for estimate_refs (i-shadow-record-01 section 4, 'finding 3'): an empty estimate_refs[] MUST carry estimate_refs_omitted_reason explaining why no estimate is attached, so 'not estimated' and 'forgot to attach the estimate' never collapse into the same silent empty array.",
-      "if": { "properties": { "estimate_refs": { "maxItems": 0 } } },
-      "then": { "required": ["estimate_refs_omitted_reason"] }
+      "if": {
+        "properties": {
+          "estimate_refs": {
+            "maxItems": 0
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "estimate_refs_omitted_reason"
+        ]
+      }
     }
   ],
   "properties": {
-    "schema_version": { "const": "decision/v1" },
+    "schema_version": {
+      "const": "decision/v1"
+    },
     "decision_id": {
       "type": "string",
       "minLength": 1,
       "description": "Stable identifier for this specific decision record (e.g. \"living-twin-decision-01-pivot-and-scope\"). One D10 conceptual decision.yaml MAY end up as several decision/v1 records over time if it is revisited -- see the Versioning section of docs/protocols/decision-v1.md for why v1 does not force a single-file-per-topic model (the real recorded case split into four, i-shadow-record-01 section 2(a))."
     },
-    "intent_ref": { "$ref": "#/$defs/ref", "description": "Same field as design-options/v1's own intent_ref -- the intent this decision (via its options) ultimately serves." },
+    "intent_ref": {
+      "$ref": "#/$defs/artifact_ref",
+      "description": "Same field as design-options/v1's own intent_ref -- the intent this decision (via its options) ultimately serves."
+    },
     "options_ref": {
-      "$ref": "#/$defs/ref",
+      "$ref": "#/$defs/artifact_ref",
       "description": "The design-options/v1 document `selected_option_id`, `no_action_option_id`, and `rejected_options[].option_id` are all resolved against. NOT cross-checked against an actual design-options/v1 fixture by this contract's own verify-fixtures.mjs -- each contract in this repo validates only within its own fixtures directory (see docs/protocols/decision-v1.md's 'Relationship to design-options/v1' section for why a cross-contract referential check is deliberately out of scope for v1)."
     },
     "critic_ref": {
-      "$ref": "#/$defs/ref",
+      "$ref": "#/$defs/artifact_ref",
       "description": "Per this repo's v1 consolidation (see design-options/v1's own top-level description), critic material lives inside the SAME design-options/v1 document as the options themselves (that document's own critic_reviews[]) -- so critic_ref and options_ref MAY legitimately resolve to the identical {logical_id, content_digest}. This is not a schema bug or a redundant field; D10 named these as two separate artifacts (design/critic.yaml vs design/options-final.yaml) because it expected them to be produced by separate steps, and v1 keeps both field names (for forward compatibility with a future version that DOES split them back out) while allowing them to point at the same place today."
     },
     "selected_option_id": {
@@ -66,7 +103,10 @@
       "description": "The option_id (from the document options_ref points at) that was actually chosen."
     },
     "no_action_option_id": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "The option_id representing 'do not proceed with this decision's action at all' (e.g. a Kill option), when one was explicitly framed among the considered options. NULL, not omitted, when no such option was distinctly framed -- null-not-zero (docs/protocols/decision-v1.md): 'a clean do-nothing option existed and its id is X' and 'nobody framed a do-nothing option for this decision' are different facts, and the field must say which. See no_action_rationale, which is required either way."
     },
     "no_action_rationale": {
@@ -85,7 +125,10 @@
     },
     "decision_channel": {
       "type": "object",
-      "required": ["channel_id", "description"],
+      "required": [
+        "channel_id",
+        "description"
+      ],
       "properties": {
         "channel_id": {
           "type": "string",
@@ -103,19 +146,30 @@
     "conflicts_with": {
       "type": "array",
       "description": "REQUIRED (may be empty). This is the field i-shadow-record-01 section 2(c) calls the single most important gap D10 left: `decision_maker: human` alone cannot detect that two different channels gave contradictory instructions on the same day. An empty array is an explicit, positive claim -- 'checked, no conflicting decision_channel was found for this decision's scope' -- not silence about whether the check was ever done; a producer that never checked MUST NOT emit an empty array as if it had (this is a process discipline this schema cannot enforce mechanically, the same limits every other 'state an honest not_measured/not_checked value' field in this repo's contracts has).",
-      "items": { "$ref": "#/$defs/conflict" }
+      "items": {
+        "$ref": "#/$defs/conflict"
+      }
     },
-    "rationale": { "type": "string", "minLength": 1 },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
     "accepted_assumptions": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "Assumptions this decision explicitly accepts as unverified rather than treating as established (D10's own field; e.g. decision-02's own 'p0=10%/p1=30% are terra's judgment, not derived from real prior data')."
     },
     "accepted_unknowns": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "Things this decision explicitly leaves unresolved rather than silently assuming resolved (D10's own field)."
     },
     "rejected_options": {
@@ -123,9 +177,16 @@
       "description": "May be empty (a decision that only ever had one option under consideration rejects nothing). Each entry names why one specific option was not chosen.",
       "items": {
         "type": "object",
-        "required": ["option_id", "reason_codes", "notes"],
+        "required": [
+          "option_id",
+          "reason_codes",
+          "notes"
+        ],
         "properties": {
-          "option_id": { "type": "string", "minLength": 1 },
+          "option_id": {
+            "type": "string",
+            "minLength": 1
+          },
           "reason_codes": {
             "type": "array",
             "minItems": 1,
@@ -144,7 +205,10 @@
             },
             "description": "A closed set grounded in the recorded case's own actual rejections (docs/protocols/decision-v1.md documents which real rejection each code traces to). EVIDENCE_CONTRADICTED = direct evidence against the option's core premise (decision-01 rejecting the unmodified original plan: 3 of 4 differentiation hypotheses falsified). UNVALIDATED_CORE_ASSUMPTION = the option depends on a mechanism never established (same rejection: the core 'self-discovery' experience unproven, r ~= 0.3). PRIOR_ART_FAILURE_PRECEDENT = the option's category has a documented track record of failure (decision-01 rejecting the AI-Social pivot: three prior AI-only-SNS attempts all failed). REGULATORY_OR_LEGAL_RISK = the option carries legal/regulatory exposure judged too heavy (same rejection: companion-style dependency and regulatory risk). STATISTICALLY_UNDERPOWERED = the option's own judgment criterion cannot actually be evaluated at the sample size available (decision-02's Barnum-threshold rejection of the sol-proposed values: n=25 cannot reliably detect the claimed effect size). GATE_TOO_PERMISSIVE_RISK_OF_FALSE_PASS = the option's threshold would pass too easily to mean anything (decision-02 rejecting sol_proposed_thresholds in favor of terra's: sol's one-sided 80% CI would make the gate easier to pass in a way that undermines the point of pre-registration). ALTERNATIVE_OPTION_STRONGER_ON_NET = rejected for a comparative reason rather than an intrinsic flaw (decision-01 rejecting Kill: not because Kill was flawed, but because the selected option's opportunity/downside trade-off was judged better). OUTDATED_EVALUATION_CRITERION = the option would be correctly rejected only by a criterion that itself no longer applies after a pivot (decision-01 D-6's own warning against judging the post-pivot product by the pre-pivot core-experience gate). OTHER = any other reason, always paired with `notes` (required on every entry regardless of code, precisely so OTHER is never a bare, unexplained code)."
           },
-          "notes": { "type": "string", "minLength": 1 }
+          "notes": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "additionalProperties": false
       }
@@ -155,11 +219,26 @@
       "description": "This decision decomposed into its individual named sub-decisions (e.g. decision-01's own D-1..D-9, or decision-02's own §4(a)/(b)/(c) rows) -- NOT a D10 field. Added in v1 specifically so `retractions[].retracted_item_ref` has a real, checkable target: without some notion of 'item' inside a decision, a partial retraction (i-shadow-record-01 section 2(a)) has nothing non-dangling to point at.",
       "items": {
         "type": "object",
-        "required": ["item_id", "summary", "status"],
+        "required": [
+          "item_id",
+          "summary",
+          "status"
+        ],
         "properties": {
-          "item_id": { "type": "string", "minLength": 1 },
-          "summary": { "type": "string", "minLength": 1 },
-          "status": { "enum": ["active", "retracted"] }
+          "item_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "active",
+              "retracted"
+            ]
+          }
         },
         "additionalProperties": false
       }
@@ -169,7 +248,11 @@
       "description": "May be empty (most decisions retract nothing). i-shadow-record-01 section 2(a)'s own finding: decision-02's Barnum threshold was retracted mid-document (its 追記v2) while the rest of that decision stayed active -- a fact D10's document-level status(active|superseded) alone cannot express.",
       "items": {
         "type": "object",
-        "required": ["retracted_item_ref", "retracted_at", "reason"],
+        "required": [
+          "retracted_item_ref",
+          "retracted_at",
+          "reason"
+        ],
         "properties": {
           "retracted_item_ref": {
             "type": "string",
@@ -180,7 +263,10 @@
             "type": "string",
             "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
           },
-          "reason": { "type": "string", "minLength": 1 },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
           "superseded_by_item_ref": {
             "type": "string",
             "minLength": 1,
@@ -193,7 +279,9 @@
     "estimate_refs": {
       "type": "array",
       "description": "May be empty -- see estimate_refs_omitted_reason, required whenever it is (null-not-zero, i-shadow-record-01 section 4's 'finding 3'). When non-empty, each entry points at an option-specific estimate/v2 decision.",
-      "items": { "$ref": "#/$defs/ref" }
+      "items": {
+        "$ref": "#/$defs/artifact_ref"
+      }
     },
     "estimate_refs_omitted_reason": {
       "type": "string",
@@ -205,29 +293,105 @@
       "pattern": "^sha256:[0-9a-f]{64}$",
       "description": "Content digest of the evidence this decision was actually based on at decision time (D10's own field). Unlike artifact_digest in release-observation/v0, this is not nullable in v1 -- a decision is always made on the strength of SOME evidence document that can be hashed; v1 has not yet observed a real case where that is not true."
     },
-    "status": { "enum": ["active", "superseded"] },
+    "status": {
+      "enum": [
+        "active",
+        "superseded"
+      ]
+    },
     "superseded_by": {
-      "$ref": "#/$defs/ref",
+      "$ref": "#/$defs/decision_ref",
       "description": "The decision_id (as a ref) of the decision/v1 record that superseded this one. Required exactly when status==\"superseded\" and forbidden exactly when status==\"active\" (schema if/then above)."
     }
   },
   "additionalProperties": false,
   "$defs": {
-    "ref": {
+    "artifact_ref": {
+      "description": "Points at an artifact OUTSIDE this ledger -- an external file whose content can (or legitimately cannot) be pinned by a content_digest. Used by intent_ref, options_ref, critic_ref, and estimate_refs[] (this schema's own external-document fields). Split out from the single $defs/ref this schema used before (sol architect-review, Option B): a ref that names another decision/v1 record IN this same ledger has a different resolution mechanism (logical_id against decision_id, not a hash against file bytes) and different constraints -- see $defs/decision_ref below for that case, and this repo's docs/protocols/decision-v1.md for the fabricated-digest incident (real fixtures were found with a formally-valid but semantically fabricated content_digest) this split, plus contracts/shared/verify-artifact-digests.mjs's actual byte-level check, exists to close.",
       "type": "object",
-      "required": ["logical_id"],
+      "required": [
+        "logical_id"
+      ],
       "properties": {
-        "logical_id": { "type": "string", "minLength": 1 },
-        "content_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+        "logical_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uri": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where to fetch the artifact from, when its content_digest is meant to be independently checkable (contracts/shared/verify-artifact-digests.mjs). A path that resolves to a real file inside THIS repo is actually verified byte-for-byte; anything else (a path into a collaborator's private working repo that is not vendored here, for instance) is honestly reported as unverifiable rather than silently treated as passing. Present or absent independently of content_digest -- a producer may know where an artifact lives without being able to hash it (or vice versa)."
+        },
+        "content_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "digest_omitted_reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why content_digest is absent. REQUIRED whenever content_digest is omitted -- an unverifiable reference must say so rather than being filled with a placeholder digest. Real case: the originating brief was delivered as prose in a chat session and never persisted as a file, so no digest could ever be computed for it. Same null-not-zero rule as estimate_refs_omitted_reason: 'not digestible' and 'digest happens to be missing' are different facts and must not be conflated."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "description": "content_digest absent -> digest_omitted_reason required (unchanged null-not-zero rule from the pre-split $defs/ref).",
+          "if": {
+            "not": {
+              "required": [
+                "content_digest"
+              ]
+            }
+          },
+          "then": {
+            "required": [
+              "digest_omitted_reason"
+            ]
+          }
+        },
+        {
+          "description": "content_digest present -> digest_omitted_reason forbidden (sol architect-review must-fix: the two fields are mutually exclusive, not merely independently optional -- 'here is the digest' and 'the digest is missing because X' cannot both be true of the same reference at once; invalid-artifact-ref-digest-and-reason-both.json exercises this).",
+          "if": {
+            "required": [
+              "content_digest"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "digest_omitted_reason"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "decision_ref": {
+      "description": "Points at ANOTHER decision/v1 record within the SAME ledger (the collection of records checked together by verify-fixtures.mjs) -- NOT an external artifact. Used by superseded_by and conflicts_with[].conflicting_decision_ref. Resolved by logical_id alone against the target record's own decision_id (verify-fixtures.mjs's cross-record checks), the structural analogue of what content_digest does for artifact_ref, but never itself content-hashed. Deliberately carries no content_digest / digest_omitted_reason -- additionalProperties:false below rejects both if present (sol architect-review must-fix; invalid-decision-ref-with-digest.json exercises this): a forward reference such as superseded_by is written before the decision it points at exists, so no digest could ever be computed for it at write time, and even for a backward-pointing ref 'digest of what' is not well-defined for a decision record the way it is for a frozen document -- serialization is not stable across re-serialization, and 'the decision' as a semantic entity is not reducible to any one byte-for-byte encoding of it. A future version MAY revisit this if a real case is observed needing it; v1 does not attempt to pre-solve that.",
+      "type": "object",
+      "required": [
+        "logical_id"
+      ],
+      "properties": {
+        "logical_id": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     },
     "conflict": {
       "type": "object",
-      "required": ["conflicting_decision_ref", "conflicting_channel_id", "detected_at", "resolution", "resolution_notes"],
+      "required": [
+        "conflicting_decision_ref",
+        "conflicting_channel_id",
+        "detected_at",
+        "resolution",
+        "resolution_notes"
+      ],
       "properties": {
         "conflicting_decision_ref": {
-          "$ref": "#/$defs/ref",
+          "$ref": "#/$defs/decision_ref",
           "description": "The decision/v1 record this one was found to conflict with. When a collection of decision/v1 records is checked together, this MUST resolve to some other record's decision_id in that same collection (a semantic check, verify-fixtures.mjs, mirroring release-observation/v0's own rollback_of dangling-reference check) -- a conflict claimed against a decision nobody has on record is either a typo or a recording gap."
         },
         "conflicting_channel_id": {
@@ -240,9 +404,16 @@
           "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
         },
         "resolution": {
-          "enum": ["this_decision_supersedes_after_reconciliation", "reconciled_no_conflict_after_clarification", "unresolved"]
+          "enum": [
+            "this_decision_supersedes_after_reconciliation",
+            "reconciled_no_conflict_after_clarification",
+            "unresolved"
+          ]
         },
-        "resolution_notes": { "type": "string", "minLength": 1 }
+        "resolution_notes": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "additionalProperties": false
     }

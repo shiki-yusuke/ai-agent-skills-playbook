@@ -3,15 +3,15 @@
   "decision_id": "living-twin-decision-03-discovery-scope",
   "intent_ref": {
     "logical_id": "living-twin-decision-01-pivot-and-scope",
-    "content_digest": "sha256:a2ead0a6ed7fc50015924785ff789050971b5b04fd2dac7487ccbc05da174f60"
+    "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options_ref": {
     "logical_id": "living-twin-discovery-scope-2026-08-17",
-    "content_digest": "sha256:2699fcf680934ff1bf313a67f54958a8e5aed3eb918797cbe5bd6be2a8b46805"
+    "content_digest": "sha256:a083df5ad6658422599053ff436edeee82effc3168117e44416e50f8fb2ae2c2"
   },
   "critic_ref": {
     "logical_id": "living-twin-discovery-scope-2026-08-17",
-    "content_digest": "sha256:2699fcf680934ff1bf313a67f54958a8e5aed3eb918797cbe5bd6be2a8b46805"
+    "content_digest": "sha256:8da62bdf3e1d2aa511589c75e420eab1a6bc713d5b94f45e617014f6c5beb2df"
   },
   "selected_option_id": "option_c_split_phases",
   "no_action_option_id": "option_a_exploratory_only",
@@ -34,15 +34,33 @@
   "rejected_options": [
     {
       "option_id": "option_b_n25_kill_capable",
-      "reason_codes": ["OTHER"],
+      "reason_codes": [
+        "OTHER"
+      ],
       "notes": "『25人(うち非親密8人)を集められるか』への回答がNoであったため不採用(decision-03 decided_by)。"
     }
   ],
   "decision_items": [
-    { "item_id": "payment-kill-criterion", "summary": "支払(持続採用者)のkill基準: n=10で0人、n=12で0人、n=15で1人以下", "status": "active" },
-    { "item_id": "import-kill-criterion", "summary": "import完遂のkill基準: n=10で5/10以下、n=12で6/12以下、n=15で8/15以下", "status": "active" },
-    { "item_id": "barnum-no-kill-criterion", "summary": "Barnum(insight)はkill基準を置かない。探索実験として効果量と区間のみ記録", "status": "active" },
-    { "item_id": "seventy-percent-no-judgment", "summary": "その他の『≥70%』系(GD-A1/A3/C1/T2)はkill基準を置かず、数値を判定に使わない", "status": "active" }
+    {
+      "item_id": "payment-kill-criterion",
+      "summary": "支払(持続採用者)のkill基準: n=10で0人、n=12で0人、n=15で1人以下",
+      "status": "active"
+    },
+    {
+      "item_id": "import-kill-criterion",
+      "summary": "import完遂のkill基準: n=10で5/10以下、n=12で6/12以下、n=15で8/15以下",
+      "status": "active"
+    },
+    {
+      "item_id": "barnum-no-kill-criterion",
+      "summary": "Barnum(insight)はkill基準を置かない。探索実験として効果量と区間のみ記録",
+      "status": "active"
+    },
+    {
+      "item_id": "seventy-percent-no-judgment",
+      "summary": "その他の『≥70%』系(GD-A1/A3/C1/T2)はkill基準を置かず、数値を判定に使わない",
+      "status": "active"
+    }
   ],
   "retractions": [],
   "estimate_refs": [],
