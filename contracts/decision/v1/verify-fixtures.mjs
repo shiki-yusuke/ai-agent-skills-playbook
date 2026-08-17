@@ -13,6 +13,13 @@
 //      `decision_id` within the same checked collection of records -- only checkable across
 //      more than one record at a time, the same reason release-observation/v0 has its own
 //      rollback_of dangling-reference check (a "collection" fixture type).
+//   4. every artifact_ref (intent_ref / options_ref / critic_ref / estimate_refs[]) whose
+//      content_digest names a file reachable inside this repo actually matches that file's real
+//      sha256 (contracts/shared/verify-artifact-digests.mjs) -- the check this contract was
+//      missing when a real PR's fixtures were found to carry a formally-valid but fabricated
+//      content_digest (sol architect-review must-fix 1). Refs whose uri is absent or points
+//      outside this repo (e.g. the living-twin fixtures below) are reported as unverifiable, not
+//      silently accepted -- see that module's own header for the full null-not-zero rationale.
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
@@ -23,9 +30,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createValidator } from "../../shared/schema-validator.mjs";
 import { FORBIDDEN_PERSONAL_DIMENSION_KEYS, scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
+import { verifyArtifactDigests } from "../../shared/verify-artifact-digests.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
+const REPO_ROOT = path.join(HERE, "..", "..", "..");
 const { validate } = createValidator(HERE);
 
 function dedupe(arr) {
@@ -69,11 +78,24 @@ function checkRetractionsResolveAndAreConsistent(record) {
   return issues;
 }
 
-function checkRecord(record) {
+// Accumulated across every fixture checked by this run (not per-fixture) so main() can print the
+// required always-on unverifiable/warning summary at the end -- null-not-zero: "checked, none
+// found" and "never actually checked" must stay visibly different, the same reason
+// contracts/shared/verify-artifact-digests.mjs itself never folds these into pass/fail.
+const allUnverifiable = [];
+const allWarnings = [];
+
+function checkRecord(record, label) {
   const reasons = [];
   reasons.push(...validate("decision.schema.json", record));
   reasons.push(...scanPersonalDimensions(record).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...checkRetractionsResolveAndAreConsistent(record));
+
+  const digestResult = verifyArtifactDigests([{ label, record }], { repoRoot: REPO_ROOT });
+  reasons.push(...digestResult.errors);
+  allUnverifiable.push(...digestResult.unverifiable);
+  allWarnings.push(...digestResult.warnings);
+
   return dedupe(reasons);
 }
 
@@ -106,10 +128,10 @@ function runCollectionFixture(entry) {
   const records = entry.files.records.map(readFixtureJson);
   const problems = [];
 
-  for (const record of records) {
-    const reasons = checkRecord(record);
+  records.forEach((record, i) => {
+    const reasons = checkRecord(record, `${entry.id} [${entry.files.records[i]}]`);
     if (reasons.length > 0) problems.push(`record not individually valid: ${reasons.join("; ")}`);
-  }
+  });
   problems.push(...checkConflictReferencesResolve(records));
 
   return { category: problems.length > 0 ? "reject" : "accept", reasons: problems };
@@ -120,7 +142,7 @@ function runFixture(entry) {
     return runCollectionFixture(entry);
   }
   const instance = readFixtureJson(entry.files.record);
-  const reasons = checkRecord(instance);
+  const reasons = checkRecord(instance, entry.id);
   return { category: reasons.length > 0 ? "reject" : "accept", reasons };
 }
 
@@ -161,6 +183,18 @@ function main() {
   }
 
   console.log(`\n${manifest.fixtures.length - failures}/${manifest.fixtures.length} fixtures passed.`);
+
+  // Always printed -- null-not-zero: a zero count here must be visibly "checked, zero found",
+  // never mistaken for "not checked" (contracts/shared/verify-artifact-digests.mjs's own header).
+  // Deduped: a record shared between an individual fixture and a "collection" fixture (e.g.
+  // decision-03/decision-04, also reused verbatim by accept-conflict-resolves-collection) is
+  // digest-checked once per fixture it appears in, so the same finding can otherwise repeat.
+  const uniqueUnverifiable = dedupe(allUnverifiable);
+  const uniqueWarnings = dedupe(allWarnings);
+  console.log(`\nartifact_ref digest verification: ${uniqueUnverifiable.length} unverifiable, ${uniqueWarnings.length} warning(s).`);
+  for (const u of uniqueUnverifiable) console.log(`  [unverifiable] ${u}`);
+  for (const w of uniqueWarnings) console.log(`  [warning] ${w}`);
+
   if (failures > 0) {
     console.error(`\n${failures} fixture(s) FAILED.`);
     process.exit(1);
