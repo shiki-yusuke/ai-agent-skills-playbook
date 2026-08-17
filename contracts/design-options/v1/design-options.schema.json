@@ -49,7 +49,7 @@
   "additionalProperties": false,
   "$defs": {
     "artifact_ref": {
-      "description": "Same {logical_id, content_digest?} shape trace/v1 uses for an artifact_revision node identity (docs/protocols/trace-v1.md section 3): logical_id is the stable name of the thing being pointed at, content_digest (when present) pins one specific revision of it. Absent (not null) when no single revision can be pinned -- see each field's own description for when that legitimately happens. Named artifact_ref (split from the single $defs/ref this schema used before, sol architect-review Option B) to match decision/v1's own two-way split of the same shape: this document type has no internal-ledger cross-reference concept of its own, so every ref in THIS schema is an artifact_ref, but $defs/decision_ref is still declared below (unused here) so both schemas keep an identical $defs shape.",
+      "description": "Same {logical_id, content_digest?} shape trace/v1 uses for an artifact_revision node identity (docs/protocols/trace-v1.md section 3): logical_id is the stable name of the thing being pointed at, content_digest (when present) pins one specific revision of it. Absent (not null) when no single revision can be pinned -- see each field's own description for when that legitimately happens. Named artifact_ref (split from the single $defs/ref this schema used before, sol architect-review Option B) to match decision/v1's own two-way split of the same shape: this document type has no internal-ledger cross-reference concept of its own, so every ref in THIS schema is an artifact_ref, but $defs/decision_ref is still declared below (unused here) so both schemas keep an identical $defs shape. `uri` is REQUIRED whenever `content_digest` is present -- see decision/v1's own $defs/artifact_ref description for the incident (a digest with no recorded path led a reviewer to misattribute and then overwrite a correct value) that made this required rather than merely encouraged.",
       "type": "object",
       "required": [
         "logical_id"
@@ -62,7 +62,12 @@
         "uri": {
           "type": "string",
           "minLength": 1,
-          "description": "Where to fetch the artifact from, when its content_digest is meant to be independently checkable (contracts/shared/verify-artifact-digests.mjs). A path that resolves to a real file inside THIS repo is actually verified byte-for-byte; anything else is honestly reported as unverifiable rather than silently treated as passing. Present or absent independently of content_digest."
+          "description": "Where to fetch the artifact from. REQUIRED whenever content_digest is present -- optional when digest_omitted_reason is used instead. A path that resolves to a real file inside THIS repo is actually verified byte-for-byte (contracts/shared/verify-artifact-digests.mjs); a path into a different repo (see `source_repo` below) is honestly reported as unverifiable rather than silently treated as passing."
+        },
+        "source_repo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Set when `uri` is a path relative to a DIFFERENT repo than the one containing this document, not relative to this repo. A ref carrying `source_repo` is always reported `unverifiable` by contracts/shared/verify-artifact-digests.mjs -- printed in the required unverifiable count/list, never silently skipped. Omit entirely when `uri` is relative to this same repo."
         },
         "content_digest": {
           "type": "string",
@@ -88,6 +93,32 @@
           "then": {
             "required": [
               "digest_omitted_reason"
+            ]
+          }
+        },
+        {
+          "description": "content_digest present -> uri required (see this $def's own top-level description).",
+          "if": {
+            "required": [
+              "content_digest"
+            ]
+          },
+          "then": {
+            "required": [
+              "uri"
+            ]
+          }
+        },
+        {
+          "description": "source_repo present -> uri required (source_repo is metadata about a uri; without one it names nothing).",
+          "if": {
+            "required": [
+              "source_repo"
+            ]
+          },
+          "then": {
+            "required": [
+              "uri"
             ]
           }
         },
@@ -199,10 +230,11 @@
           "enum": [
             "different_lineage",
             "same_lineage_different_order",
+            "same_lineage_different_session",
             "same_session",
             "human_third_party"
           ],
-          "description": "D10's own independence_status field, made a closed enum per i-shadow-record-01 section 2(d)'s finding: the platform design's original 'same_generation' free-form note is not enough to prevent double-counting. `different_lineage` = a genuinely separate model family/provider (or a human third party) reviewed without seeing the generator's reasoning. `same_lineage_different_order` = the SAME underlying model/engine reviewed again, only the reading order or framing changed. `same_session` = a self-critique inside the same generating session/context. `human_third_party` = a human who was not the decision maker and had no part in generating the options. CRITICAL RULE (verbatim from the real case, i-shadow-record-01 section 2(d), quoting the reviewing engine's own verdict on itself): reviews whose independence_status is `same_lineage_different_order` or `same_session` MUST NOT be counted as additional independent verification passes no matter how many of them exist -- two, or ten, reviews at `same_lineage_different_order` are still not equivalent to even one `different_lineage` review. Consumers of this field (including any future dashboard) must not sum critic_reviews.length as an 'independence count' without first filtering to `different_lineage` or `human_third_party`."
+          "description": "D10's own independence_status field, made a closed enum per i-shadow-record-01 section 2(d)'s finding: the platform design's original 'same_generation' free-form note is not enough to prevent double-counting. `different_lineage` = a genuinely separate model family/provider (or a human third party) reviewed without seeing the generator's reasoning. `same_lineage_different_order` = the SAME underlying model/engine reviewed again, only the reading order or framing changed. `same_lineage_different_session` = the same engine lineage as the generator, but a genuinely DIFFERENT session did the reviewing (not the session that generated the options, and not merely the same session re-run in a different order) -- added after this contract's own real fixtures were found using `same_session` for exactly this case, which understates the (still non-independent) distinction between 'reviewed by the generating session itself' and 'reviewed by a separate session on the same engine lineage'. `same_session` = a self-critique inside the same generating session/context. `human_third_party` = a human who was not the decision maker and had no part in generating the options. CRITICAL RULE (verbatim from the real case, i-shadow-record-01 section 2(d), quoting the reviewing engine's own verdict on itself): reviews whose independence_status is `same_lineage_different_order`, `same_lineage_different_session`, or `same_session` MUST NOT be counted as additional independent verification passes no matter how many of them exist -- two, or ten, reviews at any of these three values are still not equivalent to even one `different_lineage` review. Consumers of this field (including any future dashboard) must not sum critic_reviews.length as an 'independence count' without first filtering to `different_lineage` or `human_third_party`."
         },
         "critic_engine": {
           "type": "string",
