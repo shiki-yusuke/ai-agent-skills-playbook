@@ -307,7 +307,7 @@
   "additionalProperties": false,
   "$defs": {
     "artifact_ref": {
-      "description": "Points at an artifact OUTSIDE this ledger -- an external file whose content can (or legitimately cannot) be pinned by a content_digest. Used by intent_ref, options_ref, critic_ref, and estimate_refs[] (this schema's own external-document fields). Split out from the single $defs/ref this schema used before (sol architect-review, Option B): a ref that names another decision/v1 record IN this same ledger has a different resolution mechanism (logical_id against decision_id, not a hash against file bytes) and different constraints -- see $defs/decision_ref below for that case, and this repo's docs/protocols/decision-v1.md for the fabricated-digest incident (real fixtures were found with a formally-valid but semantically fabricated content_digest) this split, plus contracts/shared/verify-artifact-digests.mjs's actual byte-level check, exists to close.",
+      "description": "Points at an artifact OUTSIDE this ledger -- an external file whose content can (or legitimately cannot) be pinned by a content_digest. Used by intent_ref, options_ref, critic_ref, and estimate_refs[] (this schema's own external-document fields). Split out from the single $defs/ref this schema used before (sol architect-review, Option B): a ref that names another decision/v1 record IN this same ledger has a different resolution mechanism (logical_id against decision_id, not a hash against file bytes) and different constraints -- see $defs/decision_ref below for that case, and this repo's docs/protocols/decision-v1.md for the fabricated-digest incident (real fixtures were found with a formally-valid but semantically fabricated content_digest) this split, plus contracts/shared/verify-artifact-digests.mjs's actual byte-level check, exists to close. `uri` is REQUIRED whenever `content_digest` is present (added after review: the original split still let a digest exist with no recorded path to check it against, which is exactly how a reviewer, forced to reverse-engineer a digest's target by brute-force sha256 scanning an external repo, misattributed a real value and then overwrote a correct digest with a wrong one -- see docs/protocols/decision-v1.md's own account of that incident).",
       "type": "object",
       "required": [
         "logical_id"
@@ -320,7 +320,12 @@
         "uri": {
           "type": "string",
           "minLength": 1,
-          "description": "Where to fetch the artifact from, when its content_digest is meant to be independently checkable (contracts/shared/verify-artifact-digests.mjs). A path that resolves to a real file inside THIS repo is actually verified byte-for-byte; anything else (a path into a collaborator's private working repo that is not vendored here, for instance) is honestly reported as unverifiable rather than silently treated as passing. Present or absent independently of content_digest -- a producer may know where an artifact lives without being able to hash it (or vice versa)."
+          "description": "Where to fetch the artifact from. REQUIRED whenever content_digest is present (see this $def's own top-level description for why) -- optional when digest_omitted_reason is used instead (a document that was never filed at all, e.g. a prose chat brief, has no path to record). A path that resolves to a real file inside THIS repo is actually verified byte-for-byte (contracts/shared/verify-artifact-digests.mjs); a path into a different repo (see `source_repo` below) is honestly reported as unverifiable rather than silently treated as passing."
+        },
+        "source_repo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Set when `uri` is a path relative to a DIFFERENT repo than the one containing this record (e.g. \"living-twin\" for this contract's own recorded case), not relative to this repo. A ref carrying `source_repo` is always reported `unverifiable` by contracts/shared/verify-artifact-digests.mjs -- CI has no access to that other repo to check the path against -- but it is still printed in the required unverifiable count/list, never silently skipped. Omit entirely when `uri` is relative to this same repo."
         },
         "content_digest": {
           "type": "string",
@@ -346,6 +351,32 @@
           "then": {
             "required": [
               "digest_omitted_reason"
+            ]
+          }
+        },
+        {
+          "description": "content_digest present -> uri required (review finding: a digest with no recorded path to check it against cannot be verified OR falsified by anyone, and previously let a reviewer's own hand-rolled reverse lookup silently mis-attribute one).",
+          "if": {
+            "required": [
+              "content_digest"
+            ]
+          },
+          "then": {
+            "required": [
+              "uri"
+            ]
+          }
+        },
+        {
+          "description": "source_repo present -> uri required (source_repo only has meaning as metadata about a uri; a source_repo with no uri names nothing).",
+          "if": {
+            "required": [
+              "source_repo"
+            ]
+          },
+          "then": {
+            "required": [
+              "uri"
             ]
           }
         },
