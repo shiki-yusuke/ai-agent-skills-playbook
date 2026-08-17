@@ -11,7 +11,10 @@ findings are cited without copying it in).
 
 Conformance fixtures live in
 [`contracts/design-options/v1/`](../../contracts/design-options/v1/); see the Verification
-section below.
+section below. Breaking-but-in-place revisions to this already-published v1 contract are recorded
+in [`contracts/design-options/v1/CHANGELOG.md`](../../contracts/design-options/v1/CHANGELOG.md) --
+see that file for the 2026-08-18 `independence_status` derivation revision this document already
+describes below.
 
 ## Purpose
 
@@ -29,9 +32,11 @@ decision (see [`decision/v1`](decision-v1.md)) is made -- a `decision/v1` record
   2") -- `falsifiers`/`key_assumptions`/`observable_proxies` were written unprompted in the real
   case, so requiring them costs nothing; `predicted_outcomes`/`rollback_strategy` were not, so
   requiring them is where this schema actually changes behavior.
-- At least one independent critic pass is recorded (`critic_reviews`, minItems 1), each carrying
-  a closed `independence_status` enum that cannot be summed naively into an "independence count"
-  (see below).
+- At least one critic pass is recorded (`critic_reviews`, minItems 1, `artifact_shapers` minItems
+  1). Whether any given pass actually counts as INDEPENDENT verification is a DERIVED value (see
+  "The three independence dimensions" below) -- `critic_reviews.length` is never itself an
+  independence count, and this contract's own real recorded case has zero qualifying reviews
+  among six recorded ones (see below).
 - A non-empty `decision_request` -- the gate this contract exists to enforce
   (`i-shadow-record-01` section 2(b)): a document cannot claim to be ready for a decision while
   leaving `open_questions`/`option_ids`/`what_would_change_the_answer` empty.
@@ -65,35 +70,125 @@ Schema: [`contracts/design-options/v1/design-options.schema.json`](../../contrac
 | `design_options_id` | yes | Stable identifier for this document (e.g. `"living-twin-discovery-scope-2026-08-17"`). |
 | `intent_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, source_repo?, content_digest?, digest_omitted_reason?}` -- what intent these options serve. `uri` is required whenever `content_digest` is present; `source_repo` names the external repo `uri` is relative to when it isn't this one (this directory's own living-twin-sourced accept fixtures set it to `"living-twin"`). See "The intent_ref content_digest gap" below for why `content_digest` itself is optional here specifically, and decision/v1's own "`artifact_ref` vs `decision_ref`" section for why this is `artifact_ref` (an external-document reference) rather than the ledger-internal `decision_ref` decision/v1 also declares (this schema has no ledger-internal reference of its own, but keeps an identical `$defs` shape to decision/v1 for consistency). |
 | `options[]` | yes, minItems 1 | Each: `option_id`, `summary`, `key_assumptions[]`, `falsifiers[]`, `observable_proxies[]`, `predicted_outcomes[]`, `rollback_strategy` -- all required, all non-empty. |
-| `critic_reviews[]` | yes, minItems 1 | Each: `independence_status` (closed enum, see below), `critic_engine`, `reviewed_at`, `target_option_ids[]`, optional `notes_ref` (also `$defs/artifact_ref`). |
+| `artifact_shapers[]` | yes, minItems 1 | Every participant (model or human) who helped form `options[]`. Each: `engine_ref` (`$defs/engine_ref`), `how` (`authored \| reviewed_brief \| reviewed_predecessor_options \| other`), `how_note` (required iff `how` is `other`). See "The three independence dimensions" below. |
+| `critic_reviews[]` | yes, minItems 1 | Each: `critic` (`$defs/engine_ref`), `prior_involvement` (closed enum, see below), `observation_scope_ref` (required iff `prior_involvement` is `none_observed_in_recorded_scope`), `review_output_ref` (`$defs/artifact_ref`, required), `reviewed_at`, `target_option_ids[]`, optional `notes_ref`. `independence_status` is NOT a field here -- it is derived, see below. |
 | `decision_request` | yes | `open_questions[]`, `option_ids[]`, `what_would_change_the_answer[]` -- all non-empty. |
 
-### The `independence_status` enum and why review counts cannot be summed
+### `$defs/engine_ref`
 
-`independence_status` is one of `different_lineage | same_lineage_different_order |
-same_lineage_different_session | same_session | human_third_party`. This closes D10's own
-free-form `same_generation` note into an enum, per
-`i-shadow-record-01` section 2(d) -- the real case's central finding on this point, in the
-reviewing engine's own words: *"手続的な盲検性はあるが epistemic な独立性はない。同じ sol を二巡
-させ読む順序だけ変えても、訓練由来の盲点・検索傾向・推論癖は強く相関する。独立した追試が二件ある
-とは数えない"* (procedural blindness exists, but not epistemic independence; running the same
-engine twice with only reading order changed still correlates strongly through shared training
-blind spots, search tendencies, and reasoning habits -- this does not count as two independent
-replications). **Reviews at `same_lineage_different_order`, `same_lineage_different_session`, or
-`same_session` MUST NOT be counted as additional independent verification passes, no matter how
-many exist.** `same_lineage_different_session` was added after this contract's own
-`accept-living-twin-pivot-options.json` fixture was found mislabeling exactly this case as
-`same_session`: its second review is a genuinely separate session's blind re-analysis (K1/K2/K3),
-not a self-critique inside the generating session itself -- same engine lineage, but not the same
-session, and not merely a reordering of the same session's own review. The distinction does not
-change which reviews count (both values are still excluded from the independence count), only
-whether the label accurately describes what actually happened. A consumer (including any future
-dashboard) that sums `critic_reviews.length` as an "independence count" without first filtering
-to `different_lineage`/`human_third_party` is misusing this field. The recorded case's own
-`accept-living-twin-discovery-thresholds-options.json` fixture demonstrates why this
-distinction has teeth: the one `different_lineage` pass (terra, deriving thresholds independently
-without seeing sol's numbers) found a systematic divergence from two rounds of `same_lineage_
-different_order` review (sol) that never caught it.
+Identifies one participant, model or human: `{kind: "model", provider, family, model_id,
+session_ref?}` or `{kind: "human", human_ref, is_decision_maker}`, plus an optional
+`unknown_fields[]` naming any of that kind's own required fields that could not be determined.
+Schema-level `required` covers only `kind` -- the per-kind fields are enforced by
+`verify-fixtures.mjs`'s own semantic check (`contracts/shared/derive-independence.mjs`'s
+`engineRefIssues`): a field must be present OR named in `unknown_fields`, never simply absent. A
+field left unknown makes every derivation comparison that would need it resolve to `unknown`
+rather than guess.
+
+### The three independence dimensions (2026-08-18 revision)
+
+D10's own `independence_status` field started as a single free-form `same_generation` note, then
+became a closed 5-value enum (per `i-shadow-record-01` section 2(d)), then was found on
+2026-08-18 to be **internally inconsistent in its own real fixture**:
+`accept-living-twin-discovery-scope-options.json` labeled `gpt-5.6-terra`'s review
+`different_lineage` and `gpt-5.6-sol`'s review `same_lineage_different_order` -- but terra and sol
+share the same provider (openai) and model family (gpt-5.6), so those two labels cannot both be
+true against one single reference point. They were measured against two different, unstated
+reference points, and a third question the enum had no word for at all was hiding inside the
+`sol` label: **prior involvement** -- sol had already adversarially reviewed the very brief that
+shaped these options, so its later "review" of them is not independent verification no matter
+what lineage label is attached.
+
+This contract now recognizes three orthogonal dimensions instead of one field:
+
+- **(A) Lineage distance** from whoever shaped the artifact being reviewed. DERIVED (never
+  producer-asserted) from `artifact_shapers[]` + a review's own `critic`, by
+  `contracts/shared/derive-independence.mjs`.
+- **(B) Redundancy between critics reviewing the same document.** Not modeled by this contract --
+  an explicitly open gap, not solved here (see design-options/v1's own CHANGELOG.md "Not solved by
+  this revision").
+- **(C) Prior involvement** -- whether THIS critic already had a hand in shaping the very options
+  it is now reviewing. Producer-declared, via `prior_involvement`, but gated: see below.
+
+#### (A) Lineage distance: the derivation table
+
+For a critic that is `kind: model`, `deriveIndependenceStatus` (`contracts/shared/
+derive-independence.mjs`) compares it against **every** entry in `artifact_shapers[]` and takes
+the CLOSEST (least independent) relationship found, in this order:
+
+| Relationship (closest to farthest) | Condition |
+|---|---|
+| `same_session` | Same `model_id`, same `session_ref` (or `session_ref` unknown on either side -- conservatively assumed closest rather than guessed as more independent) |
+| `same_lineage_different_session` | Same `model_id`, different `session_ref` |
+| `same_family_different_model` | Same `provider` + `family`, different `model_id` |
+| `same_provider_different_family` | Same `provider`, different `family` |
+| `different_lineage` | Different `provider` (or shaper/critic kinds differ -- a human and a model share no engine lineage by construction) |
+
+The comparison is progressive: it only asks for as much detail as needed to place the pair (e.g. a
+shaper whose `provider` differs from the critic's yields `different_lineage` even if that shaper's
+own `model_id` was never recorded). It returns `unknown` only when the SPECIFIC field needed for
+the next distinction is missing on either side -- and if ANY shaper comparison is `unknown`, the
+overall result for that critic is `unknown` (the true closest relationship cannot be shown to be
+no closer than what is already known).
+
+Two critic-level short-circuits apply before any shaper comparison, for `kind: human` critics:
+`is_decision_maker: false` -> `human_third_party` (independent of `artifact_shapers[]`);
+`is_decision_maker: true` -> **`unknown`, by an explicit choice this revision does not resolve
+further** -- see "Open questions" below.
+
+`same_lineage_different_order` (the old enum's fourth value) is **deprecated**: recognized in
+prose/history, never derived.
+
+#### (C) Prior involvement: `shaped_options | reviewed_predecessor | none_observed_in_recorded_scope | unknown`
+
+`shaped_options` = this same engine_ref also appears in `artifact_shapers[]`.
+`reviewed_predecessor` = reviewed an earlier/related round without itself shaping the final
+options. `none_observed_in_recorded_scope` = no prior involvement found within a stated,
+checkable scope (`observation_scope_ref`, required together with this value) -- **not** a claim
+of universal non-involvement. A bare `none` is deliberately absent from the enum: positive
+involvement can be evidenced, its universal absence cannot (the architect ruling that shaped this
+revision was explicit on this point). `unknown` is the honest default whenever this has not
+actually been checked -- the field is required precisely so "not checked" cannot collapse into
+silence.
+
+#### The qualifying gate is a conjunction
+
+A review counts as independent verification ("qualifying") only if **both**:
+
+1. its derived lineage status is `different_lineage` or `human_third_party`, **and**
+2. its `prior_involvement` is `none_observed_in_recorded_scope`.
+
+`unknown` on either dimension is never qualifying. `contracts/shared/
+derive-independence.mjs`'s `evaluateCriticReview` returns `{derived_status, qualifying, reasons}`
+-- `reasons` always explains which dimension(s) passed or failed, never just the boolean.
+**`critic_reviews.length` is not an independence count and MUST NOT be reported as one** -- see
+the next section for why the real recorded case makes this concrete rather than hypothetical.
+
+#### The real case has zero qualifying reviews
+
+Re-deriving all three real living-twin fixtures under this model
+(`node contracts/shared/derive-independence.mjs contracts/design-options/v1/fixtures/accept-living-twin-*.json`)
+finds **zero of the six recorded `critic_reviews` qualify**: every review is either `same_session`
+(vs. itself as a shaper) with `prior_involvement: shaped_options`, `same_family_different_model`
+(terra vs. the sol shaper) with `prior_involvement: none_observed_in_recorded_scope` -- clearing
+the involvement dimension but not the lineage one -- or `unknown` (a human critic who is also the
+decision maker). `accept-zero-qualifying-reviews.json` (byte-identical to
+`accept-living-twin-discovery-scope-options.json`) exists specifically so this is a named,
+separately-checkable fixture. This is a correction to the previously-asserted labels, not a new
+fact about what actually happened -- see design-options/v1's own CHANGELOG.md for the full account
+and for why this was revised in place rather than deferred to a v2 (including the stated limit
+that a GitHub code-search check for external usages returned HTTP 503 and could not be completed
+-- "zero external users of the old field" is an inference from fork count and elapsed time, not a
+proof).
+
+### Open questions (flagged, not resolved, by this revision)
+
+- **A human critic who is also the decision maker** (`critic.kind: "human"`,
+  `is_decision_maker: true`) derives to `unknown` rather than any more specific value -- the
+  architect-specified derivation table does not cover this case, and this revision chose not to
+  guess rather than invent an unreviewed sixth category.
+- **Whether `same_provider_different_family` earns its place.** Added for symmetry with
+  `same_family_different_model`, but no real fixture in this repo currently produces it.
 
 ### The `intent_ref` `content_digest` gap
 
@@ -113,24 +208,37 @@ verified by
 [`contracts/design-options/v1/verify-fixtures.mjs`](../../contracts/design-options/v1/verify-fixtures.mjs)
 (`node verify-fixtures.mjs`, no install step, no network access).
 
-Three accept fixtures, all drawn from the one real I-shadow case
+Three real accept fixtures, all drawn from the one real I-shadow case
 (`i-shadow-record-01-living-twin-2026-08-17.md` and the living-twin repo's own decision documents
--- an external, private working repo; not vendored here, cited for provenance only):
+-- an external, private working repo; not vendored here, cited for provenance only), plus three
+synthetic accept fixtures and twelve reject fixtures:
 
 1. `accept-living-twin-pivot-options` -- the Pivot/Discovery-GO decision's four options.
 2. `accept-living-twin-discovery-scope-options` -- the Discovery-scope decision's options A/B/C/D.
 3. `accept-living-twin-discovery-thresholds-options` -- the sol-vs-terra threshold cross-check.
+4. `accept-zero-qualifying-reviews` -- byte-identical to (2), added 2026-08-18 as its own named
+   fixture so the zero-qualifying-reviews outcome is separately checkable by id.
+5. `accept-self-referential-digest` -- synthetic; proves `verify-artifact-digests.mjs` can verify
+   an in-repo ref byte-for-byte, since every living-twin-sourced ref above is `unverifiable` by
+   design (CI cannot reach an external, unvendored repo).
+6. `accept-unknown-not-qualifying` -- synthetic, added 2026-08-18; proves a legitimately-declared
+   `unknown_fields` entry derives `independence_status: unknown` (never qualifying) rather than
+   being guessed.
 
 Every option's `key_assumptions`/`falsifiers`/`observable_proxies`/`predicted_outcomes`/
-`rollback_strategy` is a paraphrase of that real source text, not invented content; see each
-fixture's own entry in `fixtures/expected-results.json` for exactly which source passage it
-traces to. Six reject fixtures exercise: the personal-dimension scan (all 11 forbidden keys),
-a missing `decision_request` (structural), a missing `predicted_outcomes` on one option
-(structural -- the specific field this contract enforces per "finding 2" above), a missing
-`rollback_strategy` on one option (structural, the other half of "finding 2"), a
+`rollback_strategy` on the three real fixtures is a paraphrase of that real source text, not
+invented content; see each fixture's own entry in `fixtures/expected-results.json` for exactly
+which source passage it traces to. Twelve reject fixtures exercise: the personal-dimension scan
+(all 11 forbidden keys), a missing `decision_request` (structural), a missing `predicted_outcomes`
+on one option (structural -- the specific field this contract enforces per "finding 2" above), a
+missing `rollback_strategy` on one option (structural, the other half of "finding 2"), a
 `decision_request.option_ids` entry that resolves to no option in the document (semantic,
-dangling-reference), and an `independence_status` value outside the closed five-value enum
-(structural).
+dangling-reference), and -- added 2026-08-18 -- a bare `prior_involvement: "none"` (structural, not
+in the enum), `none_observed_in_recorded_scope` without `observation_scope_ref` (structural,
+schema `allOf`), a missing `review_output_ref` (structural), an empty `artifact_shapers[]`
+(structural, `minItems`), a producer writing the old `independence_status` field directly
+(structural, `additionalProperties: false`), and an `engine_ref` missing a per-kind required field
+with no `unknown_fields` declaration (semantic, `engineRefIssues`).
 
 `verify-fixtures.mjs` also runs every `intent_ref`/`notes_ref` (`$defs/artifact_ref`) through
 `contracts/shared/verify-artifact-digests.mjs` (see decision/v1's own "`artifact_ref` vs
@@ -177,6 +285,16 @@ permanently correct.
 - **A free-form string for `independence_status`** (D10's original `same_generation` note).
   Rejected once the real case showed a free-form field cannot prevent double-counting two
   same-lineage passes as independent verification -- see the enum discussion above.
+- **A producer-asserted `independence_status` enum, even closed.** Superseded 2026-08-18: the
+  closed enum still let a producer assert a lineage label without recording what it was measured
+  against, and this contract's own real fixture shipped with two such labels that were
+  individually plausible but jointly inconsistent (see "The three independence dimensions" above
+  and CHANGELOG.md). `independence_status` is now derived, never stored.
+- **A single `generator` field instead of `artifact_shapers[]`.** Rejected 2026-08-18: the real
+  case had multiple participants (an authoring session and a model that adversarially reshaped the
+  brief) whose content a later critic must be compared against, and a later critic's lineage
+  distance is measured against the CLOSEST of all of them -- a single assumed author cannot
+  represent that.
 - **Requiring `intent_ref.content_digest`.** Rejected once the real case showed a genuine
   prose-brief-with-no-file scenario that a required digest would either fabricate (hashing
   something that was never the actual intent artifact) or block recording entirely.
