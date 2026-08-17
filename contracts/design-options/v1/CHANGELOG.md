@@ -88,22 +88,16 @@ exactly that temptation twice.
 
 Re-deriving `independence_status` for all three real living-twin fixtures under the new model
 (`node contracts/shared/derive-independence.mjs contracts/design-options/v1/fixtures/accept-living-twin-*.json`)
-finds **zero of the six recorded critic_reviews qualify as independent verification**:
-
-| Document | Critic | Derived status | prior_involvement | Qualifying |
-|---|---|---|---|---|
-| pivot-options | gpt-5.6-sol | `same_session` (vs. itself as a shaper) | `shaped_options` | No |
-| pivot-options | independent-review-session (human, is_decision_maker=true) | `unknown` | `unknown` | No |
-| discovery-scope-options | gpt-5.6-terra | `same_family_different_model` (vs. sol shaper) | `none_observed_in_recorded_scope` | No |
-| discovery-scope-options | gpt-5.6-sol | `same_session` (vs. itself as a shaper) | `shaped_options` | No |
-| discovery-thresholds-options | gpt-5.6-terra | `same_session` (vs. itself as a shaper) | `shaped_options` | No |
-| discovery-thresholds-options | independent-review-session (human, is_decision_maker=true) | `unknown` | `unknown` | No |
+finds **zero of the six recorded critic_reviews qualify as independent verification** -- see the
+corrected table in the "2026-08-18 correction pass" section below for the exact values (this
+section's own original table had two engine_ref misattributions, fixed there rather than silently
+here).
 
 This is a **correction to the previously-asserted labels**, not a new fact about the underlying
 real events -- the events (sol reviewing material it helped shape; terra being the same provider
-and family as sol; a human decision-maker channel compiling a cross-check) were always true. What
-changed is that the old schema let those events be mislabeled as more independent than they were.
-`accept-zero-qualifying-reviews.json` (byte-identical to
+and family as sol; a Claude session compiling a cross-check using sol as a tool) were always true.
+What changed is that the old schema let those events be mislabeled as more independent than they
+were. `accept-zero-qualifying-reviews.json` (byte-identical to
 `accept-living-twin-discovery-scope-options.json`) exists specifically so this outcome is a named,
 separately-checkable fixture rather than something a reader has to already know to look for.
 
@@ -148,9 +142,86 @@ compatibility-breaking judgment call was made:
   `unknown` for a human critic who is also the decision maker, rather than asserting
   `human_third_party` or any other value -- this case is not covered by the derivation table the
   architect ruling specified, and is flagged rather than resolved. See
-  `docs/protocols/design-options-v1.md`'s "Open questions" section.
-- **Whether `same_provider_different_family` is actually needed.** It was added for symmetry with
-  `same_family_different_model` (both fill in the gap between "same model_id" and "different
-  provider"), but no real fixture in this repo currently produces it. Flagged for the next
-  reviewer to confirm it earns its place rather than being schema surface with no observed case
-  behind it.
+  `docs/protocols/design-options-v1.md`'s "Open questions" section, and
+  `accept-derivation-unknown-human-decision-maker.json` for a dedicated coverage fixture.
+
+## 2026-08-18 (correction pass, team-lead review)
+
+Team-lead review of the revision above confirmed its design and all three of the builder's own
+flagged concerns (the "全10契約" completion condition was actually 9; the
+`same_provider_different_family` question was legitimate to ask, though the architect's own
+requirement keeps the branch; the `critic.kind=human && is_decision_maker=true` gap was a real,
+correctly-unresolved finding) -- and found three further issues:
+
+### Correction 1: engine_ref misattribution in the real fixtures (most important)
+
+The second `critic_reviews` entry in `accept-living-twin-pivot-options.json` and
+`accept-living-twin-discovery-thresholds-options.json` was originally typed
+`{kind: "human", is_decision_maker: true}` -- **both fields wrong**. The "independent-review-session"
+these entries name is a **Claude session that used sol as a tool** (decision-01 D-4: "二次調査側も
+同じsolを2巡使用しており、私の2ラウンドと合わせて計4巡" -- the reviewing session ran sol two MORE
+rounds itself), not a human. And the decision maker in every one of decision-01 through -04 is
+**the user** (`decided_by: ユーザー`, `decision_maker: human` on the corresponding decision/v1
+records) -- not this session. Corrected to
+`{kind: "model", provider: "anthropic", family: "claude", unknown_fields: ["model_id"],
+session_ref: <a distinct label per fixture, since the pivot-options and discovery-thresholds-options
+occurrences are not established to be the same actual session>}`, with `is_decision_maker` removed
+(a `kind: model` engine_ref has no such field).
+
+### Correction 2: `unknown` fired too easily -- redefined to mean "qualifying cannot be ruled out"
+
+Under correction 1, this critic's `family` matches the Claude authoring shaper's but `model_id` is
+unknown on both sides. The original `relationBetween` returned `unknown` for ANY unresolved field
+in the provider -> family -> model_id -> session_ref chain, which is more conservative than
+necessary: once `provider` is confirmed EQUAL, `different_lineage` (the one qualifying lineage
+value) is already impossible, so an unresolved `family`/`model_id`/`session_ref` cannot hide a
+qualifying outcome either -- there is no need to give up and say `unknown`. `relationBetween` now
+skips an unresolved field once `provider` is confirmed equal (treating it as "possibly equal, keep
+narrowing" rather than blocking), and only genuinely returns `unknown` when `provider` itself is
+unresolved. One asymmetry is still handled specially: if `session_ref` is recorded on one side but
+simply never recorded on the other (rather than being unknown on both), the two are NOT assumed
+equal -- a recorded value is not assumed to coincidentally match an unrecorded one, so this lands
+on `same_lineage_different_session` rather than `same_session`. See `relationBetween`'s own comment
+in `contracts/shared/derive-independence.mjs` for the full mechanics, and
+`accept-unknown-not-qualifying.json` (corrected to declare `provider` unknown, not `model_id` --
+the original version of that fixture no longer produces `unknown` at all under the fixed rule,
+which is itself proof the fix works as intended).
+
+### Correction 3: `prior_involvement` upgraded/reclassified with real evidence
+
+- `accept-living-twin-pivot-options.json`'s second review: upgraded from `unknown` to
+  `none_observed_in_recorded_scope`, evidenced by `review-criteria-preregistered-2026-08-17.md`
+  itself (now its `observation_scope_ref`) -- that document's own `registered_by` line states the
+  reviewing session is separate from the investigation session and reads results only after
+  freezing judgment criteria, i.e. it had not yet shaped the options within that recorded scope.
+- `accept-living-twin-discovery-thresholds-options.json`'s second review: reclassified to
+  `shaped_options`, NOT upgraded -- this session built the sol-vs-terra cross-check table that
+  became decision-02's own content, so it is itself a shaper (added as a fourth
+  `artifact_shapers[]` entry, `how: authored`) as well as later reviewing its own table. The
+  qualifying outcome is unchanged either way (still not qualifying), but the label is now accurate
+  rather than merely "safe."
+
+### Corrected re-derivation table (supersedes the table in the entry above)
+
+| Document | Critic | Derived status | prior_involvement | Qualifying |
+|---|---|---|---|---|
+| pivot-options | gpt-5.6-sol | `same_session` (vs. itself as a shaper) | `shaped_options` | No |
+| pivot-options | Claude (K1/K2/K3 blind reanalysis session) | `same_lineage_different_session` (vs. the Claude authoring shaper) | `none_observed_in_recorded_scope` | No |
+| discovery-scope-options | gpt-5.6-terra | `same_family_different_model` (vs. sol shaper) | `none_observed_in_recorded_scope` | No |
+| discovery-scope-options | gpt-5.6-sol | `same_session` (vs. itself as a shaper) | `shaped_options` | No |
+| discovery-thresholds-options | gpt-5.6-terra | `same_session` (vs. itself as a shaper) | `shaped_options` | No |
+| discovery-thresholds-options | Claude (sol-vs-terra cross-check session) | `same_session` (vs. itself as the fourth shaper) | `shaped_options` | No |
+
+Still **zero of six qualify** -- the conclusion is unchanged; only the individual labels became
+more accurate.
+
+### M-C: derivation-table branch coverage (added per team-lead review)
+
+The real fixtures above never produce `same_provider_different_family`, a genuinely
+`different_lineage`-final result, `human_third_party` as a dedicated (non-digest-focused) case, or
+`unknown` via the `is_decision_maker: true` path in a standalone fixture. Four purely synthetic
+fixtures were added, each stating in its own `options[0].summary` that it is synthetic and not
+sourced from any real event: `accept-derivation-same_provider_different_family.json`,
+`accept-derivation-different_lineage.json` (also the only model-vs-model qualifying=true example in
+this directory), `accept-derivation-human_third_party.json`, and
+`accept-derivation-unknown-human-decision-maker.json`.
