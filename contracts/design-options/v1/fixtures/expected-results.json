@@ -66,6 +66,14 @@
       "expected": "reject",
       "reason_code": "$.critic_reviews[0].independence_status",
       "notes": "critic_reviews[0].independence_status set to \"fully_independent\", which is not one of the four closed enum values (different_lineage | same_lineage_different_order | same_session | human_third_party). This is deliberate: an open-ended independence label is exactly what let the real case's own two same-lineage passes get miscounted as independent verification before the closed enum existed (i-shadow-record-01 section 2(d))."
+    },
+    {
+      "id": "invalid-rollback-strategy-missing",
+      "type": "document",
+      "files": { "record": "invalid-rollback-strategy-missing.json" },
+      "expected": "reject",
+      "reason_code": "$.options[0]",
+      "notes": "rollback_strategy removed from the original_go_unmodified option (index 0) of accept-living-twin-pivot-options.json. This contract had required rollback_strategy on every option since v1's own consolidation of i-shadow-record-01 section 3's 'finding 2' (predicted_outcomes/rollback_strategy were the two counterfactual fields NOT written naturally without being required), but previously had no reject fixture proving the requirement actually fires -- invalid-predicted-outcomes-missing.json covered the other half of finding 2, this one covers rollback_strategy specifically."
     }
   ]
 }

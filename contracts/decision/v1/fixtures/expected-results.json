@@ -90,6 +90,54 @@
       "expected": "reject",
       "reason_code": "dangling_conflicting_decision_ref",
       "notes": "Two synthetic (clearly non-real, demo-decision-*) records: demo-decision-2's conflicts_with[0].conflicting_decision_ref points at \"demo-decision-999\", a decision_id that appears nowhere in this collection. Invented rather than sourced from real data because no real recorded decision in this case exhibits a dangling conflicts_with reference -- mirroring release-observation/v0's own synthetic dangling-rollback-of-collection fixture for the identical reason."
+    },
+    {
+      "id": "accept-self-referential-digests",
+      "type": "record",
+      "files": { "record": "accept-self-referential-digests.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Synthetic demo record (demo-self-referential-digest) whose intent_ref/options_ref/critic_ref uri fields point at real, stable files INSIDE this repo (LICENSE, contracts/shared/jcs.mjs, contracts/shared/personal-dimensions.mjs) with their actual sha256 as content_digest. Exists because every living-twin-sourced accept fixture in this directory is honestly unverifiable in CI by design (living-twin is external and unvendored) -- this is the one fixture that lets contracts/shared/verify-artifact-digests.mjs actually verify a digest byte-for-byte inside CI, proving the mechanism works rather than only ever reporting `unverifiable`."
+    },
+    {
+      "id": "invalid-artifact-digest-mismatch",
+      "type": "record",
+      "files": { "record": "invalid-artifact-digest-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "artifact_digest_mismatch",
+      "notes": "accept-self-referential-digests.json with the last hex digit of intent_ref.content_digest flipped (...a93 -> ...a94), so it no longer matches LICENSE's real sha256. Individually schema-valid (still matches ^sha256:[0-9a-f]{64}$, the only thing schema validation alone can ever check about a digest) -- only contracts/shared/verify-artifact-digests.mjs's actual byte-level check catches it. This is the exact incident (sol architect-review must-fix 1) the artifact_ref/decision_ref split and this digest-verification module exist to close: a formally-valid content_digest that does not match the file it claims to."
+    },
+    {
+      "id": "invalid-empty-estimate-refs-without-reason",
+      "type": "record",
+      "files": { "record": "invalid-empty-estimate-refs-without-reason.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "accept-living-twin-decision-01-pivot.json with estimate_refs_omitted_reason deleted while estimate_refs stays []. Caught by the schema's top-level conditional `required` (allOf if/then on estimate_refs.maxItems==0) -- the null-not-zero rule this field exists to enforce (i-shadow-record-01 section 4, 'finding 3') previously had no reject fixture proving it actually fires."
+    },
+    {
+      "id": "invalid-artifact-ref-digest-and-reason-both",
+      "type": "record",
+      "files": { "record": "invalid-artifact-ref-digest-and-reason-both.json" },
+      "expected": "reject",
+      "reason_code": "$.options_ref",
+      "notes": "accept-living-twin-decision-01-pivot.json with options_ref carrying BOTH content_digest (already present) AND a synthetic digest_omitted_reason. Exercises $defs/artifact_ref's mutual-exclusion conditional (sol architect-review must-fix 2): 'here is the digest' and 'the digest is missing because X' cannot both be true of the same ref at once. This is the specific gap the pre-split $defs/ref left open -- a producer could truthfully claim both."
+    },
+    {
+      "id": "invalid-artifact-ref-neither-digest-nor-reason",
+      "type": "record",
+      "files": { "record": "invalid-artifact-ref-neither-digest-nor-reason.json" },
+      "expected": "reject",
+      "reason_code": "$.options_ref",
+      "notes": "accept-living-twin-decision-01-pivot.json with options_ref's content_digest deleted, leaving only logical_id (no digest_omitted_reason either). Caught by $defs/artifact_ref's existing null-not-zero conditional (content_digest absent -> digest_omitted_reason required) -- an artifact_ref that says neither 'here is the digest' nor 'here is why there isn't one' is exactly the silent gap this contract does not allow."
+    },
+    {
+      "id": "invalid-decision-ref-with-digest",
+      "type": "record",
+      "files": { "record": "invalid-decision-ref-with-digest.json" },
+      "expected": "reject",
+      "reason_code": "$.superseded_by",
+      "notes": "accept-living-twin-decision-03-discovery-scope.json with a synthetic content_digest added to superseded_by. Caught by $defs/decision_ref's additionalProperties:false (sol architect-review must-fix 3): a ledger-internal reference to another decision/v1 record is resolved by logical_id alone and deliberately carries no digest field at all, so this is rejected as an unknown property, not merely an unverifiable one."
     }
   ]
 }
