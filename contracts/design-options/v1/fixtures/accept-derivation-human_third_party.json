@@ -1,6 +1,6 @@
 {
   "schema_version": "design-options/v1",
-  "design_options_id": "demo-unknown-not-qualifying",
+  "design_options_id": "demo-derivation-human-third-party",
   "intent_ref": {
     "logical_id": "this-repo:LICENSE",
     "uri": "LICENSE",
@@ -20,7 +20,7 @@
   "options": [
     {
       "option_id": "demo_option",
-      "summary": "Synthetic demo option, invented solely to demonstrate that an engine_ref with a legitimately-declared-unknown provider (unknown_fields) derives to independence_status=unknown -- because a provider that turns out to differ would be the one qualifying outcome (different_lineage), unlike family/model_id/session_ref, whose being unknown is skipped rather than treated as blocking (2026-08-18 refinement, see contracts/design-options/v1/CHANGELOG.md). unknown is never qualifying, even when prior_involvement independently clears (none_observed_in_recorded_scope). Not sourced from the living-twin case.",
+      "summary": "Synthetic demo option. This fixture is a purely synthetic derivation-table coverage case, NOT sourced from the living-twin case -- a dedicated, clearly-named exercise of the human_third_party branch (kind:human, is_decision_maker:false), distinct from accept-self-referential-digest.json, which also happens to derive human_third_party but exists primarily to demonstrate byte-for-byte digest verification, not this branch specifically.",
       "key_assumptions": [
         "demo assumption"
       ],
@@ -39,10 +39,9 @@
   "critic_reviews": [
     {
       "critic": {
-        "kind": "model",
-        "family": "gpt-5.6",
-        "model_id": "gpt-5.6-mystery-variant",
-        "unknown_fields": ["provider"]
+        "kind": "human",
+        "human_ref": "demo:third-party-reviewer",
+        "is_decision_maker": false
       },
       "prior_involvement": "none_observed_in_recorded_scope",
       "observation_scope_ref": {

@@ -39,6 +39,17 @@
       },
       "how": "authored",
       "how_note": "terra_independent_thresholdsの数値をsolの提案を見せずに独立に導出した(decision-02 §0)。"
+    },
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "unknown_fields": ["model_id"],
+        "session_ref": "living-twin-sol-vs-terra-cross-check"
+      },
+      "how": "authored",
+      "how_note": "sol/terraの閾値を並べた突合表(decision-02 §1)を作成し、それが decision-02 の内容そのものになった。すなわちこのセッションは選択肢セット(の比較・提示形)を組み立てた側でもある。"
     }
   ],
   "options": [
@@ -98,14 +109,16 @@
     },
     {
       "critic": {
-        "kind": "human",
-        "human_ref": "living-twin-independent-review-session",
-        "is_decision_maker": true
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "unknown_fields": ["model_id"],
+        "session_ref": "living-twin-sol-vs-terra-cross-check"
       },
-      "prior_involvement": "unknown",
+      "prior_involvement": "shaped_options",
       "review_output_ref": {
         "logical_id": "living-twin:sol-vs-terra-cross-check-table",
-        "digest_omitted_reason": "sol/terraの突合表(decision-02 §1)を作成した独立レビュー担当セッション自身の生出力は個別ファイルとして保存されていない。sol/terraそれぞれの生出力は既にreview_output_ref/artifact_shapers[].engine_refで個別に参照済みのため、それらを流用すると誤帰属になる。捏造を避けるため参照先なしとして正直に記録する。"
+        "digest_omitted_reason": "sol/terraの突合表(decision-02 §1)を作成したClaudeセッション自身の生出力は個別ファイルとして保存されていない。sol/terraそれぞれの生出力は既にreview_output_ref/artifact_shapers[].engine_refで個別に参照済みのため、それらを流用すると誤帰属になる。捏造を避けるため参照先なしとして正直に記録する。"
       },
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": ["sol_proposed_thresholds", "terra_independent_thresholds"]

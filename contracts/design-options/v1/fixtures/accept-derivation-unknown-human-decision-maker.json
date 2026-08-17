@@ -1,6 +1,6 @@
 {
   "schema_version": "design-options/v1",
-  "design_options_id": "demo-unknown-not-qualifying",
+  "design_options_id": "demo-derivation-unknown-human-decision-maker",
   "intent_ref": {
     "logical_id": "this-repo:LICENSE",
     "uri": "LICENSE",
@@ -20,7 +20,7 @@
   "options": [
     {
       "option_id": "demo_option",
-      "summary": "Synthetic demo option, invented solely to demonstrate that an engine_ref with a legitimately-declared-unknown provider (unknown_fields) derives to independence_status=unknown -- because a provider that turns out to differ would be the one qualifying outcome (different_lineage), unlike family/model_id/session_ref, whose being unknown is skipped rather than treated as blocking (2026-08-18 refinement, see contracts/design-options/v1/CHANGELOG.md). unknown is never qualifying, even when prior_involvement independently clears (none_observed_in_recorded_scope). Not sourced from the living-twin case.",
+      "summary": "Synthetic demo option. This fixture is a purely synthetic derivation-table coverage case, NOT sourced from the living-twin case -- exercises the OTHER source of `unknown` besides an unresolved provider: a human critic who is ALSO the decision maker (is_decision_maker: true). This case is not covered by the architect-specified derivation table at all (see docs/protocols/design-options-v1.md 'Open questions'); this contract reports it as unknown rather than guessing human_third_party or any other value.",
       "key_assumptions": [
         "demo assumption"
       ],
@@ -39,10 +39,9 @@
   "critic_reviews": [
     {
       "critic": {
-        "kind": "model",
-        "family": "gpt-5.6",
-        "model_id": "gpt-5.6-mystery-variant",
-        "unknown_fields": ["provider"]
+        "kind": "human",
+        "human_ref": "demo:decision-maker-self-review",
+        "is_decision_maker": true
       },
       "prior_involvement": "none_observed_in_recorded_scope",
       "observation_scope_ref": {

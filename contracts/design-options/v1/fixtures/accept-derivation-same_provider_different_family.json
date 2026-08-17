@@ -1,6 +1,6 @@
 {
   "schema_version": "design-options/v1",
-  "design_options_id": "demo-unknown-not-qualifying",
+  "design_options_id": "demo-derivation-same-provider-different-family",
   "intent_ref": {
     "logical_id": "this-repo:LICENSE",
     "uri": "LICENSE",
@@ -20,7 +20,7 @@
   "options": [
     {
       "option_id": "demo_option",
-      "summary": "Synthetic demo option, invented solely to demonstrate that an engine_ref with a legitimately-declared-unknown provider (unknown_fields) derives to independence_status=unknown -- because a provider that turns out to differ would be the one qualifying outcome (different_lineage), unlike family/model_id/session_ref, whose being unknown is skipped rather than treated as blocking (2026-08-18 refinement, see contracts/design-options/v1/CHANGELOG.md). unknown is never qualifying, even when prior_involvement independently clears (none_observed_in_recorded_scope). Not sourced from the living-twin case.",
+      "summary": "Synthetic demo option. This fixture is a purely synthetic derivation-table coverage case, NOT sourced from the living-twin case or any other real event -- invented solely so contracts/shared/derive-independence.mjs's same_provider_different_family branch has at least one exercising fixture (no real fixture in this repo currently produces this value: architect review required the branch to exist in the table even though it has not yet been observed in a real case).",
       "key_assumptions": [
         "demo assumption"
       ],
@@ -40,9 +40,9 @@
     {
       "critic": {
         "kind": "model",
-        "family": "gpt-5.6",
-        "model_id": "gpt-5.6-mystery-variant",
-        "unknown_fields": ["provider"]
+        "provider": "openai",
+        "family": "gpt-4",
+        "model_id": "gpt-4-demo-variant"
       },
       "prior_involvement": "none_observed_in_recorded_scope",
       "observation_scope_ref": {
