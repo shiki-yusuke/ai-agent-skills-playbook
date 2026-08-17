@@ -63,9 +63,9 @@ Schema: [`contracts/design-options/v1/design-options.schema.json`](../../contrac
 |---|---|---|
 | `schema_version` | yes | Literal `"design-options/v1"`. |
 | `design_options_id` | yes | Stable identifier for this document (e.g. `"living-twin-discovery-scope-2026-08-17"`). |
-| `intent_ref` | yes | `{logical_id, content_digest?}` -- what intent these options serve. See "The intent_ref content_digest gap" below for why `content_digest` is optional here specifically. |
+| `intent_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, content_digest?, digest_omitted_reason?}` -- what intent these options serve. See "The intent_ref content_digest gap" below for why `content_digest` is optional here specifically, and decision/v1's own "`artifact_ref` vs `decision_ref`" section for why this is `artifact_ref` (an external-document reference) rather than the ledger-internal `decision_ref` decision/v1 also declares (this schema has no ledger-internal reference of its own, but keeps an identical `$defs` shape to decision/v1 for consistency). |
 | `options[]` | yes, minItems 1 | Each: `option_id`, `summary`, `key_assumptions[]`, `falsifiers[]`, `observable_proxies[]`, `predicted_outcomes[]`, `rollback_strategy` -- all required, all non-empty. |
-| `critic_reviews[]` | yes, minItems 1 | Each: `independence_status` (closed enum, see below), `critic_engine`, `reviewed_at`, `target_option_ids[]`, optional `notes_ref`. |
+| `critic_reviews[]` | yes, minItems 1 | Each: `independence_status` (closed enum, see below), `critic_engine`, `reviewed_at`, `target_option_ids[]`, optional `notes_ref` (also `$defs/artifact_ref`). |
 | `decision_request` | yes | `open_questions[]`, `option_ids[]`, `what_would_change_the_answer[]` -- all non-empty. |
 
 ### The `independence_status` enum and why review counts cannot be summed
@@ -116,12 +116,21 @@ Three accept fixtures, all drawn from the one real I-shadow case
 Every option's `key_assumptions`/`falsifiers`/`observable_proxies`/`predicted_outcomes`/
 `rollback_strategy` is a paraphrase of that real source text, not invented content; see each
 fixture's own entry in `fixtures/expected-results.json` for exactly which source passage it
-traces to. Five reject fixtures exercise: the personal-dimension scan (all 11 forbidden keys),
+traces to. Six reject fixtures exercise: the personal-dimension scan (all 11 forbidden keys),
 a missing `decision_request` (structural), a missing `predicted_outcomes` on one option
-(structural -- the specific field this contract enforces per "finding 2" above), a
+(structural -- the specific field this contract enforces per "finding 2" above), a missing
+`rollback_strategy` on one option (structural, the other half of "finding 2"), a
 `decision_request.option_ids` entry that resolves to no option in the document (semantic,
 dangling-reference), and an `independence_status` value outside the closed four-value enum
 (structural).
+
+`verify-fixtures.mjs` also runs every `intent_ref`/`notes_ref` (`$defs/artifact_ref`) through
+`contracts/shared/verify-artifact-digests.mjs` (see decision/v1's own "`artifact_ref` vs
+`decision_ref`" section for the fabricated-digest incident this closes): a `content_digest`
+whose `uri` resolves to a real file inside this repo is verified byte-for-byte; the two
+living-twin-sourced `intent_ref`s in this directory's own accept fixtures carry no `uri` at all
+(living-twin is external and unvendored) and are therefore reported `unverifiable` every run --
+printed in full, not silently accepted.
 
 ## Relationship to decision/v1
 
