@@ -1,9 +1,19 @@
 #!/usr/bin/env node
 // Verifies that an $defs/artifact_ref's content_digest actually matches the bytes of the file its
-// uri points at -- the check this repo was missing when a real PR's fixtures were found to carry
-// formally-valid-but-fabricated content_digest values (sol architect-review must-fix 1): schema
-// validation alone can only check the SHAPE `^sha256:[0-9a-f]{64}$`, never whether that hash is
-// the truth about any actual file. This module closes that gap for artifact_ref specifically
+// uri points at (sol architect-review must-fix 1): schema validation alone can only check the
+// SHAPE `^sha256:[0-9a-f]{64}$`, never whether that hash is the truth about any actual file.
+//
+// The incident that motivated this module was not invented or false digest values. This repo's
+// own fixtures once carried content_digest values with NO uri recorded alongside them. A reviewer
+// could not tell which file each hash was about, guessed at a search scope, failed to find a
+// match, wrongly concluded the values were false, and overwrote correct data with incorrect data.
+// The digests were real the whole time. The lesson is narrower and more useful than "people write
+// false hashes": a pointer whose referent is not recorded can be neither verified NOR refuted, and
+// "cannot be checked" is not a neutral state -- it invites a confident wrong answer. The prose
+// explaining the provenance did exist, in a fixture description and a protocol doc, and was not
+// consulted during verification. A machine check reads fields, not paragraphs.
+//
+// This module closes that gap for artifact_ref specifically
 // (decision/v1's own $defs/decision_ref is a different, non-content-hashed reference type and is
 // never scanned here -- see decision.schema.json's own $defs/decision_ref description for why).
 //
@@ -38,14 +48,14 @@
 //   7. Within one record, the SAME content_digest attached to two DIFFERENT logical_id values is
 //      reported as a WARNING (never an error) -- this is legitimate when two refs really do point
 //      at the same underlying document (decision/v1's own options_ref/critic_ref consolidation
-//      note), but it is also the exact shape a fabricated-by-copy-paste digest takes, so it is
-//      always surfaced rather than only detected by accident.
+//      note), but it is also the shape a digest copy-pasted from a neighbouring field would take,
+//      so it is always surfaced rather than only detected by accident.
 //   8. Within one record, the SAME logical_id attached to two DIFFERENT content_digest values is
 //      an ERROR, not a warning (unlike check 7's reverse direction): two refs claiming to be the
 //      SAME logical thing cannot honestly have two different real contents at once -- this is the
 //      exact failure mode of treating an identifier as "a field to fill in" rather than a name for
-//      a specific real document (the same root cause a fabricated digest has, just visible from
-//      the identifier side instead of the hash side).
+//      a specific real document -- the identifier-side version of the same root cause this module's
+//      header describes: a reference whose referent was never pinned down.
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
