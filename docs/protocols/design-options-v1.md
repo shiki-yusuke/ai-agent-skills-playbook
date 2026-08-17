@@ -118,18 +118,27 @@ the CLOSEST (least independent) relationship found, in this order:
 
 | Relationship (closest to farthest) | Condition |
 |---|---|
-| `same_session` | Same `model_id`, same `session_ref` (or `session_ref` unknown on either side -- conservatively assumed closest rather than guessed as more independent) |
-| `same_lineage_different_session` | Same `model_id`, different `session_ref` |
+| `same_session` | Same `model_id`; same `session_ref`, or `session_ref` recorded on NEITHER side (no evidence distinguishes them, so the closest possibility is assumed) |
+| `same_lineage_different_session` | Same `model_id`, different `session_ref` -- OR `session_ref` recorded on only ONE side (a recorded value is never assumed to coincidentally equal an unrecorded one) |
 | `same_family_different_model` | Same `provider` + `family`, different `model_id` |
 | `same_provider_different_family` | Same `provider`, different `family` |
 | `different_lineage` | Different `provider` (or shaper/critic kinds differ -- a human and a model share no engine lineage by construction) |
 
-The comparison is progressive: it only asks for as much detail as needed to place the pair (e.g. a
-shaper whose `provider` differs from the critic's yields `different_lineage` even if that shaper's
-own `model_id` was never recorded). It returns `unknown` only when the SPECIFIC field needed for
-the next distinction is missing on either side -- and if ANY shaper comparison is `unknown`, the
-overall result for that critic is `unknown` (the true closest relationship cannot be shown to be
-no closer than what is already known).
+**`unknown` (2026-08-18 refinement) means "qualifying cannot be ruled out", not "a field happens to
+be missing".** `provider` is the one field whose unresolved value could still hide the qualifying
+outcome (`different_lineage`), so an unknown `provider` genuinely yields `unknown`. Once `provider`
+is confirmed EQUAL, `different_lineage` is impossible regardless of `family`/`model_id`/
+`session_ref` -- every relationship reachable from there is already non-qualifying, so an unknown
+value at any of those fields is SKIPPED (treated as "possibly equal, keep narrowing") rather than
+blocking the derivation; the comparison finds the closest relationship still consistent with what
+is confirmed. This was found wrong in the real recorded case before this fix: a critic whose
+`family` matched a shaper's but whose exact `model_id` was never recorded derived to `unknown`
+under the original (overly conservative) rule, when the correct answer -- `same_lineage_
+different_session` -- was already knowable to be non-qualifying regardless of the missing
+`model_id`. If ANY shaper comparison is still `unknown` after this narrowing (i.e. some shaper's
+`provider` is itself unresolved), the overall result for that critic is `unknown` -- the true
+closest relationship across all shapers cannot be shown to be no closer than what is already
+known.
 
 Two critic-level short-circuits apply before any shaper comparison, for `kind: human` critics:
 `is_decision_maker: false` -> `human_third_party` (independent of `artifact_shapers[]`);
@@ -171,24 +180,34 @@ Re-deriving all three real living-twin fixtures under this model
 finds **zero of the six recorded `critic_reviews` qualify**: every review is either `same_session`
 (vs. itself as a shaper) with `prior_involvement: shaped_options`, `same_family_different_model`
 (terra vs. the sol shaper) with `prior_involvement: none_observed_in_recorded_scope` -- clearing
-the involvement dimension but not the lineage one -- or `unknown` (a human critic who is also the
-decision maker). `accept-zero-qualifying-reviews.json` (byte-identical to
-`accept-living-twin-discovery-scope-options.json`) exists specifically so this is a named,
-separately-checkable fixture. This is a correction to the previously-asserted labels, not a new
-fact about what actually happened -- see design-options/v1's own CHANGELOG.md for the full account
-and for why this was revised in place rather than deferred to a v2 (including the stated limit
-that a GitHub code-search check for external usages returned HTTP 503 and could not be completed
--- "zero external users of the old field" is an inference from fork count and elapsed time, not a
-proof).
+the involvement dimension but not the lineage one -- or `same_lineage_different_session` (the
+Claude session that ran two more rounds of sol as a blind-reanalysis tool, per decision-01 D-4,
+vs. the Claude authoring shaper) with `prior_involvement: none_observed_in_recorded_scope`, backed
+by `review-criteria-preregistered-2026-08-17.md`'s own record that this reviewing session read
+results only after freezing its judgment criteria. `accept-zero-qualifying-reviews.json`
+(byte-identical to `accept-living-twin-discovery-scope-options.json`) exists specifically so this
+is a named, separately-checkable fixture. This is a correction to the previously-asserted labels,
+not a new fact about what actually happened -- see design-options/v1's own CHANGELOG.md for the
+full account (including a same-day correction pass that fixed an engine_ref misattribution: this
+reviewing session is a Claude session, not a human, and the actual decision maker throughout is
+the user) and for why this was revised in place rather than deferred to a v2 (including the stated
+limit that a GitHub code-search check for external usages returned HTTP 503 and could not be
+completed -- "zero external users of the old field" is an inference from fork count and elapsed
+time, not a proof).
 
 ### Open questions (flagged, not resolved, by this revision)
 
 - **A human critic who is also the decision maker** (`critic.kind: "human"`,
   `is_decision_maker: true`) derives to `unknown` rather than any more specific value -- the
   architect-specified derivation table does not cover this case, and this revision chose not to
-  guess rather than invent an unreviewed sixth category.
-- **Whether `same_provider_different_family` earns its place.** Added for symmetry with
-  `same_family_different_model`, but no real fixture in this repo currently produces it.
+  guess rather than invent an unreviewed sixth category. No real fixture in this repo instantiates
+  this case (the pivot/thresholds documents' second critic was originally, incorrectly, typed this
+  way -- see CHANGELOG.md's correction pass); `accept-derivation-unknown-human-decision-maker.json`
+  is a dedicated synthetic fixture covering it.
+- `same_provider_different_family` **is required, not merely added for symmetry** -- the architect
+  ruling explicitly named it (alongside missing IDs, human generators, and multiple generators) as
+  a case the derivation table must cover. No real fixture in this repo produces it;
+  `accept-derivation-same_provider_different_family.json` is a dedicated synthetic fixture.
 
 ### The `intent_ref` `content_digest` gap
 
