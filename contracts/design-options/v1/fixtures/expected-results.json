@@ -1,0 +1,71 @@
+{
+  "protocol_version": "design-options/v1",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. `reason_code` for a \"reject\" fixture is either a named semantic-check code (e.g. \"dangling_decision_request_option_id\") or a raw schema-validator JSON-path (e.g. \"$\"), same leading-token convention as this repo's other contracts (see release-observation/v0's own expected-results.json). `all_forbidden_keys_flagged: true` means: instead of checking a single `reason_code`, verify that every key in contracts/shared/personal-dimensions.mjs's forbidden set is individually flagged. PROVENANCE: all three accept fixtures are drawn from the one real I-shadow case this repo has recorded -- `docs/protocols/i-shadow-record-01-living-twin-2026-08-17.md` and the living-twin repo's own `docs/decisions/decision-01-pivot-and-scope-2026-08-17.md`, `decision-02-thresholds-2026-08-17.md`, `decision-03-input-discovery-can-it-kill-2026-08-17.md`, and `decision-04-two-stage-discovery-2026-08-17.md` (none of these source files ship in this repo; they are an external, private working repo -- this manifest's notes quote and cite them for provenance, but this repo does not vendor them). Every option's key_assumptions/falsifiers/observable_proxies/predicted_outcomes/rollback_strategy text is a paraphrase of that source material, not invented content. `content_digest` values that appear (accept-living-twin-discovery-scope-options.json's and accept-living-twin-discovery-thresholds-options.json's `intent_ref`) are real `sha256sum` digests of the actual living-twin source markdown files as they existed on 2026-08-17 (independently recomputed by this task, not copied from a claim) -- accept-living-twin-discovery-thresholds-options.json's digest is additionally cross-checked against the same hash decision-01-pivot-and-scope-2026-08-17.md itself already records for decision-input-4points-2026-08-17.md, and the two match exactly. accept-living-twin-pivot-options.json's `intent_ref` deliberately carries NO `content_digest` -- the real case's own intent was a prose brief the user wrote outside any versioned file (i-shadow-record-01 section 1), so no single file exists to hash; `logical_id` alone names it, which this schema's own intent_ref description explains is the correct, honest representation of that gap rather than a technicality this fixture is working around. `reviewed_at` timestamps on every critic_reviews entry are all `2026-08-17T00:00:00Z`: the source decisions only record dates for these reviews, never clock times, so `T00:00:00Z` is used consistently as an explicit, documented placeholder for 'date is real, time-of-day was never recorded' -- not a claim that any review actually happened at midnight UTC. Every reject fixture is a deliberate, clearly synthetic mutation of accept-living-twin-pivot-options.json.",
+  "fixtures": [
+    {
+      "id": "accept-living-twin-pivot-options",
+      "type": "document",
+      "files": { "record": "accept-living-twin-pivot-options.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "The Pivot/Discovery-GO decision, with all four options from living-twin decision-01-pivot-and-scope-2026-08-17.md's own 棄却した選択肢と理由 table: the unmodified original plan (original_go_unmodified), the selected Pivot (pivot_go), Kill, and the alternative AI-Social/companion Pivot. critic_reviews record the two passes the real case actually had: sol across two rounds (same_lineage_different_order) and the independent-review session's own blind re-analysis using the same engine lineage (same_session) -- i-shadow-record-01 section 2(d)'s central finding, verbatim: neither of these counts as an independent verification pass on its own."
+    },
+    {
+      "id": "accept-living-twin-discovery-scope-options",
+      "type": "document",
+      "files": { "record": "accept-living-twin-discovery-scope-options.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "The Discovery-scope decision (living-twin decision-03-input-discovery-can-it-kill-2026-08-17.md's 選択肢 A/B/C, plus option_d_two_stage_wave added from decision-04-two-stage-discovery-2026-08-17.md -- the real case's own decision-03-to-decision-04 supersession introduced a genuinely new option that was never part of the original decision_request, which is why decision_request.option_ids intentionally lists only A/B/C here, not D; see this schema's own decision_request.option_ids description for why that asymmetry is allowed rather than being treated as a fixture bug. critic_reviews record terra (different_lineage -- the one real different_lineage pass in this whole recorded case) and sol (same_lineage_different_order)."
+    },
+    {
+      "id": "accept-living-twin-discovery-thresholds-options",
+      "type": "document",
+      "files": { "record": "accept-living-twin-discovery-thresholds-options.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "The threshold cross-check (living-twin decision-02-thresholds-2026-08-17.md §1's sol-vs-terra table): two options, sol's proposed numbers and terra's independently-derived numbers (terra never saw sol's values before deriving its own -- decision-02 §0). This is the fixture that most directly demonstrates why independence_status distinguishes different_lineage from same_lineage_different_order: the cross-check found a systematic divergence (decision-02 §2), which the recorded case treats as proof the different_lineage pass was NOT redundant with sol's own two same-lineage rounds."
+    },
+    {
+      "id": "invalid-personal-dimension",
+      "type": "document",
+      "files": { "record": "invalid-personal-dimension.json" },
+      "expected": "reject",
+      "all_forbidden_keys_flagged": true,
+      "notes": "All 11 forbidden personal-dimension keys planted at once (as extra top-level properties) on top of accept-living-twin-pivot-options.json. Also independently caught 11 times over by additionalProperties:false (this schema's top level is fully closed) -- this fixture is about proving the scan itself flags every one of the 11 keys individually."
+    },
+    {
+      "id": "invalid-missing-decision-request",
+      "type": "document",
+      "files": { "record": "invalid-missing-decision-request.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "decision_request is omitted entirely -- the specific failure mode this contract's own gate design (i-shadow-record-01 section 2(b)) exists to reject: a design-options document with no decision_request would let options be listed without anyone being forced to say what is actually being asked. Caught by the schema's top-level `required` list."
+    },
+    {
+      "id": "invalid-predicted-outcomes-missing",
+      "type": "document",
+      "files": { "record": "invalid-predicted-outcomes-missing.json" },
+      "expected": "reject",
+      "reason_code": "$.options[1]",
+      "notes": "predicted_outcomes removed from the pivot_go option (index 1, after original_go_unmodified) -- the exact field i-shadow-record-01 section 3's 'finding 2' found was NOT written naturally without being required (unlike falsifiers/key_assumptions/observable_proxies, which the real case wrote unprompted). Caught by the option schema's `required` list."
+    },
+    {
+      "id": "invalid-decision-request-dangling-option-id",
+      "type": "document",
+      "files": { "record": "invalid-decision-request-dangling-option-id.json" },
+      "expected": "reject",
+      "reason_code": "dangling_decision_request_option_id",
+      "notes": "decision_request.option_ids has \"option_that_does_not_exist\" appended -- a synthetic id not present in this document's own options[]. Individually schema-valid (a plain string in an array of strings); only the semantic cross-check in verify-fixtures.mjs catches it, mirroring release-observation/v0's own rollback_of dangling-reference check."
+    },
+    {
+      "id": "invalid-unknown-independence-status",
+      "type": "document",
+      "files": { "record": "invalid-unknown-independence-status.json" },
+      "expected": "reject",
+      "reason_code": "$.critic_reviews[0].independence_status",
+      "notes": "critic_reviews[0].independence_status set to \"fully_independent\", which is not one of the four closed enum values (different_lineage | same_lineage_different_order | same_session | human_third_party). This is deliberate: an open-ended independence label is exactly what let the real case's own two same-lineage passes get miscounted as independent verification before the closed enum existed (i-shadow-record-01 section 2(d))."
+    }
+  ]
+}

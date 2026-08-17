@@ -1,0 +1,77 @@
+{
+  "schema_version": "decision/v1",
+  "decision_id": "living-twin-decision-02-thresholds",
+  "intent_ref": {
+    "logical_id": "living-twin-decision-01-pivot-and-scope",
+    "content_digest": "sha256:a2ead0a6ed7fc50015924785ff789050971b5b04fd2dac7487ccbc05da174f60"
+  },
+  "options_ref": {
+    "logical_id": "living-twin-discovery-thresholds-2026-08-17",
+    "content_digest": "sha256:d598b10be3ace72ba8f7cdf89cfad006f0adf44d6db64fbd68e5d2c22a5f3ded"
+  },
+  "critic_ref": {
+    "logical_id": "living-twin-discovery-thresholds-2026-08-17",
+    "content_digest": "sha256:d598b10be3ace72ba8f7cdf89cfad006f0adf44d6db64fbd68e5d2c22a5f3ded"
+  },
+  "selected_option_id": "terra_independent_thresholds",
+  "no_action_option_id": null,
+  "no_action_rationale": "閾値を凍結すること自体の価値(後知恵の排除)は数値の正しさとは独立に成立するため、数値が未検証でも凍結は進める、というのがこの決定群の前提そのもの(decision-01 D-4運用ルール3)。『閾値を全く凍結しない』は、この前提と矛盾するため検討対象として立てられなかった。",
+  "decided_at": "2026-08-17T00:00:00Z",
+  "decision_maker": "human",
+  "decision_channel": {
+    "channel_id": "independent-review-session",
+    "description": "sol(architect)が提案した数値をterra(別モデル系統)には一切見せず、同じ制約条件から独立に導出させる手続きを独立レビュー担当セッションが実施し、突合結果を確定した(decision-02 §0)。"
+  },
+  "conflicts_with": [],
+  "rationale": "sol とterraの突合で体系的な乖離があった。terraは正確二項分布と検定力からp0=10%/p1=30%を根拠に閾値を導出したのに対し、solは数値を提示したが導出過程を示さなかった。特にBarnumのCIについてsolは片側80%まで緩めており、これはgateを通しやすくする操作で事前登録の意義を損なう。したがって主試験・import完遂・Barnum主指標の定義についてterraの値を採用する(decision-02 §1〜2)。",
+  "accepted_assumptions": [
+    "terra(gpt-5.6-terra)1系統の導出であり、統計の専門家の確認を経ていない(decision-02 §5)",
+    "p0=10%/p1=30%の設定はterraの判断であり、実データに基づく事前分布ではない(この2値が変われば全閾値が動く)"
+  ],
+  "accepted_unknowns": [
+    "主試験の『2製品以上・2日以上』『14日後』という運用定義の妥当性は検証されていない(decision-02 §5)"
+  ],
+  "rejected_options": [
+    {
+      "option_id": "sol_proposed_thresholds",
+      "reason_codes": [
+        "STATISTICALLY_UNDERPOWERED",
+        "GATE_TOO_PERMISSIVE_RISK_OF_FALSE_PASS"
+      ],
+      "notes": "solの閾値は通しやすく、terraの閾値は厳しく、terraは導出根拠を示している。特にBarnumのCIをsolは片側80%まで緩めており、これはgateを通しやすくする操作であり事前登録の意義を損なう方向である(decision-02 §2)。"
+    }
+  ],
+  "decision_items": [
+    {
+      "item_id": "main-trial-threshold",
+      "summary": "主試験(有料Portability Replacement Test): n=25、予約金¥2,000、通過6/25以上・不通過3/25以下",
+      "status": "active"
+    },
+    {
+      "item_id": "barnum-threshold-gate",
+      "summary": "Barnum対照: dz≥0.50 かつ片側95%下限>0 をgateとする",
+      "status": "active"
+    },
+    {
+      "item_id": "import-completion-threshold",
+      "summary": "import完遂率: n=25、母比率下限80%、通過24/25以上(Wilson片側95%)",
+      "status": "active"
+    },
+    {
+      "item_id": "sample-bias-handling",
+      "summary": "標本バイアスの扱い: 募集前に4分類を固定し、非利害層8人以上を目標に層別結果を出す(terra)",
+      "status": "active"
+    }
+  ],
+  "retractions": [
+    {
+      "retracted_item_ref": "barnum-threshold-gate",
+      "retracted_at": "2026-08-17T00:00:00Z",
+      "reason": "terra自身が『n=25では大きな効果しか検出できない。真のdzが0.50でも通過確率は約50%。r≈0.3相当を検出力80%で評価するには約70人以上必要』と警告していたにもかかわらず、その n で判定基準を設定した。判定できない n で閾値を作るのは、事前登録の形式だけを真似て中身が無い状態である(decision-02 追記v2)。"
+    }
+  ],
+  "estimate_refs": [],
+  "estimate_refs_omitted_reason": "estimate --adopt は一度も実行していない。living-twinはspec-laneのlane外で走ったため、estimate/v2への接続点自体が存在しない(i-shadow-record-01 §4)。",
+  "evidence_snapshot_digest": "sha256:48a2bed9fe9936d54ef972fa0c2111a0870469c1635755ad829bdd8b2b4540e6",
+  "status": "active"
+}
