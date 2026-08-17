@@ -16,6 +16,16 @@
 // producer-asserted-but-conjunctively-gated (C) to decide whether a review counts as independent
 // verification ("qualifying") -- it never lets a producer simply assert the answer.
 //
+// `unknown` (2026-08-18 refinement): means "qualifying cannot be ruled out", not "some field
+// happens to be missing". A missing `provider` is genuinely `unknown`, because a provider that
+// turns out to differ would be the one QUALIFYING outcome (`different_lineage`). Once `provider`
+// is confirmed equal, no missing `family`/`model_id`/`session_ref` can ever produce a qualifying
+// result, so those fields are skipped rather than treated as blocking -- the derivation instead
+// finds the closest non-qualifying relation still consistent with what is confirmed. See
+// relationBetween's own comment for the mechanics, and design-options/v1's CHANGELOG.md for the
+// real fixture defect ("`unknown` fired for a field gap that could never have been qualifying
+// anyway") this refinement corrects.
+//
 // Zero npm dependencies by design, same as every verify-fixtures.mjs / shared module in this repo.
 //
 // Usage as a library:
@@ -105,49 +115,64 @@ export function describeEngineRef(engineRef) {
   return `engine_ref(kind=${JSON.stringify(engineRef.kind)})`;
 }
 
-// Compares ONE shaper's engine_ref against the critic's engine_ref. Progressive: it only asks for
-// as much detail as it actually needs to place the pair, in the order the M2 derivation table
-// distinguishes them (provider -> family -> model_id -> session_ref) -- so e.g. a shaper whose
-// provider is known but whose model_id is not can still correctly yield `different_lineage`
-// against a critic on a different provider, without model_id ever entering the comparison. Only
-// returns "unknown" when the SPECIFIC field needed for the next distinction is missing on either
-// side, never when comparing further would have been possible with what's already been confirmed.
+// Compares ONE shaper's engine_ref against the critic's engine_ref. `unknown` here means
+// something specific (2026-08-18 revision, see design-options/v1 CHANGELOG.md "unknown means
+// 'qualifying cannot be ruled out', not 'a field is missing'"): it is returned ONLY when the
+// missing information could still hide a QUALIFYING outcome (`different_lineage`) -- i.e. when
+// `provider` itself is unresolved, since providers differing is the one fact this table treats
+// as qualifying. Once `provider` is confirmed EQUAL, `different_lineage` is impossible no matter
+// what `family`/`model_id`/`session_ref` turn out to be, so an unknown value at any of THOSE
+// fields is skipped (treated as "possibly equal, keep narrowing") rather than blocking the
+// derivation -- every relation reachable past that point is non-qualifying already, and this
+// module's job at that stage is only to find the CLOSEST (least independent) one still
+// consistent with what is confirmed, per the same "closest across all shapers" principle
+// `deriveIndependenceStatus` applies across shapers. It never stacks a SECOND unverified
+// assumption on top of a first, though: see the session_ref step below for the one place that
+// distinction has a concrete effect (an explicitly recorded session_ref on one side is not
+// assumed to coincidentally equal an unrecorded value on the other).
 function relationBetween(shaperRef, criticRef) {
   if (shaperRef.kind !== "model" || criticRef.kind !== "model") {
     // A human and a model share no engine lineage by construction -- this is the one relation
     // this function can state with certainty regardless of which side is missing which field.
     return { relation: "different_lineage", reason: `no shared engine lineage possible (shaper kind=${shaperRef.kind}, critic kind=${criticRef.kind})` };
   }
+
   if (!present(shaperRef.provider) || !present(criticRef.provider)) {
-    return { relation: "unknown", reason: "provider unknown on at least one side" };
+    return { relation: "unknown", reason: "provider unknown on at least one side -- different_lineage (qualifying) cannot be ruled out" };
   }
   if (shaperRef.provider !== criticRef.provider) {
     return { relation: "different_lineage", reason: `different provider (shaper=${shaperRef.provider}, critic=${criticRef.provider})` };
   }
-  if (!present(shaperRef.family) || !present(criticRef.family)) {
-    return { relation: "unknown", reason: `same provider (${shaperRef.provider}) but family unknown on at least one side` };
-  }
-  if (shaperRef.family !== criticRef.family) {
+
+  // provider confirmed equal from here on -- different_lineage is off the table, so an unknown
+  // family/model_id no longer needs to block the derivation; it is skipped, not treated as
+  // indeterminate.
+  if (present(shaperRef.family) && present(criticRef.family) && shaperRef.family !== criticRef.family) {
     return { relation: "same_provider_different_family", reason: `same provider (${shaperRef.provider}), different family (shaper=${shaperRef.family}, critic=${criticRef.family})` };
   }
-  if (!present(shaperRef.model_id) || !present(criticRef.model_id)) {
-    return { relation: "unknown", reason: `same provider+family (${shaperRef.provider}/${shaperRef.family}) but model_id unknown on at least one side` };
+
+  if (present(shaperRef.model_id) && present(criticRef.model_id) && shaperRef.model_id !== criticRef.model_id) {
+    return { relation: "same_family_different_model", reason: `same provider${present(shaperRef.family) && present(criticRef.family) ? "+family" : ""} (${shaperRef.provider}), different model_id (shaper=${shaperRef.model_id}, critic=${criticRef.model_id})` };
   }
-  if (shaperRef.model_id !== criticRef.model_id) {
-    return { relation: "same_family_different_model", reason: `same provider+family (${shaperRef.provider}/${shaperRef.family}), different model_id (shaper=${shaperRef.model_id}, critic=${criticRef.model_id})` };
-  }
+
   if (present(shaperRef.session_ref) && present(criticRef.session_ref)) {
     return shaperRef.session_ref === criticRef.session_ref
-      ? { relation: "same_session", reason: `same model_id (${shaperRef.model_id}), same session_ref` }
-      : { relation: "same_lineage_different_session", reason: `same model_id (${shaperRef.model_id}), different session_ref` };
+      ? { relation: "same_session", reason: "same session_ref" }
+      : { relation: "same_lineage_different_session", reason: "different session_ref" };
   }
-  // Same model_id, but session_ref is not recorded on at least one side: this module cannot rule
-  // out that it is literally the same session, so it conservatively assumes the closest
-  // (least independent) possibility rather than guess a more independent label -- the same
-  // "unknown poisons toward the conservative side" stance this module takes everywhere else,
-  // applied at the one point where a coarser relation (same_lineage_different_session) is not
-  // available to fall back to without risking an overstated independence claim.
-  return { relation: "same_session", reason: `same model_id (${shaperRef.model_id}), session_ref unknown on at least one side -- conservatively treated as same_session` };
+  if (present(shaperRef.session_ref) !== present(criticRef.session_ref)) {
+    // Asymmetric: one side recorded a specific session_ref value and the other simply was never
+    // asked to record one (e.g. a shaper whose `how: authored` role was never given a session
+    // label at all). Assuming these coincidentally match would stack a second unverified
+    // assumption on top of whatever family/model_id gaps were already skipped above -- this
+    // module declines to do that, and instead treats a recorded value as evidence the sessions
+    // differ.
+    return { relation: "same_lineage_different_session", reason: "session_ref recorded on only one side -- not assumed equal to an unrecorded value" };
+  }
+  // Neither side ever recorded a session_ref: no evidence distinguishes them at all, so the
+  // closest (least independent) possibility is assumed, consistent with every field skipped
+  // above.
+  return { relation: "same_session", reason: "session_ref recorded on neither side -- closest possibility assumed" };
 }
 
 // Core derivation: the "closest (least independent) relationship across ALL shapers" rule from
