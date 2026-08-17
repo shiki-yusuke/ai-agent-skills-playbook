@@ -1,7 +1,7 @@
 {
   "protocol_version": "design-options/v1",
   "fixture_format_version": "1",
-  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. `reason_code` for a \"reject\" fixture is either a named semantic-check code (e.g. \"dangling_decision_request_option_id\") or a raw schema-validator JSON-path (e.g. \"$\"), same leading-token convention as this repo's other contracts (see release-observation/v0's own expected-results.json). `all_forbidden_keys_flagged: true` means: instead of checking a single `reason_code`, verify that every key in contracts/shared/personal-dimensions.mjs's forbidden set is individually flagged. accept-self-referential-digest.json is the one exception to everything below: a synthetic demo document (not sourced from the real case) whose `intent_ref` points at this repo's own LICENSE file with a real, actually-verified sha256 -- included because all three of the real accept fixtures below carry `source_repo` on every content_digest-bearing ref and are therefore always `unverifiable` in CI by design (living-twin is external, unvendored); this is the one fixture that lets contracts/shared/verify-artifact-digests.mjs prove it can actually verify a design-options/v1 artifact_ref byte-for-byte, not only ever report `unverifiable`. PROVENANCE (for the three real accept fixtures): drawn from the one real I-shadow case this repo has recorded -- `docs/protocols/i-shadow-record-01-living-twin-2026-08-17.md` and the living-twin repo's own `docs/decisions/decision-01-pivot-and-scope-2026-08-17.md`, `decision-02-thresholds-2026-08-17.md`, `decision-03-input-discovery-can-it-kill-2026-08-17.md`, and `decision-04-two-stage-discovery-2026-08-17.md` (none of these source files ship in this repo; they are an external, private working repo -- this manifest's notes quote and cite them for provenance, but this repo does not vendor them). Every option's key_assumptions/falsifiers/observable_proxies/predicted_outcomes/rollback_strategy text is a paraphrase of that source material, not invented content. `content_digest` values that appear (accept-living-twin-discovery-scope-options.json's and accept-living-twin-discovery-thresholds-options.json's `intent_ref`) are real `sha256sum` digests of the actual living-twin source markdown files as they existed on 2026-08-17 (independently recomputed by this task, not copied from a claim) -- accept-living-twin-discovery-thresholds-options.json's digest is additionally cross-checked against the same hash decision-01-pivot-and-scope-2026-08-17.md itself already records for decision-input-4points-2026-08-17.md, and the two match exactly. Both carry `uri` (the living-twin-relative path to the actual source markdown) and `source_repo` set to `living-twin` (added after review: a digest with no recorded path to check it against cannot be verified by anyone else, and this schema's own $defs/artifact_ref now requires `uri` whenever `content_digest` is present) -- `source_repo` means contracts/shared/verify-artifact-digests.mjs always reports these two `unverifiable` in CI (living-twin is external and unvendored), never silently accepted as passing. accept-living-twin-pivot-options.json's `intent_ref` deliberately carries NO `content_digest` -- the real case's own intent was a prose brief the user wrote outside any versioned file (i-shadow-record-01 section 1), so no single file exists to hash; `logical_id` alone names it, which this schema's own intent_ref description explains is the correct, honest representation of that gap rather than a technicality this fixture is working around. `reviewed_at` timestamps on every critic_reviews entry are all `2026-08-17T00:00:00Z`: the source decisions only record dates for these reviews, never clock times, so `T00:00:00Z` is used consistently as an explicit, documented placeholder for 'date is real, time-of-day was never recorded' -- not a claim that any review actually happened at midnight UTC. Every reject fixture is a deliberate, clearly synthetic mutation of accept-living-twin-pivot-options.json.",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. `reason_code` for a \"reject\" fixture is either a named semantic-check code (e.g. \"dangling_decision_request_option_id\", \"engine_ref_field_undeclared\") or a raw schema-validator JSON-path (e.g. \"$\"), same leading-token convention as this repo's other contracts (see release-observation/v0's own expected-results.json). `all_forbidden_keys_flagged: true` means: instead of checking a single `reason_code`, verify that every key in contracts/shared/personal-dimensions.mjs's forbidden set is individually flagged. accept-self-referential-digest.json and accept-unknown-not-qualifying.json are the two exceptions to everything below: synthetic demo documents (not sourced from the real case), included to let contracts/shared/verify-artifact-digests.mjs and contracts/shared/derive-independence.mjs each prove a specific mechanism works in CI rather than only ever reporting `unverifiable`/being exercised against real, always-partially-external data. PROVENANCE (for the real living-twin accept fixtures): drawn from the one real I-shadow case this repo has recorded -- `docs/protocols/i-shadow-record-01-living-twin-2026-08-17.md` and the living-twin repo's own `docs/decisions/decision-01-pivot-and-scope-2026-08-17.md`, `decision-02-thresholds-2026-08-17.md`, `decision-03-input-discovery-can-it-kill-2026-08-17.md`, and `decision-04-two-stage-discovery-2026-08-17.md` (none of these source files ship in this repo; they are an external, private working repo -- this manifest's notes quote and cite them for provenance, but this repo does not vendor them). Every option's key_assumptions/falsifiers/observable_proxies/predicted_outcomes/rollback_strategy text is a paraphrase of that source material, not invented content. `content_digest` values that appear (accept-living-twin-discovery-scope-options.json's and accept-living-twin-discovery-thresholds-options.json's `intent_ref`) are real `sha256sum` digests of the actual living-twin source markdown files as they existed on 2026-08-17 (independently recomputed by this task, not copied from a claim) -- accept-living-twin-discovery-thresholds-options.json's digest is additionally cross-checked against the same hash decision-01-pivot-and-scope-2026-08-17.md itself already records for decision-input-4points-2026-08-17.md, and the two match exactly. Both carry `uri` (the living-twin-relative path to the actual source markdown) and `source_repo` set to `living-twin` (added after review: a digest with no recorded path to check it against cannot be verified by anyone else, and this schema's own $defs/artifact_ref now requires `uri` whenever `content_digest` is present) -- `source_repo` means contracts/shared/verify-artifact-digests.mjs always reports these two `unverifiable` in CI (living-twin is external and unvendored), never silently accepted as passing. accept-living-twin-pivot-options.json's `intent_ref` deliberately carries NO `content_digest` -- the real case's own intent was a prose brief the user wrote outside any versioned file (i-shadow-record-01 section 1), so no single file exists to hash; `logical_id` alone names it, which this schema's own intent_ref description explains is the correct, honest representation of that gap rather than a technicality this fixture is working around. `reviewed_at` timestamps on every critic_reviews entry are all `2026-08-17T00:00:00Z`: the source decisions only record dates for these reviews, never clock times, so `T00:00:00Z` is used consistently as an explicit, documented placeholder for 'date is real, time-of-day was never recorded' -- not a claim that any review actually happened at midnight UTC. Every reject fixture derived from a living-twin base is a deliberate, clearly synthetic mutation of accept-living-twin-pivot-options.json. 2026-08-18 REVISION (see ../CHANGELOG.md): `independence_status` was removed from every criticReview and is now DERIVED from `artifact_shapers[]` + `critic_reviews[].critic` (contracts/shared/derive-independence.mjs), after a real fixture's own two independence_status values were found measured against two different, unstated reference points. Re-evaluating the real living-twin case under the new derivation found ZERO of its recorded critic_reviews qualify as independent verification -- this is the corrected, honest reading of the same real data, not a new finding invented for this revision (see accept-zero-qualifying-reviews.json below and CHANGELOG.md).",
   "fixtures": [
     {
       "id": "accept-living-twin-pivot-options",
@@ -9,7 +9,7 @@
       "files": { "record": "accept-living-twin-pivot-options.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "The Pivot/Discovery-GO decision, with all four options from living-twin decision-01-pivot-and-scope-2026-08-17.md's own 棄却した選択肢と理由 table: the unmodified original plan (original_go_unmodified), the selected Pivot (pivot_go), Kill, and the alternative AI-Social/companion Pivot. critic_reviews record the two passes the real case actually had: sol across two rounds (same_lineage_different_order) and a separate independent-review session's own blind re-analysis using the same engine lineage (same_lineage_different_session -- relabeled from an earlier same_session, which understated that this was a different session, not a self-critique inside the generating session) -- i-shadow-record-01 section 2(d)'s central finding, verbatim: neither of these counts as an independent verification pass on its own."
+      "notes": "The Pivot/Discovery-GO decision, with all four options from living-twin decision-01-pivot-and-scope-2026-08-17.md's own 棄却した選択肢と理由 table. `artifact_shapers[]` (2026-08-18): the Claude investigative session that authored/paraphrased the option content, plus gpt-5.6-sol which adversarially reviewed the brief across two rounds (i-shadow-record-01 §1). `critic_reviews[]`: sol's own review now derives to `same_session` against itself as a shaper (and `prior_involvement: shaped_options` -- sol reviewing material it also shaped is not independent verification, no matter how it is labeled), and the second review (decision-01 D-4's 'K1/K2/K3 blind reanalysis', run through the same independent-review-session channel that decision/v1 records as this decision's decision_channel) derives to `unknown`: it is a human-channel critic who is also the decision maker, a case this contract's own derivation table does not resolve one way or the other (flagged, not guessed) -- see docs/protocols/design-options-v1.md 'Open questions'. decision-01 D-4 itself records that this second review was actually two MORE rounds of sol run by that session, but no raw output file for those specific rounds was ever preserved (only sol-round1/sol-round2/terra-independent exist, per docs/research/critic/README.md), so `review_output_ref` there honestly uses `digest_omitted_reason` rather than pointing at an unrelated file."
     },
     {
       "id": "accept-living-twin-discovery-scope-options",
@@ -17,7 +17,7 @@
       "files": { "record": "accept-living-twin-discovery-scope-options.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "The Discovery-scope decision (living-twin decision-03-input-discovery-can-it-kill-2026-08-17.md's 選択肢 A/B/C, plus option_d_two_stage_wave added from decision-04-two-stage-discovery-2026-08-17.md -- the real case's own decision-03-to-decision-04 supersession introduced a genuinely new option that was never part of the original decision_request, which is why decision_request.option_ids intentionally lists only A/B/C here, not D; see this schema's own decision_request.option_ids description for why that asymmetry is allowed rather than being treated as a fixture bug. critic_reviews record terra (different_lineage -- the one real different_lineage pass in this whole recorded case) and sol (same_lineage_different_order)."
+      "notes": "The Discovery-scope decision (living-twin decision-03-input-discovery-can-it-kill-2026-08-17.md's 選択肢 A/B/C, plus option_d_two_stage_wave added from decision-04-two-stage-discovery-2026-08-17.md). `artifact_shapers[]` (2026-08-18, architect-review gpt-5.6-sol ruling): the Claude investigative session (how: authored) and gpt-5.6-sol (how: reviewed_brief -- adversarially reviewed the brief in a way that shaped the option content, sol-round2-self-attack.txt). Re-derived under the new model, terra's review is `same_family_different_model` (same provider+family as the sol shaper, different model_id -- NOT `different_lineage` as the old producer-asserted label claimed, because lineage distance is measured against the closest shaper, and sol -- not Claude -- is the closer one) and sol's own review is `same_session` with `prior_involvement: shaped_options`. Neither qualifies as independent verification: this document is one of the two real fixtures (with accept-zero-qualifying-reviews.json) that demonstrate this contract's own corrected finding that the real living-twin case had zero qualifying independent reviews recorded. See CHANGELOG.md for why this correction was made in place rather than deferred to a v2."
     },
     {
       "id": "accept-living-twin-discovery-thresholds-options",
@@ -25,7 +25,23 @@
       "files": { "record": "accept-living-twin-discovery-thresholds-options.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "The threshold cross-check (living-twin decision-02-thresholds-2026-08-17.md §1's sol-vs-terra table): two options, sol's proposed numbers and terra's independently-derived numbers (terra never saw sol's values before deriving its own -- decision-02 §0). This is the fixture that most directly demonstrates why independence_status distinguishes different_lineage from same_lineage_different_order: the cross-check found a systematic divergence (decision-02 §2), which the recorded case treats as proof the different_lineage pass was NOT redundant with sol's own two same-lineage rounds."
+      "notes": "The threshold cross-check (living-twin decision-02-thresholds-2026-08-17.md §1's sol-vs-terra table): two options, sol's proposed numbers and terra's independently-derived numbers (terra never saw sol's values before deriving its own -- decision-02 §0). `artifact_shapers[]` (2026-08-18): the Claude investigative session (authored the fixture's structured text) plus sol AND terra themselves (each `how: authored` -- each directly authored the real-world numeric content of their own option, unlike the discovery-scope document where sol only reviewed a brief). Under the new derivation, terra's own critic_reviews entry -- which represents the value of its blind, independent derivation as a check on sol's proposal -- derives to `same_session` against itself as a shaper (it is literally the same recorded terra output serving both roles) with `prior_involvement: shaped_options`, so it does NOT qualify as independent verification of sol's numbers even though the systematic divergence it found (decision-02 §2) was real and consequential. The second critic (the independent-review-session channel that compiled the sol-vs-terra table) derives to `unknown` for the same reason as accept-living-twin-pivot-options.json's second review -- a human-channel critic who is also the decision maker, not resolved by this contract's table."
+    },
+    {
+      "id": "accept-zero-qualifying-reviews",
+      "type": "document",
+      "files": { "record": "accept-zero-qualifying-reviews.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Byte-identical to accept-living-twin-discovery-scope-options.json (same real living-twin document, same design_options_id) -- added 2026-08-18 as its own separate manifest entry specifically so the zero-qualifying-reviews outcome has a fixture whose NAME states the point being made, rather than requiring a reader to already know that discovery-scope-options happens to demonstrate it. This is not a new finding: it is this contract's own corrected, honest reading of the same real data (CHANGELOG.md), the state this whole 2026-08-18 revision exists to make machine-checkable -- two recorded critic_reviews, zero of them independently countable, and neither this fixture nor the derivation module hides that."
+    },
+    {
+      "id": "accept-unknown-not-qualifying",
+      "type": "document",
+      "files": { "record": "accept-unknown-not-qualifying.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "Synthetic demo document (demo-unknown-not-qualifying), NOT sourced from the real case -- added 2026-08-18. Its one critic's engine_ref legitimately declares model_id as unknown (unknown_fields: [\"model_id\"]), which is schema-valid (engine_ref completeness only requires a field to be present OR declared unknown, never both). Exists to prove, in CI, that an honestly-declared-unknown field makes contracts/shared/derive-independence.mjs derive `independence_status: unknown` rather than guess a relationship -- and that `unknown` is never qualifying, even though this fixture's `prior_involvement` is independently set to `none_observed_in_recorded_scope` (i.e. the involvement dimension alone would have cleared; the lineage dimension being unknown is what blocks it, isolating which of the two conjunctive dimensions is doing the work)."
     },
     {
       "id": "accept-self-referential-digest",
@@ -33,7 +49,7 @@
       "files": { "record": "accept-self-referential-digest.json" },
       "expected": "accept",
       "reason_code": null,
-      "notes": "Synthetic demo document (demo-self-referential-digest), NOT sourced from the real case: intent_ref.uri points at this repo's own LICENSE file with LICENSE's actual sha256 as content_digest, no source_repo (same repo). Exists because every other accept fixture in this directory carries source_repo and is therefore always unverifiable in CI by design -- this is the one fixture that lets contracts/shared/verify-artifact-digests.mjs actually verify a design-options/v1 artifact_ref byte-for-byte inside CI, proving the mechanism works rather than only ever reporting unverifiable."
+      "notes": "Synthetic demo document (demo-self-referential-digest), NOT sourced from the real case: intent_ref.uri points at this repo's own LICENSE file with LICENSE's actual sha256 as content_digest, no source_repo (same repo). Exists because every living-twin accept fixture in this directory carries source_repo on its living-twin-sourced refs and is therefore always unverifiable in CI by design -- this is the one fixture that lets contracts/shared/verify-artifact-digests.mjs actually verify a design-options/v1 artifact_ref byte-for-byte inside CI, proving the mechanism works rather than only ever reporting unverifiable. `artifact_shapers[]` and `critic_reviews[].critic` (2026-08-18) are minimal synthetic human engine_refs -- kind:human, is_decision_maker:false on the critic -- so its derived independence_status is `human_third_party` with `prior_involvement: none_observed_in_recorded_scope`, i.e. this demo document is also, incidentally, a qualifying-review example."
     },
     {
       "id": "invalid-personal-dimension",
@@ -41,7 +57,7 @@
       "files": { "record": "invalid-personal-dimension.json" },
       "expected": "reject",
       "all_forbidden_keys_flagged": true,
-      "notes": "All 11 forbidden personal-dimension keys planted at once (as extra top-level properties) on top of accept-living-twin-pivot-options.json. Also independently caught 11 times over by additionalProperties:false (this schema's top level is fully closed) -- this fixture is about proving the scan itself flags every one of the 11 keys individually."
+      "notes": "All 11 forbidden personal-dimension keys planted at once (as extra top-level properties) on top of the current accept-living-twin-pivot-options.json. Also independently caught 11 times over by additionalProperties:false (this schema's top level is fully closed) -- this fixture is about proving the scan itself flags every one of the 11 keys individually."
     },
     {
       "id": "invalid-missing-decision-request",
@@ -68,20 +84,60 @@
       "notes": "decision_request.option_ids has \"option_that_does_not_exist\" appended -- a synthetic id not present in this document's own options[]. Individually schema-valid (a plain string in an array of strings); only the semantic cross-check in verify-fixtures.mjs catches it, mirroring release-observation/v0's own rollback_of dangling-reference check."
     },
     {
-      "id": "invalid-unknown-independence-status",
-      "type": "document",
-      "files": { "record": "invalid-unknown-independence-status.json" },
-      "expected": "reject",
-      "reason_code": "$.critic_reviews[0].independence_status",
-      "notes": "critic_reviews[0].independence_status set to \"fully_independent\", which is not one of the five closed enum values (different_lineage | same_lineage_different_order | same_lineage_different_session | same_session | human_third_party). This is deliberate: an open-ended independence label is exactly what let the real case's own two same-lineage passes get miscounted as independent verification before the closed enum existed (i-shadow-record-01 section 2(d))."
-    },
-    {
       "id": "invalid-rollback-strategy-missing",
       "type": "document",
       "files": { "record": "invalid-rollback-strategy-missing.json" },
       "expected": "reject",
       "reason_code": "$.options[0]",
-      "notes": "rollback_strategy removed from the original_go_unmodified option (index 0) of accept-living-twin-pivot-options.json. This contract had required rollback_strategy on every option since v1's own consolidation of i-shadow-record-01 section 3's 'finding 2' (predicted_outcomes/rollback_strategy were the two counterfactual fields NOT written naturally without being required), but previously had no reject fixture proving the requirement actually fires -- invalid-predicted-outcomes-missing.json covered the other half of finding 2, this one covers rollback_strategy specifically."
+      "notes": "rollback_strategy removed from the original_go_unmodified option (index 0) of the current accept-living-twin-pivot-options.json. This contract had required rollback_strategy on every option since v1's own consolidation of i-shadow-record-01 section 3's 'finding 2' (predicted_outcomes/rollback_strategy were the two counterfactual fields NOT written naturally without being required), but previously had no reject fixture proving the requirement actually fires -- invalid-predicted-outcomes-missing.json covered the other half of finding 2, this one covers rollback_strategy specifically."
+    },
+    {
+      "id": "invalid-prior-involvement-none-absolute",
+      "type": "document",
+      "files": { "record": "invalid-prior-involvement-none-absolute.json" },
+      "expected": "reject",
+      "reason_code": "$.critic_reviews[0].prior_involvement",
+      "notes": "Added 2026-08-18. critic_reviews[0].prior_involvement set to the bare string \"none\", which is deliberately NOT one of the four enum values (shaped_options | reviewed_predecessor | none_observed_in_recorded_scope | unknown) -- see that field's own schema description for why: positive involvement can be evidenced, its universal absence cannot, so a producer may never simply assert a bare 'none'."
+    },
+    {
+      "id": "invalid-none-observed-without-scope-ref",
+      "type": "document",
+      "files": { "record": "invalid-none-observed-without-scope-ref.json" },
+      "expected": "reject",
+      "reason_code": "$.critic_reviews[0]",
+      "notes": "Added 2026-08-18. critic_reviews[0].prior_involvement set to \"none_observed_in_recorded_scope\" with observation_scope_ref removed -- the schema's own allOf requires observation_scope_ref exactly when this value is used (an unscoped 'none observed' cannot be distinguished from 'not looked for')."
+    },
+    {
+      "id": "invalid-missing-review-output-ref",
+      "type": "document",
+      "files": { "record": "invalid-missing-review-output-ref.json" },
+      "expected": "reject",
+      "reason_code": "$.critic_reviews[0]",
+      "notes": "Added 2026-08-18. critic_reviews[0].review_output_ref removed entirely. Demonstrates the fix for the predecessor field notes_ref being optional (CHANGELOG.md): a criticReview MUST cite its own output, not merely be allowed to."
+    },
+    {
+      "id": "invalid-empty-artifact-shapers",
+      "type": "document",
+      "files": { "record": "invalid-empty-artifact-shapers.json" },
+      "expected": "reject",
+      "reason_code": "$.artifact_shapers",
+      "notes": "Added 2026-08-18. Top-level artifact_shapers set to an empty array -- minItems:1 fires: a design-options document with a stated-but-empty origin is not something this contract's derivation can evaluate independence against."
+    },
+    {
+      "id": "invalid-independence-status-in-producer-input",
+      "type": "document",
+      "files": { "record": "invalid-independence-status-in-producer-input.json" },
+      "expected": "reject",
+      "reason_code": "$.critic_reviews[0]",
+      "notes": "Added 2026-08-18. critic_reviews[0].independence_status set directly by the producer (the field's OLD name/role) -- rejected by additionalProperties:false, since criticReview no longer declares this field at all. Proves the derivation cannot be bypassed by a producer simply asserting the answer again under the old field name."
+    },
+    {
+      "id": "invalid-engine-ref-missing-model-id",
+      "type": "document",
+      "files": { "record": "invalid-engine-ref-missing-model-id.json" },
+      "expected": "reject",
+      "reason_code": "engine_ref_field_undeclared",
+      "notes": "Added 2026-08-18. critic_reviews[0].critic.model_id removed, with no unknown_fields entry naming it -- contracts/shared/derive-independence.mjs's engineRefIssues (invoked from this directory's own verify-fixtures.mjs) rejects a per-kind required engine_ref field that is neither present nor declared unknown. Contrast accept-unknown-not-qualifying.json, where the same field is missing but IS declared -- that one accepts."
     }
   ]
 }

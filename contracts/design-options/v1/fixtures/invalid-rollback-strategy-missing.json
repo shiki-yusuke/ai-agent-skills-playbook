@@ -5,6 +5,30 @@
     "logical_id": "living-twin:user-authored-investigation-brief-prose",
     "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
+  "artifact_shapers": [
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "unknown_fields": [
+          "model_id"
+        ]
+      },
+      "how": "authored",
+      "how_note": "Claudeの調査セッションが二次調査report.mdの三段階提案(Version A/B/C)とPivot候補(i-shadow-record-01 §1)、および本fixtureの選択肢テキストへの構造化・要約を行った。どのClaudeモデルの版であったかは記録されていないためmodel_idはunknown_fields。"
+    },
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-sol",
+        "session_ref": "01a00ed8-c9e0-78a3-a32d-1ae6a6dbebce"
+      },
+      "how": "reviewed_brief"
+    }
+  ],
   "options": [
     {
       "option_id": "original_go_unmodified",
@@ -86,8 +110,20 @@
   ],
   "critic_reviews": [
     {
-      "independence_status": "same_lineage_different_order",
-      "critic_engine": "gpt-5.6-sol",
+      "critic": {
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-sol",
+        "session_ref": "01a00ed8-c9e0-78a3-a32d-1ae6a6dbebce"
+      },
+      "prior_involvement": "shaped_options",
+      "review_output_ref": {
+        "logical_id": "living-twin:sol-round2-self-attack",
+        "uri": "docs/research/critic/sol-round2-self-attack.txt",
+        "source_repo": "living-twin",
+        "content_digest": "sha256:8da62bdf3e1d2aa511589c75e420eab1a6bc713d5b94f45e617014f6c5beb2df"
+      },
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": [
         "pivot_go",
@@ -96,8 +132,16 @@
       ]
     },
     {
-      "independence_status": "same_session",
-      "critic_engine": "independent-review-session (blind re-analysis, K1/K2/K3, same engine lineage as the generating session)",
+      "critic": {
+        "kind": "human",
+        "human_ref": "living-twin-independent-review-session",
+        "is_decision_maker": true
+      },
+      "prior_involvement": "unknown",
+      "review_output_ref": {
+        "logical_id": "living-twin:k1-k2-k3-blind-reanalysis",
+        "digest_omitted_reason": "decision-01 D-4によれば、このK1/K2/K3盲検再分析はsolを追加で2ラウンド実行して行われた('二次調査側も同じsolを2巡使用しており、私の2ラウンドと合わせて計4巡')。しかしその生出力はファイルとして保存されておらず、docs/research/critic/配下に該当ファイルが存在しない(存在するのはsol-round1/sol-round2/terra-independentの3件のみ、README.md参照)。捏造を避けるため参照先なしとして正直に記録する。"
+      },
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": [
         "pivot_go",
