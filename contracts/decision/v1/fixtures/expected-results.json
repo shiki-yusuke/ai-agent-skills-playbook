@@ -1,0 +1,151 @@
+{
+  "protocol_version": "decision/v1",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory. `verify-fixtures.mjs` reads this file and fails (non-zero exit) if any fixture's actual outcome does not match. Each entry's `type` selects which check applies: \"record\" (a single decision/v1 record, checked against the schema, the personal-dimension scan, the within-record retractions<->decision_items consistency check, and contracts/shared/verify-artifact-digests.mjs's byte-level digest check) or \"collection\" (an array of records checked together, the only way to express the conflicts_with cross-record dangling-reference check -- same convention release-observation/v0 uses for its own rollback_of check). `reason_code` for a \"reject\" fixture is either a named semantic-check code or a raw schema-validator JSON-path, same leading-token convention as this repo's other contracts. PROVENANCE: the four individual accept records (decision-01 through decision-04) are drawn from the one real I-shadow case this repo has recorded -- `docs/protocols/i-shadow-record-01-living-twin-2026-08-17.md` and the living-twin repo's own `docs/decisions/decision-01-pivot-and-scope-2026-08-17.md`, `decision-02-thresholds-2026-08-17.md`, `decision-03-discovery-scope-2026-08-17.md`, and `decision-04-two-stage-discovery-2026-08-17.md` (none of these source files ship in this repo; they are an external, private working repo -- notes here cite them for provenance without vendoring them). `evidence_snapshot_digest` on each of the four is a real `sha256sum` of an actual source markdown file this task independently recomputed (decision-01 -> the LUNAR-existence correction that grounds its rationale; decision-02, decision-03, decision-04 -> each decision's own source file). `options_ref` (per its own field description: 'the design-options/v1 document ... resolved against') carries `uri` + real `sha256sum` of THIS repo's own `contracts/design-options/v1/fixtures/accept-living-twin-*.json` file (no `source_repo` -- same repo), recomputed after those files were finalized (see M10/circular-dependency note in docs/protocols/decision-v1.md: editing a design-options fixture invalidates every decision fixture's `options_ref.content_digest` that points at it, so design-options/v1 must be finalized first). `critic_ref` carries `uri` + `source_repo: \"living-twin\"` + real `sha256sum` of the actual living-twin critic file (`independent-review-diff-2026-08-17.md` / `terra-independent-threshold-derivation.txt` / `sol-round2-self-attack.txt`, the last shared correctly by decision-03 and decision-04 since both cite the same critic pass) -- unverifiable in CI by design (living-twin is external, unvendored), reported as such, never silently accepted. `logical_id` on `critic_ref` is `living-twin:<source-basename-without-extension>`, distinct per real file, so it can never again collide with `options_ref`'s own logical_id the way an earlier version of these fixtures did (see 'Known review findings, corrected' below). `intent_ref` is uniform across all four (`living-twin:user-authored-investigation-brief-prose`, `digest_omitted_reason` set, text unchanged) -- the real case's intent was the same prose brief for every one of these four decisions, not a per-decision document. decision-03's own rationale field is deliberately candid about a real mismatch in the source material: decision-03's text names its selection \"選択肢C\" but the design actually frozen there is a hybrid, not an exact match for decision-03-input's original catalogued option C -- this fixture records that mismatch rather than silently reconciling it (see docs/protocols/decision-v1.md's own 'Known source-material inconsistency' note). The accept-conflict-resolves-collection fixture reuses decision-03 and decision-04 verbatim to demonstrate conflicts_with resolving correctly across a real collection (decision-04's own conflicts_with really does point at decision-03's real decision_id). The two demo-decision-* records and the two dangling-conflicting-decision-ref-collection-*.json files are the one exception: clearly-labeled synthetic minimal records, invented because no real recorded decision in this case exhibits a dangling conflicts_with reference -- mirroring release-observation/v0's own synthetic demo-release@* precedent for the same reason. KNOWN REVIEW FINDINGS, CORRECTED (kept here rather than erased, per this repo's own no-silent-reconciliation norm applied to its own fixture history): an earlier version of these four fixtures gave `options_ref` and `critic_ref` the SAME `logical_id` despite pointing at different real documents, and gave `intent_ref` a `content_digest` for a document that was never filed at all (no `uri` field existed to record what any digest was even for) -- all seven underlying digest VALUES were real sha256sums of real files throughout, just attached to the wrong logical_id / missing the uri needed to check them, which is why a reviewer without `uri` to go on had to brute-force-hash an external repo to guess what they meant, and briefly misattributed one in the process. See docs/protocols/decision-v1.md's own account of this incident for the full timeline.",
+  "fixtures": [
+    {
+      "id": "accept-living-twin-decision-01-pivot",
+      "type": "record",
+      "files": { "record": "accept-living-twin-decision-01-pivot.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "living-twin decision-01-pivot-and-scope-2026-08-17.md in full: Pivot/Discovery GO selected over the unmodified original plan, Kill, and the alternative AI-Social/companion pivot. no_action_option_id names \"kill\" (a genuinely framed do-nothing option in this case). status=active, retractions=[] (this decision was never partially retracted)."
+    },
+    {
+      "id": "accept-living-twin-decision-02-thresholds",
+      "type": "record",
+      "files": { "record": "accept-living-twin-decision-02-thresholds.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "living-twin decision-02-thresholds-2026-08-17.md: terra's independently-derived thresholds selected over sol's. Exercises the partial-retraction machinery this contract's own decision_items[]/retractions[] pair exists for (i-shadow-record-01 'finding 1'): the Barnum threshold sub-item is individually retracted via the decision's own 追記v2, while the rest of the decision (main-trial-threshold, import-completion-threshold, sample-bias-handling) stays active -- exactly the fact D10's document-level status(active|superseded) alone cannot express. no_action_option_id is null (this decision never framed a distinct 'freeze no thresholds' alternative), paired with a required no_action_rationale quoting why."
+    },
+    {
+      "id": "accept-living-twin-decision-03-discovery-scope",
+      "type": "record",
+      "files": { "record": "accept-living-twin-decision-03-discovery-scope.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "living-twin decision-03-discovery-scope-2026-08-17.md. status=superseded, superseded_by points at decision-04 (checked as individually schema-valid here -- only the collection fixture below cross-checks that the reference actually resolves)."
+    },
+    {
+      "id": "accept-living-twin-decision-04-two-stage-discovery",
+      "type": "record",
+      "files": { "record": "accept-living-twin-decision-04-two-stage-discovery.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "living-twin decision-04-two-stage-discovery-2026-08-17.md: the real recorded conflict (i-shadow-record-01 section 2(c), called the single most important finding). conflicts_with names decision-03 as the conflicting decision and \"tertiary-phase-direct-instruction\" as the OTHER channel -- a channel that, per the real case, never produced its own citable decision/v1 record at all (this schema's own conflict.conflicting_channel_id description explains why that is allowed). no_action_option_id is null: this decision arose from reconciling a channel conflict, not a fresh design-options round, so no do-nothing option was ever framed for it."
+    },
+    {
+      "id": "accept-conflict-resolves-collection",
+      "type": "collection",
+      "files": { "records": ["accept-living-twin-decision-03-discovery-scope.json", "accept-living-twin-decision-04-two-stage-discovery.json"] },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "The same decision-03/decision-04 pair, checked together: decision-04's conflicts_with[0].conflicting_decision_ref.logical_id (\"living-twin-decision-03-discovery-scope\") DOES resolve to decision-03's own decision_id within this two-record collection -- the positive case for the cross-record check, using real (not synthetic) data, unlike the dangling-reference fixture below."
+    },
+    {
+      "id": "invalid-personal-dimension",
+      "type": "record",
+      "files": { "record": "invalid-personal-dimension.json" },
+      "expected": "reject",
+      "all_forbidden_keys_flagged": true,
+      "notes": "All 11 forbidden personal-dimension keys planted at once (as extra top-level properties) on top of accept-living-twin-decision-01-pivot.json. Also independently caught 11 times over by additionalProperties:false (this schema's top level is fully closed)."
+    },
+    {
+      "id": "invalid-missing-decision-channel",
+      "type": "record",
+      "files": { "record": "invalid-missing-decision-channel.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "decision_channel is omitted entirely from accept-living-twin-decision-01-pivot.json -- the field i-shadow-record-01 section 2(c) calls the single most important addition this contract makes over D10. Caught by the schema's top-level `required` list."
+    },
+    {
+      "id": "invalid-superseded-without-superseded-by",
+      "type": "record",
+      "files": { "record": "invalid-superseded-without-superseded-by.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "accept-living-twin-decision-03-discovery-scope.json with `superseded_by` deleted while `status` stays \"superseded\" -- the exact failure mode named in this task's own invalid-fixture requirements. Caught by the schema's conditional `required` (allOf if/then on status==\"superseded\")."
+    },
+    {
+      "id": "invalid-dangling-retraction",
+      "type": "record",
+      "files": { "record": "invalid-dangling-retraction.json" },
+      "expected": "reject",
+      "reason_code": "dangling_retracted_item_ref",
+      "notes": "accept-living-twin-decision-02-thresholds.json with retractions[0].retracted_item_ref changed to \"item-that-does-not-exist\", which matches no decision_items[].item_id in this record -- the exact failure mode named in this task's own invalid-fixture requirements (\"retraction が存在しない項目を指す\"). Individually schema-valid (a plain non-empty string); only the semantic check in verify-fixtures.mjs catches it."
+    },
+    {
+      "id": "invalid-retracted-item-status-mismatch",
+      "type": "record",
+      "files": { "record": "invalid-retracted-item-status-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "retracted_item_ref_status_mismatch",
+      "notes": "accept-living-twin-decision-02-thresholds.json with the barnum-threshold-gate decision_items[] entry's status changed back to \"active\" while retractions[] still claims it was retracted -- the inconsistent-but-not-dangling half of the same check. A real retraction always flips the item's own status; this fixture proves the check catches the case where that link is broken instead of merely missing."
+    },
+    {
+      "id": "invalid-dangling-conflicting-decision-ref",
+      "type": "collection",
+      "files": { "records": ["dangling-conflicting-decision-ref-collection-1.json", "dangling-conflicting-decision-ref-collection-2.json"] },
+      "expected": "reject",
+      "reason_code": "dangling_conflicting_decision_ref",
+      "notes": "Two synthetic (clearly non-real, demo-decision-*) records: demo-decision-2's conflicts_with[0].conflicting_decision_ref points at \"demo-decision-999\", a decision_id that appears nowhere in this collection. Invented rather than sourced from real data because no real recorded decision in this case exhibits a dangling conflicts_with reference -- mirroring release-observation/v0's own synthetic dangling-rollback-of-collection fixture for the identical reason."
+    },
+    {
+      "id": "invalid-artifact-digest-mismatch",
+      "type": "record",
+      "files": { "record": "invalid-artifact-digest-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "artifact_digest_mismatch",
+      "notes": "accept-living-twin-decision-01-pivot.json with the last hex digit of options_ref.content_digest flipped (...744 -> ...745), so it no longer matches the real sha256 of contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json that options_ref.uri actually points at (a real, same-repo file -- no separate synthetic self-referential fixture is needed for this once options_ref resolves inside this repo by construction). Individually schema-valid (still matches ^sha256:[0-9a-f]{64}$, the only thing schema validation alone can ever check about a digest) -- only contracts/shared/verify-artifact-digests.mjs's actual byte-level check catches it. This is the exact incident (sol architect-review must-fix 1) the artifact_ref/decision_ref split and this digest-verification module exist to close: a formally-valid content_digest that does not match the file it claims to. (An earlier version of this fixture used a synthetic demo record pointing at LICENSE/contracts/shared/*.mjs instead -- no longer necessary now that a real accept fixture's own options_ref is repo-internal and verifiable.)"
+    },
+    {
+      "id": "invalid-artifact-ref-digest-without-uri",
+      "type": "record",
+      "files": { "record": "invalid-artifact-ref-digest-without-uri.json" },
+      "expected": "reject",
+      "reason_code": "$.critic_ref",
+      "notes": "accept-living-twin-decision-01-pivot.json with critic_ref's uri (and source_repo) deleted while content_digest stays. Caught by $defs/artifact_ref's new content_digest-present-implies-uri-required conditional -- added specifically because the earlier lack of `uri` on these very refs was what let a reviewer misattribute a digest by brute-force hashing (see this directory's own top-level PROVENANCE note). Also independently re-checked by contracts/shared/verify-artifact-digests.mjs's own standalone artifact_ref_digest_without_uri check, so the module still catches this even when used outside full schema validation."
+    },
+    {
+      "id": "invalid-same-logical-id-different-digest",
+      "type": "record",
+      "files": { "record": "invalid-same-logical-id-different-digest.json" },
+      "expected": "reject",
+      "reason_code": "artifact_ref_logical_id_digest_conflict",
+      "notes": "accept-living-twin-decision-01-pivot.json with critic_ref.logical_id changed to be identical to options_ref.logical_id, while each ref keeps its own distinct, individually-correct uri/content_digest (both real, both verifiable, both actually different files). Individually schema-valid (logical_id has no cross-field uniqueness constraint at the schema level) -- only contracts/shared/verify-artifact-digests.mjs's cross-ref check catches it. This is deliberately the identifier-side mirror image of this contract's own unrecorded-referent incident (see this directory's own top-level PROVENANCE note): an identifier reused across two refs that provably resolve to different real content, the exact shape an earlier version of these four accept fixtures had before this task's correction."
+    },
+    {
+      "id": "invalid-empty-estimate-refs-without-reason",
+      "type": "record",
+      "files": { "record": "invalid-empty-estimate-refs-without-reason.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "accept-living-twin-decision-01-pivot.json with estimate_refs_omitted_reason deleted while estimate_refs stays []. Caught by the schema's top-level conditional `required` (allOf if/then on estimate_refs.maxItems==0) -- the null-not-zero rule this field exists to enforce (i-shadow-record-01 section 4, 'finding 3') previously had no reject fixture proving it actually fires."
+    },
+    {
+      "id": "invalid-artifact-ref-digest-and-reason-both",
+      "type": "record",
+      "files": { "record": "invalid-artifact-ref-digest-and-reason-both.json" },
+      "expected": "reject",
+      "reason_code": "$.options_ref",
+      "notes": "accept-living-twin-decision-01-pivot.json with options_ref carrying BOTH content_digest (already present) AND a synthetic digest_omitted_reason. Exercises $defs/artifact_ref's mutual-exclusion conditional (sol architect-review must-fix 2): 'here is the digest' and 'the digest is missing because X' cannot both be true of the same ref at once. This is the specific gap the pre-split $defs/ref left open -- a producer could truthfully claim both."
+    },
+    {
+      "id": "invalid-artifact-ref-neither-digest-nor-reason",
+      "type": "record",
+      "files": { "record": "invalid-artifact-ref-neither-digest-nor-reason.json" },
+      "expected": "reject",
+      "reason_code": "$.options_ref",
+      "notes": "accept-living-twin-decision-01-pivot.json with options_ref's content_digest deleted, leaving only logical_id (no digest_omitted_reason either). Caught by $defs/artifact_ref's existing null-not-zero conditional (content_digest absent -> digest_omitted_reason required) -- an artifact_ref that says neither 'here is the digest' nor 'here is why there isn't one' is exactly the silent gap this contract does not allow."
+    },
+    {
+      "id": "invalid-decision-ref-with-digest",
+      "type": "record",
+      "files": { "record": "invalid-decision-ref-with-digest.json" },
+      "expected": "reject",
+      "reason_code": "$.superseded_by",
+      "notes": "accept-living-twin-decision-03-discovery-scope.json with a synthetic content_digest added to superseded_by. Caught by $defs/decision_ref's additionalProperties:false (sol architect-review must-fix 3): a ledger-internal reference to another decision/v1 record is resolved by logical_id alone and deliberately carries no digest field at all, so this is rejected as an unknown property, not merely an unverifiable one."
+    }
+  ]
+}

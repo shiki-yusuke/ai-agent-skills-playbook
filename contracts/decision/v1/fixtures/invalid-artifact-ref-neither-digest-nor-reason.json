@@ -1,0 +1,114 @@
+{
+  "schema_version": "decision/v1",
+  "decision_id": "living-twin-decision-01-pivot-and-scope",
+  "intent_ref": {
+    "logical_id": "living-twin:user-authored-investigation-brief-prose",
+    "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
+  },
+  "options_ref": {
+    "logical_id": "living-twin-pivot-and-scope-2026-08-17",
+    "uri": "contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json"
+  },
+  "critic_ref": {
+    "logical_id": "living-twin:independent-review-diff-2026-08-17",
+    "uri": "docs/decisions/independent-review-diff-2026-08-17.md",
+    "source_repo": "living-twin",
+    "content_digest": "sha256:cd5f74ef788595fd9fd25ecb1ea2793bc683507898a34857c1db7dd51055c6c1"
+  },
+  "selected_option_id": "pivot_go",
+  "no_action_option_id": "kill",
+  "no_action_rationale": "Killは『Living Twin/Personal Memory Vault構想全体を進めない』選択肢であり、この決定における唯一の明示的な『何もしない』の代替として棄却された選択肢と理由の表に列挙されている(decision-01)。",
+  "decided_at": "2026-08-17T00:00:00Z",
+  "decision_maker": "human",
+  "decision_channel": {
+    "channel_id": "independent-review-session",
+    "description": "「Codexとも確認して妥当だと思える根拠があるのであれば進めて」というユーザーの委任に基づき、独立レビュー担当セッションが根拠を確認のうえ確定した(decision-01冒頭 decided_by)。"
+  },
+  "conflicts_with": [],
+  "rationale": "差別化仮説4つ中3つが反証済み、私の盲検再分析(K1)も独立に同じ結論に到達、LUNAR(訂正01で実在確認済み)がPivotの芯(evidence selection/privacy control)を名指しで支持、かつダウンサイドが構造的に限定される(Discovery 1〜2週+Personal Pilot 3ヶ月・月$20前後、失敗しても自分用ツール・検証データ・技術ポートフォリオが残る)ため、Pivot/Discovery GOを採用する(decision-01 D-1)。",
+  "accepted_assumptions": [
+    "Discoveryの数値閾値は未決(decision-02で確定する)まま、Pivot採用自体は先に確定してよい",
+    "本レビューは『独立レビュー』ではなく『盲検再分析(同一エンジン系統)』であり、その呼称の下で根拠として使ってよい(D-4)"
+  ],
+  "accepted_unknowns": [
+    "cross-domain integrationはLUNARも課題として挙げており、Pivotでも未検証のまま残る(訂正01 §5)",
+    "顔解析なしでArchiveの芯が成立しない場合の反証は現実的でないとしているが、確定的に排除されたわけではない(D-3)"
+  ],
+  "rejected_options": [
+    {
+      "option_id": "original_go_unmodified",
+      "reason_codes": [
+        "EVIDENCE_CONTRADICTED",
+        "UNVALIDATED_CORE_ASSUMPTION"
+      ],
+      "notes": "差別化仮説4中3が反証済み、中核体験(自己発見)が科学的に未成立(passive tracesからr≈0.3、汎用Barnumとの直接比較なし)。"
+    },
+    {
+      "option_id": "kill",
+      "reason_codes": [
+        "ALTERNATIVE_OPTION_STRONGER_ON_NET"
+      ],
+      "notes": "未充足の組み合わせが実在し、タイミングが良く、ダウンサイドが限定的。LUNARが芯を外部から支持。Killを選ぶ積極的な理由が無い。"
+    },
+    {
+      "option_id": "alternative_pivot",
+      "reason_codes": [
+        "PRIOR_ART_FAILURE_PRECEDENT",
+        "REGULATORY_OR_LEGAL_RISK"
+      ],
+      "notes": "AI専用SNSは3回試され3回失敗(Chirperはmentionの99.83%が存在しない宛先)、相性予測は学術的に否定済み(Joel 2017)。companionは規制と依存リスクが重い。"
+    }
+  ],
+  "decision_items": [
+    {
+      "item_id": "D-1",
+      "summary": "Pivotを採用する(原案Living Twinは凍結)",
+      "status": "active"
+    },
+    {
+      "item_id": "D-2",
+      "summary": "データソースからX(Twitter)を外す",
+      "status": "active"
+    },
+    {
+      "item_id": "D-3",
+      "summary": "顔・生体データの凍結を維持する",
+      "status": "active"
+    },
+    {
+      "item_id": "D-4",
+      "summary": "本レビューの呼称を『盲検再分析』に格下げする",
+      "status": "active"
+    },
+    {
+      "item_id": "D-5",
+      "summary": "Discovery-B(8週の外部cohort)を計画に入れる",
+      "status": "active"
+    },
+    {
+      "item_id": "D-6",
+      "summary": "no-codeの定義を限定し、検証を3分離する(insightはArchive本体の生死判定から外す)",
+      "status": "active"
+    },
+    {
+      "item_id": "D-7",
+      "summary": "追加gateを2つ設ける(shutdown drill / securityの検査範囲の凍結)",
+      "status": "active"
+    },
+    {
+      "item_id": "D-8",
+      "summary": "再試験ルールの凍結(原因を1つだけ修正して1回まで)",
+      "status": "active"
+    },
+    {
+      "item_id": "D-9",
+      "summary": "法務上の限定を2つ明記する(家庭内例外としない / EU AI Act Art.50対応)",
+      "status": "active"
+    }
+  ],
+  "retractions": [],
+  "estimate_refs": [],
+  "estimate_refs_omitted_reason": "estimate --adopt は一度も実行していない。living-twinはspec-laneのlane外で走ったため、estimate/v2への接続点自体が存在しない(i-shadow-record-01 §4)。",
+  "evidence_snapshot_digest": "sha256:c684f23bd3cb0f9644a9e48d1171bc5e7d7d64f18cd50c7818ede69c852b3595",
+  "status": "active"
+}
