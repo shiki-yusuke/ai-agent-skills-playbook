@@ -8,6 +8,11 @@
 //      present in the SAME document (a decision_request asking about an option nobody defined
 //      is a typo or a gap, mirroring release-observation/v0's own rollback_of dangling-reference
 //      check -- but this one is checkable within a single record, not across a collection).
+//   3. every artifact_ref (intent_ref / notes_ref) whose content_digest names a file reachable
+//      inside this repo actually matches that file's real sha256
+//      (contracts/shared/verify-artifact-digests.mjs) -- see decision/v1's own verify-fixtures.mjs
+//      for the fabricated-digest incident this closes. Refs whose uri is absent or points outside
+//      this repo are reported as unverifiable, not silently accepted.
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
@@ -18,9 +23,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createValidator } from "../../shared/schema-validator.mjs";
 import { FORBIDDEN_PERSONAL_DIMENSION_KEYS, scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
+import { verifyArtifactDigests } from "../../shared/verify-artifact-digests.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
+const REPO_ROOT = path.join(HERE, "..", "..", "..");
 const { validate } = createValidator(HERE);
 
 function dedupe(arr) {
@@ -58,12 +65,23 @@ function checkDecisionRequestOptionIdsResolve(doc) {
   return issues;
 }
 
-function checkDocument(doc) {
+// Accumulated across every fixture checked by this run -- see decision/v1's own verify-fixtures.mjs
+// for why this is always printed rather than folded silently into pass/fail.
+const allUnverifiable = [];
+const allWarnings = [];
+
+function checkDocument(doc, label) {
   const reasons = [];
   reasons.push(...validate("design-options.schema.json", doc));
   reasons.push(...scanPersonalDimensions(doc).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...checkDuplicateOptionIds(doc));
   reasons.push(...checkDecisionRequestOptionIdsResolve(doc));
+
+  const digestResult = verifyArtifactDigests([{ label, record: doc }], { repoRoot: REPO_ROOT });
+  reasons.push(...digestResult.errors);
+  allUnverifiable.push(...digestResult.unverifiable);
+  allWarnings.push(...digestResult.warnings);
+
   return dedupe(reasons);
 }
 
@@ -73,7 +91,7 @@ function readFixtureJson(filename) {
 
 function runFixture(entry) {
   const instance = readFixtureJson(entry.files.record);
-  const reasons = checkDocument(instance);
+  const reasons = checkDocument(instance, entry.id);
   return { category: reasons.length > 0 ? "reject" : "accept", reasons };
 }
 
@@ -114,6 +132,11 @@ function main() {
   }
 
   console.log(`\n${manifest.fixtures.length - failures}/${manifest.fixtures.length} fixtures passed.`);
+
+  console.log(`\nartifact_ref digest verification: ${allUnverifiable.length} unverifiable, ${allWarnings.length} warning(s).`);
+  for (const u of allUnverifiable) console.log(`  [unverifiable] ${u}`);
+  for (const w of allWarnings) console.log(`  [warning] ${w}`);
+
   if (failures > 0) {
     console.error(`\n${failures} fixture(s) FAILED.`);
     process.exit(1);
