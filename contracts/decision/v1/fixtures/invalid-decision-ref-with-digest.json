@@ -8,7 +8,7 @@
   "options_ref": {
     "logical_id": "living-twin-discovery-scope-2026-08-17",
     "uri": "contracts/design-options/v1/fixtures/accept-living-twin-discovery-scope-options.json",
-    "content_digest": "sha256:a51975055b0d54eb746bc16ea8e33c780db76e61ad3d06936a6265286f124710"
+    "content_digest": "sha256:b1bc84afffd3846f252ec3cbbc606441c9005fdc60ba4d2fee1d3036edf0902d"
   },
   "critic_ref": {
     "logical_id": "living-twin:sol-round2-self-attack",
