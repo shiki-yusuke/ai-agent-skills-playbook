@@ -3,6 +3,8 @@
   "design_options_id": "living-twin-discovery-thresholds-2026-08-17",
   "intent_ref": {
     "logical_id": "living-twin:decision-input-4points",
+    "uri": "docs/decisions/decision-input-4points-2026-08-17.md",
+    "source_repo": "living-twin",
     "content_digest": "sha256:48a2bed9fe9936d54ef972fa0c2111a0870469c1635755ad829bdd8b2b4540e6"
   },
   "options": [

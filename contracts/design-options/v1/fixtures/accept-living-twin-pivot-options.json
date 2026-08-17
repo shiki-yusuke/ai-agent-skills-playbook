@@ -93,7 +93,7 @@
       "target_option_ids": ["pivot_go", "kill", "alternative_pivot"]
     },
     {
-      "independence_status": "same_session",
+      "independence_status": "same_lineage_different_session",
       "critic_engine": "independent-review-session (blind re-analysis, K1/K2/K3, same engine lineage as the generating session)",
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": ["pivot_go", "kill", "alternative_pivot"]
