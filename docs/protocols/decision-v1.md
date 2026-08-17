@@ -90,6 +90,39 @@ repo's own guidance (`~/.claude/CLAUDE.md`'s cross-cutting-risk note) generalize
 **a solo developer running multiple agents in parallel will always face this problem**, so this
 field exists for any I-shadow case, not just the one it was sourced from.
 
+## `artifact_ref` vs `decision_ref`
+
+`$defs/ref` (a single shared `{logical_id, content_digest?}` shape) was split into two distinct
+types after a real PR's fixtures were found to carry a formally-valid but fabricated
+`content_digest` -- the schema-level pattern `^sha256:[0-9a-f]{64}$` cannot tell a real hash from
+one that merely looks like one, and a reviewer had to catch the fabrication by hand (three of
+seven digests in that PR matched no file on disk at all; two others were copy-pasted across
+fields that name different documents). An independent-review directive (this repo calls this
+"sol architect-review") required closing that gap with two changes:
+
+- **`$defs/artifact_ref`** -- points at a file OUTSIDE this ledger (`intent_ref`, `options_ref`,
+  `critic_ref`, `estimate_refs[]`). Adds an optional `uri` alongside the existing
+  `{logical_id, content_digest?, digest_omitted_reason?}` shape, and makes `content_digest` /
+  `digest_omitted_reason` **mutually exclusive** (previously only "at least one" was enforced --
+  a ref claiming both "here is the digest" and "the digest is missing because X" at once was
+  accepted). `contracts/shared/verify-artifact-digests.mjs` independently sha256's the file a
+  `uri` resolves to (when that file is reachable inside this repo) and rejects a mismatch --
+  actually checking the claim, not just its shape.
+- **`$defs/decision_ref`** -- points at ANOTHER decision/v1 record within the same ledger
+  (`superseded_by`, `conflicts_with[].conflicting_decision_ref`). Resolved by `logical_id` alone
+  against the target's `decision_id` (verify-fixtures.mjs's existing cross-record checks);
+  deliberately carries no `content_digest` / `digest_omitted_reason` at all (rejected by
+  `additionalProperties: false` if present) -- a forward reference like `superseded_by` is
+  written before the decision it names exists, so no digest could ever be computed for it, and
+  "digest of a decision record" is not well-defined the way "digest of a frozen file" is.
+
+Fixtures exercising this split: `accept-self-referential-digests.json` (real files inside this
+repo, actually digest-verified) and `invalid-artifact-digest-mismatch.json` (schema-valid, but
+digest-verification catches the mismatch) prove `verify-artifact-digests.mjs` actually works;
+`invalid-artifact-ref-digest-and-reason-both.json`,
+`invalid-artifact-ref-neither-digest-nor-reason.json`, and `invalid-decision-ref-with-digest.json`
+exercise the three new constraints above directly.
+
 ## null-not-zero for `no_action`
 
 `no_action_option_id` is nullable (D10 names the field but not this nullability -- v1 adds it).
@@ -111,7 +144,7 @@ Schema: [`contracts/decision/v1/decision.schema.json`](../../contracts/decision/
 |---|---|---|
 | `schema_version` | yes | Literal `"decision/v1"`. |
 | `decision_id` | yes | Stable identifier. One conceptual D10 decision MAY span several decision/v1 records over time (see Versioning). |
-| `intent_ref` / `options_ref` / `critic_ref` | yes | `{logical_id, content_digest?}` refs. `options_ref`/`critic_ref` MAY point at the same design-options/v1 document (see that contract's own consolidation note). |
+| `intent_ref` / `options_ref` / `critic_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, content_digest?, digest_omitted_reason?}`, with `content_digest`/`digest_omitted_reason` mutually exclusive (see "`artifact_ref` vs `decision_ref`" above). `options_ref`/`critic_ref` MAY point at the same design-options/v1 document (see that contract's own consolidation note). |
 | `selected_option_id` | yes | The chosen option_id. |
 | `no_action_option_id` | yes (nullable) | See "null-not-zero for no_action" above. |
 | `no_action_rationale` | yes | See above. |
@@ -128,7 +161,7 @@ Schema: [`contracts/decision/v1/decision.schema.json`](../../contracts/decision/
 | `estimate_refs_omitted_reason` | required iff `estimate_refs` is empty | Free text. |
 | `evidence_snapshot_digest` | yes | `sha256:<64 hex>`, non-nullable (unlike `release-observation/v0`'s `artifact_digest`: v1 has not yet observed a real decision made on no hashable evidence at all). |
 | `status` | yes | `active \| superseded`. |
-| `superseded_by` | required iff `status == "superseded"`, forbidden iff `status == "active"` | Ref to the superseding decision. |
+| `superseded_by` | required iff `status == "superseded"`, forbidden iff `status == "active"` | `$defs/decision_ref`: `{logical_id}` only -- see "`artifact_ref` vs `decision_ref`" above for why it carries no digest field at all. |
 
 ## Verification
 
@@ -143,6 +176,14 @@ personal-dimension scan, three semantic checks neither schema alone can express:
 3. `conflicts_with[].conflicting_decision_ref` MUST resolve to some OTHER record's `decision_id`
    within a checked collection of records (cross-record check, mirroring
    `release-observation/v0`'s own `rollback_of` check -- the `"collection"` fixture type).
+4. Every `$defs/artifact_ref` (`intent_ref` / `options_ref` / `critic_ref` / `estimate_refs[]`)
+   whose `content_digest` names a `uri` reachable inside this repo is actually verified
+   byte-for-byte against that file's real sha256
+   (`contracts/shared/verify-artifact-digests.mjs`) -- see "`artifact_ref` vs `decision_ref`"
+   above. A ref whose `uri` is absent or points outside this repo (every living-twin-sourced ref
+   in this directory's own fixtures, by design -- `docs/decisions/*.md` is an external, unvendored
+   repo) is reported as **unverifiable**, printed in full every run, never silently treated as
+   passing.
 
 ### Provenance
 
@@ -152,7 +193,26 @@ I-shadow case: living-twin's own `decision-01-pivot-and-scope-2026-08-17.md`,
 `decision-04-two-stage-discovery-2026-08-17.md` (an external, private repo; not vendored here).
 `evidence_snapshot_digest` on each is a real `sha256sum` of an actual source markdown file this
 task independently recomputed. `options_ref`/`critic_ref` digests are real `sha256sum` values of
-this same PR's own `design-options/v1` fixture files. A fifth fixture
+this same PR's own `design-options/v1` fixture files.
+
+> **Unresolved discrepancy found during the artifact_ref/decision_ref split (flagged, not
+> silently fixed):** the claim in the paragraph above does not match what these four fixtures'
+> `options_ref`/`critic_ref` digests actually hash to. Re-verified byte-for-byte against the
+> living-twin repo: `decision-01`'s `options_ref`/`critic_ref` match
+> `decision-input-4points-2026-08-17.md` / `independent-review-diff-2026-08-17.md`; `decision-02`'s
+> match `decision-input-4points-2026-08-17.md` / `terra-independent-threshold-derivation.txt`
+> (critic dir); `decision-03`/`decision-04`'s both match
+> `decision-03-input-discovery-can-it-kill-2026-08-17.md` /
+> `sol-round2-self-attack.txt` -- all six are real living-twin source files, not fabricated (0
+> mismatches when checked against the correct target), but NONE of them are `design-options/v1`
+> fixture file hashes as this paragraph claims. Left as-is (values are not content_digest
+> rewrites this task is authorized to make -- see this contract's own Versioning note on
+> immutability-adjacent caution) pending a human decision on which target `options_ref`/
+> `critic_ref` are actually meant to pin: the design-options/v1 JSON document in this repo (what
+> the schema's own field description literally says), or the living-twin source material a round
+> of options was built from (what these six values actually are).
+
+A fifth fixture
 (`accept-conflict-resolves-collection`) reuses `decision-03`/`decision-04` verbatim as a
 `"collection"`, demonstrating `conflicts_with` resolving correctly against REAL data (decision-04
 really does conflict with decision-03). The dangling-reference reject fixture
