@@ -10,8 +10,9 @@
 //      check -- but this one is checkable within a single record, not across a collection).
 //   3. every artifact_ref (intent_ref / notes_ref) whose content_digest names a file reachable
 //      inside this repo actually matches that file's real sha256
-//      (contracts/shared/verify-artifact-digests.mjs) -- see decision/v1's own verify-fixtures.mjs
-//      for the fabricated-digest incident this closes. Refs whose uri is absent or points outside
+//      (contracts/shared/verify-artifact-digests.mjs) -- see that module's header for the
+//      unrecorded-referent incident this closes (a digest with no uri beside it can be neither
+//      verified nor refuted). Refs whose uri is absent or points outside
 //      this repo are reported as unverifiable, not silently accepted.
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
