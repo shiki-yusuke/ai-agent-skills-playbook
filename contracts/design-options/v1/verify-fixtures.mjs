@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verifies contracts/design-options/v1/fixtures/* against design-options.schema.json, plus two
+// Verifies contracts/design-options/v1/fixtures/* against design-options.schema.json, plus four
 // semantic MUSTs neither schema alone can express (see docs/protocols/design-options-v1.md):
 //   1. every `options[].option_id` MUST be unique within one document (this repo's minimal
 //      validator subset has no cross-item uniqueness-by-key keyword, only uniqueItems over
@@ -14,7 +14,15 @@
 //      unrecorded-referent incident this closes (a digest with no uri beside it can be neither
 //      verified nor refuted). Refs whose uri is absent or points outside
 //      this repo are reported as unverifiable, not silently accepted.
+//   4. every `artifact_shapers[].engine_ref` and every `critic_reviews[].critic` (both
+//      $defs/engine_ref) has its per-kind required fields (provider/family/model_id for
+//      kind:model, human_ref/is_decision_maker for kind:human) present OR named in that same
+//      engine_ref's own `unknown_fields` (contracts/shared/derive-independence.mjs's
+//      engineRefIssues) -- these fields are deliberately NOT in the schema's own `required` list
+//      (see $defs/engine_ref's description) because a field can legitimately be undeterminable;
+//      what this check rejects is a field that is missing AND not declared as such.
 //
+
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
 // Usage: node verify-fixtures.mjs   (no arguments, no install step)
@@ -25,6 +33,7 @@ import { fileURLToPath } from "node:url";
 import { createValidator } from "../../shared/schema-validator.mjs";
 import { FORBIDDEN_PERSONAL_DIMENSION_KEYS, scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
 import { verifyArtifactDigests } from "../../shared/verify-artifact-digests.mjs";
+import { engineRefIssues } from "../../shared/derive-independence.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
@@ -46,6 +55,25 @@ function checkDuplicateOptionIds(doc) {
       issues.push(`duplicate_option_id: "${id}" appears more than once in options[]`);
     }
     seen.add(id);
+  }
+  return issues;
+}
+
+// engine_ref completeness (contracts/shared/derive-independence.mjs's engineRefIssues): every
+// artifact_shapers[].engine_ref and every critic_reviews[].critic is checked so a per-kind
+// required field can only be absent when the producer names it in unknown_fields -- see
+// invalid-engine-ref-missing-model-id.json for the reject case this closes.
+function checkEngineRefCompleteness(doc) {
+  const issues = [];
+  if (Array.isArray(doc.artifact_shapers)) {
+    doc.artifact_shapers.forEach((shaper, i) => {
+      issues.push(...engineRefIssues(shaper && shaper.engine_ref, `artifact_shapers[${i}].engine_ref`));
+    });
+  }
+  if (Array.isArray(doc.critic_reviews)) {
+    doc.critic_reviews.forEach((review, i) => {
+      issues.push(...engineRefIssues(review && review.critic, `critic_reviews[${i}].critic`));
+    });
   }
   return issues;
 }
@@ -77,6 +105,7 @@ function checkDocument(doc, label) {
   reasons.push(...scanPersonalDimensions(doc).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...checkDuplicateOptionIds(doc));
   reasons.push(...checkDecisionRequestOptionIdsResolve(doc));
+  reasons.push(...checkEngineRefCompleteness(doc));
 
   const digestResult = verifyArtifactDigests([{ label, record: doc }], { repoRoot: REPO_ROOT });
   reasons.push(...digestResult.errors);
