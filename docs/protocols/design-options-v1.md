@@ -63,26 +63,34 @@ Schema: [`contracts/design-options/v1/design-options.schema.json`](../../contrac
 |---|---|---|
 | `schema_version` | yes | Literal `"design-options/v1"`. |
 | `design_options_id` | yes | Stable identifier for this document (e.g. `"living-twin-discovery-scope-2026-08-17"`). |
-| `intent_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, content_digest?, digest_omitted_reason?}` -- what intent these options serve. See "The intent_ref content_digest gap" below for why `content_digest` is optional here specifically, and decision/v1's own "`artifact_ref` vs `decision_ref`" section for why this is `artifact_ref` (an external-document reference) rather than the ledger-internal `decision_ref` decision/v1 also declares (this schema has no ledger-internal reference of its own, but keeps an identical `$defs` shape to decision/v1 for consistency). |
+| `intent_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, source_repo?, content_digest?, digest_omitted_reason?}` -- what intent these options serve. `uri` is required whenever `content_digest` is present; `source_repo` names the external repo `uri` is relative to when it isn't this one (this directory's own living-twin-sourced accept fixtures set it to `"living-twin"`). See "The intent_ref content_digest gap" below for why `content_digest` itself is optional here specifically, and decision/v1's own "`artifact_ref` vs `decision_ref`" section for why this is `artifact_ref` (an external-document reference) rather than the ledger-internal `decision_ref` decision/v1 also declares (this schema has no ledger-internal reference of its own, but keeps an identical `$defs` shape to decision/v1 for consistency). |
 | `options[]` | yes, minItems 1 | Each: `option_id`, `summary`, `key_assumptions[]`, `falsifiers[]`, `observable_proxies[]`, `predicted_outcomes[]`, `rollback_strategy` -- all required, all non-empty. |
 | `critic_reviews[]` | yes, minItems 1 | Each: `independence_status` (closed enum, see below), `critic_engine`, `reviewed_at`, `target_option_ids[]`, optional `notes_ref` (also `$defs/artifact_ref`). |
 | `decision_request` | yes | `open_questions[]`, `option_ids[]`, `what_would_change_the_answer[]` -- all non-empty. |
 
 ### The `independence_status` enum and why review counts cannot be summed
 
-`independence_status` is one of `different_lineage | same_lineage_different_order | same_session |
-human_third_party`. This closes D10's own free-form `same_generation` note into an enum, per
+`independence_status` is one of `different_lineage | same_lineage_different_order |
+same_lineage_different_session | same_session | human_third_party`. This closes D10's own
+free-form `same_generation` note into an enum, per
 `i-shadow-record-01` section 2(d) -- the real case's central finding on this point, in the
 reviewing engine's own words: *"手続的な盲検性はあるが epistemic な独立性はない。同じ sol を二巡
 させ読む順序だけ変えても、訓練由来の盲点・検索傾向・推論癖は強く相関する。独立した追試が二件ある
 とは数えない"* (procedural blindness exists, but not epistemic independence; running the same
 engine twice with only reading order changed still correlates strongly through shared training
 blind spots, search tendencies, and reasoning habits -- this does not count as two independent
-replications). **Reviews at `same_lineage_different_order` or `same_session` MUST NOT be counted
-as additional independent verification passes, no matter how many exist.** A consumer (including
-any future dashboard) that sums `critic_reviews.length` as an "independence count" without first
-filtering to `different_lineage`/`human_third_party` is misusing this field. The recorded case's
-own `accept-living-twin-discovery-thresholds-options.json` fixture demonstrates why this
+replications). **Reviews at `same_lineage_different_order`, `same_lineage_different_session`, or
+`same_session` MUST NOT be counted as additional independent verification passes, no matter how
+many exist.** `same_lineage_different_session` was added after this contract's own
+`accept-living-twin-pivot-options.json` fixture was found mislabeling exactly this case as
+`same_session`: its second review is a genuinely separate session's blind re-analysis (K1/K2/K3),
+not a self-critique inside the generating session itself -- same engine lineage, but not the same
+session, and not merely a reordering of the same session's own review. The distinction does not
+change which reviews count (both values are still excluded from the independence count), only
+whether the label accurately describes what actually happened. A consumer (including any future
+dashboard) that sums `critic_reviews.length` as an "independence count" without first filtering
+to `different_lineage`/`human_third_party` is misusing this field. The recorded case's own
+`accept-living-twin-discovery-thresholds-options.json` fixture demonstrates why this
 distinction has teeth: the one `different_lineage` pass (terra, deriving thresholds independently
 without seeing sol's numbers) found a systematic divergence from two rounds of `same_lineage_
 different_order` review (sol) that never caught it.
@@ -121,16 +129,16 @@ a missing `decision_request` (structural), a missing `predicted_outcomes` on one
 (structural -- the specific field this contract enforces per "finding 2" above), a missing
 `rollback_strategy` on one option (structural, the other half of "finding 2"), a
 `decision_request.option_ids` entry that resolves to no option in the document (semantic,
-dangling-reference), and an `independence_status` value outside the closed four-value enum
+dangling-reference), and an `independence_status` value outside the closed five-value enum
 (structural).
 
 `verify-fixtures.mjs` also runs every `intent_ref`/`notes_ref` (`$defs/artifact_ref`) through
 `contracts/shared/verify-artifact-digests.mjs` (see decision/v1's own "`artifact_ref` vs
-`decision_ref`" section for the fabricated-digest incident this closes): a `content_digest`
-whose `uri` resolves to a real file inside this repo is verified byte-for-byte; the two
-living-twin-sourced `intent_ref`s in this directory's own accept fixtures carry no `uri` at all
-(living-twin is external and unvendored) and are therefore reported `unverifiable` every run --
-printed in full, not silently accepted.
+`decision_ref`" section for the incident this closes): a `content_digest` whose `uri` resolves to
+a real file inside this repo (and carries no `source_repo`) is verified byte-for-byte; the two
+living-twin-sourced `intent_ref`s in this directory's own accept fixtures carry `uri` +
+`source_repo: "living-twin"` and are therefore reported `unverifiable` every run -- CI cannot
+resolve a path into an external, unvendored repo -- printed in full, not silently accepted.
 
 ## Relationship to decision/v1
 

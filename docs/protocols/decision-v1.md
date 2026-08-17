@@ -93,35 +93,53 @@ field exists for any I-shadow case, not just the one it was sourced from.
 ## `artifact_ref` vs `decision_ref`
 
 `$defs/ref` (a single shared `{logical_id, content_digest?}` shape) was split into two distinct
-types after a real PR's fixtures were found to carry a formally-valid but fabricated
-`content_digest` -- the schema-level pattern `^sha256:[0-9a-f]{64}$` cannot tell a real hash from
-one that merely looks like one, and a reviewer had to catch the fabrication by hand (three of
-seven digests in that PR matched no file on disk at all; two others were copy-pasted across
-fields that name different documents). An independent-review directive (this repo calls this
-"sol architect-review") required closing that gap with two changes:
+types, then further hardened, after review of a real PR's fixtures turned up two related but
+distinct defects (see "Editing order..." above and this file's own Provenance section for the
+corrected account -- an earlier round of review initially mischaracterized this as fabricated
+digests; it was not: every digest value was real, the defect was in what each ref recorded about
+ITSELF). An independent-review directive (this repo calls this "sol architect-review") required
+closing the gap with these changes:
 
 - **`$defs/artifact_ref`** -- points at a file OUTSIDE this ledger (`intent_ref`, `options_ref`,
-  `critic_ref`, `estimate_refs[]`). Adds an optional `uri` alongside the existing
-  `{logical_id, content_digest?, digest_omitted_reason?}` shape, and makes `content_digest` /
-  `digest_omitted_reason` **mutually exclusive** (previously only "at least one" was enforced --
-  a ref claiming both "here is the digest" and "the digest is missing because X" at once was
-  accepted). `contracts/shared/verify-artifact-digests.mjs` independently sha256's the file a
-  `uri` resolves to (when that file is reachable inside this repo) and rejects a mismatch --
-  actually checking the claim, not just its shape.
+  `critic_ref`, `estimate_refs[]`). Shape: `{logical_id, uri?, source_repo?, content_digest?,
+  digest_omitted_reason?}`, with three constraints beyond the old shape's single "at least one of
+  content_digest/digest_omitted_reason":
+  - `content_digest` and `digest_omitted_reason` are **mutually exclusive** (previously only "at
+    least one" was enforced -- a ref claiming both "here is the digest" and "the digest is
+    missing because X" at once was accepted).
+  - `uri` is **REQUIRED whenever `content_digest` is present** (added after review: a digest with
+    no recorded path to check it against cannot be verified OR falsified by anyone else -- this is
+    exactly what let a reviewer, unable to tell what an undocumented digest was for, brute-force
+    sha256-scan an external repo to guess it, and briefly misattribute one in the process).
+  - `source_repo` is optional, and only meaningful alongside `uri`: set it when `uri` is relative
+    to a DIFFERENT repo than the one containing this record (e.g. `"living-twin"` for this
+    contract's own recorded case's `critic_ref`s). A ref carrying `source_repo` is always reported
+    `unverifiable` by `contracts/shared/verify-artifact-digests.mjs` -- CI has no access to that
+    other repo -- but always counted and listed, never silently skipped.
+  `contracts/shared/verify-artifact-digests.mjs` independently sha256's the file a `uri` resolves
+  to (when that file is reachable inside this repo and no `source_repo` is set) and rejects a
+  mismatch -- actually checking the claim, not just its shape. It also rejects the SAME
+  `logical_id` carrying two DIFFERENT `content_digest` values within one record (an identifier
+  cannot honestly name two different real contents at once), and warns (not errors) on the
+  reverse -- the SAME `content_digest` under two DIFFERENT `logical_id` values, legitimate only
+  when both really do name the same underlying document.
 - **`$defs/decision_ref`** -- points at ANOTHER decision/v1 record within the same ledger
   (`superseded_by`, `conflicts_with[].conflicting_decision_ref`). Resolved by `logical_id` alone
   against the target's `decision_id` (verify-fixtures.mjs's existing cross-record checks);
-  deliberately carries no `content_digest` / `digest_omitted_reason` at all (rejected by
-  `additionalProperties: false` if present) -- a forward reference like `superseded_by` is
-  written before the decision it names exists, so no digest could ever be computed for it, and
-  "digest of a decision record" is not well-defined the way "digest of a frozen file" is.
+  deliberately carries no `content_digest` / `digest_omitted_reason` / `uri` / `source_repo` at
+  all (rejected by `additionalProperties: false` if present) -- a forward reference like
+  `superseded_by` is written before the decision it names exists, so no digest could ever be
+  computed for it, and "digest of a decision record" is not well-defined the way "digest of a
+  frozen file" is.
 
-Fixtures exercising this split: `accept-self-referential-digests.json` (real files inside this
-repo, actually digest-verified) and `invalid-artifact-digest-mismatch.json` (schema-valid, but
-digest-verification catches the mismatch) prove `verify-artifact-digests.mjs` actually works;
-`invalid-artifact-ref-digest-and-reason-both.json`,
-`invalid-artifact-ref-neither-digest-nor-reason.json`, and `invalid-decision-ref-with-digest.json`
-exercise the three new constraints above directly.
+Fixtures exercising this: `invalid-artifact-digest-mismatch.json` (a real accept fixture's
+`options_ref` digest with one hex digit flipped -- schema-valid, but digest-verification catches
+the mismatch; no separate synthetic self-referential fixture is needed for this, since
+`options_ref` already resolves inside this repo by construction once it targets a design-options/v1
+fixture file), `invalid-artifact-ref-digest-without-uri.json` (content_digest with no uri),
+`invalid-same-logical-id-different-digest.json` (one logical_id, two really-different real
+digests), `invalid-artifact-ref-digest-and-reason-both.json`,
+`invalid-artifact-ref-neither-digest-nor-reason.json`, and `invalid-decision-ref-with-digest.json`.
 
 ## null-not-zero for `no_action`
 
@@ -144,7 +162,7 @@ Schema: [`contracts/decision/v1/decision.schema.json`](../../contracts/decision/
 |---|---|---|
 | `schema_version` | yes | Literal `"decision/v1"`. |
 | `decision_id` | yes | Stable identifier. One conceptual D10 decision MAY span several decision/v1 records over time (see Versioning). |
-| `intent_ref` / `options_ref` / `critic_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, content_digest?, digest_omitted_reason?}`, with `content_digest`/`digest_omitted_reason` mutually exclusive (see "`artifact_ref` vs `decision_ref`" above). `options_ref`/`critic_ref` MAY point at the same design-options/v1 document (see that contract's own consolidation note). |
+| `intent_ref` / `options_ref` / `critic_ref` | yes | `$defs/artifact_ref`: `{logical_id, uri?, source_repo?, content_digest?, digest_omitted_reason?}`. `uri` is required whenever `content_digest` is present; `content_digest`/`digest_omitted_reason` are mutually exclusive (see "`artifact_ref` vs `decision_ref`" above). `options_ref`/`critic_ref` MAY point at the same design-options/v1 document (see that contract's own consolidation note) -- but MUST then use the SAME `logical_id`, not merely the same `content_digest`; see the digest-verification checklist item below for why. |
 | `selected_option_id` | yes | The chosen option_id. |
 | `no_action_option_id` | yes (nullable) | See "null-not-zero for no_action" above. |
 | `no_action_rationale` | yes | See above. |
@@ -168,7 +186,7 @@ Schema: [`contracts/decision/v1/decision.schema.json`](../../contracts/decision/
 Fixtures: [`contracts/decision/v1/fixtures/`](../../contracts/decision/v1/fixtures/), verified by
 [`contracts/decision/v1/verify-fixtures.mjs`](../../contracts/decision/v1/verify-fixtures.mjs)
 (`node verify-fixtures.mjs`, no install step, no network access). Beyond schema validation and the
-personal-dimension scan, three semantic checks neither schema alone can express:
+personal-dimension scan, five semantic checks neither schema alone can express:
 
 1. `retractions[].retracted_item_ref` MUST match a `decision_items[].item_id` in the same record
    (dangling check, within one record).
@@ -177,13 +195,19 @@ personal-dimension scan, three semantic checks neither schema alone can express:
    within a checked collection of records (cross-record check, mirroring
    `release-observation/v0`'s own `rollback_of` check -- the `"collection"` fixture type).
 4. Every `$defs/artifact_ref` (`intent_ref` / `options_ref` / `critic_ref` / `estimate_refs[]`)
-   whose `content_digest` names a `uri` reachable inside this repo is actually verified
-   byte-for-byte against that file's real sha256
+   whose `content_digest` names a `uri` reachable inside this repo (and carries no `source_repo`)
+   is actually verified byte-for-byte against that file's real sha256
    (`contracts/shared/verify-artifact-digests.mjs`) -- see "`artifact_ref` vs `decision_ref`"
-   above. A ref whose `uri` is absent or points outside this repo (every living-twin-sourced ref
-   in this directory's own fixtures, by design -- `docs/decisions/*.md` is an external, unvendored
-   repo) is reported as **unverifiable**, printed in full every run, never silently treated as
-   passing.
+   above. A ref carrying `source_repo`, or whose `uri` points outside this repo (every
+   living-twin-sourced `critic_ref` in this directory's own fixtures, by design -- living-twin is
+   an external, unvendored repo), is reported as **unverifiable**, printed in full every run, never
+   silently treated as passing. A `content_digest` with no `uri` at all is a schema-level error,
+   not merely unverifiable -- see the same module for why.
+5. Within one record, the SAME `logical_id` MUST NOT carry two different `content_digest` values
+   (error -- an identifier cannot honestly name two different real contents at once); the reverse
+   -- the SAME `content_digest` under two different `logical_id` values -- is only a warning,
+   legitimate when both names really do resolve to the same underlying document (e.g.
+   `options_ref`/`critic_ref` pointing at the same consolidated design-options/v1 document).
 
 ### Provenance
 
@@ -192,25 +216,45 @@ I-shadow case: living-twin's own `decision-01-pivot-and-scope-2026-08-17.md`,
 `decision-02-thresholds-2026-08-17.md`, `decision-03-discovery-scope-2026-08-17.md`, and
 `decision-04-two-stage-discovery-2026-08-17.md` (an external, private repo; not vendored here).
 `evidence_snapshot_digest` on each is a real `sha256sum` of an actual source markdown file this
-task independently recomputed. `options_ref`/`critic_ref` digests are real `sha256sum` values of
-this same PR's own `design-options/v1` fixture files.
+task independently recomputed. `options_ref` carries `uri` pointing at THIS repo's own
+`contracts/design-options/v1/fixtures/accept-living-twin-*.json` file (no `source_repo` -- the
+design-options/v1 document `options_ref`'s own field description says it names really is, in this
+repo, that JSON fixture) with a real `sha256sum` recomputed after those files were finalized (see
+"Editing order and the options_ref/design-options circular dependency" below). `critic_ref`
+carries `uri` + `source_repo: "living-twin"` and a real `sha256sum` of the actual living-twin
+critic-pass file (`independent-review-diff-2026-08-17.md`, `terra-independent-threshold-
+derivation.txt`, or `sol-round2-self-attack.txt`, the last shared correctly by `decision-03` and
+`decision-04` since both cite the same critic pass) -- honestly unverifiable in CI by design
+(living-twin is external, unvendored), reported as such by `contracts/shared/
+verify-artifact-digests.mjs`, never silently accepted.
 
-> **Unresolved discrepancy found during the artifact_ref/decision_ref split (flagged, not
-> silently fixed):** the claim in the paragraph above does not match what these four fixtures'
-> `options_ref`/`critic_ref` digests actually hash to. Re-verified byte-for-byte against the
-> living-twin repo: `decision-01`'s `options_ref`/`critic_ref` match
-> `decision-input-4points-2026-08-17.md` / `independent-review-diff-2026-08-17.md`; `decision-02`'s
-> match `decision-input-4points-2026-08-17.md` / `terra-independent-threshold-derivation.txt`
-> (critic dir); `decision-03`/`decision-04`'s both match
-> `decision-03-input-discovery-can-it-kill-2026-08-17.md` /
-> `sol-round2-self-attack.txt` -- all six are real living-twin source files, not fabricated (0
-> mismatches when checked against the correct target), but NONE of them are `design-options/v1`
-> fixture file hashes as this paragraph claims. Left as-is (values are not content_digest
-> rewrites this task is authorized to make -- see this contract's own Versioning note on
-> immutability-adjacent caution) pending a human decision on which target `options_ref`/
-> `critic_ref` are actually meant to pin: the design-options/v1 JSON document in this repo (what
-> the schema's own field description literally says), or the living-twin source material a round
-> of options was built from (what these six values actually are).
+> **Resolved: an earlier version of this Provenance paragraph, and an earlier version of these
+> four fixtures, both had a real defect (now fixed).** The fixtures gave `options_ref` and
+> `critic_ref` the SAME `logical_id` despite the two pointing at different real documents, and
+> gave `intent_ref` a `content_digest` for a brief that was never filed as a document at all --
+> and there was no `uri` field anywhere to record what any of these digests were even claims
+> ABOUT. All seven digest VALUES were, throughout, real `sha256sum`s of real files (0 fabricated,
+> 0 mismatches against their true targets) -- the defect was entirely on the identifier/pointer
+> side, not the hash side, which is exactly why it looked like a digest problem (a reviewer
+> without `uri` to go on had to brute-force sha256-scan an external repo to guess what a
+> mislabeled digest was for, and briefly misattributed one in the process before this was caught
+> and fixed). `$defs/artifact_ref` now requires `uri` whenever `content_digest` is present, and
+> adds an optional `source_repo` for exactly the `critic_ref` case above, so this class of defect
+> can no longer occur silently -- see "`artifact_ref` vs `decision_ref`" above.
+
+### Editing order and the options_ref/design-options circular dependency
+
+`options_ref.content_digest` is the content hash of the referenced `design-options/v1` fixture
+FILE -- which means editing that file (in this repo, in ANY pull request) invalidates every
+`decision/v1` record's `options_ref.content_digest` that points at it. When a change touches both
+`design-options/v1` fixtures and `decision/v1` fixtures in the same PR, finalize the
+`design-options/v1` side FIRST, then recompute `options_ref.content_digest` for every `decision/v1`
+fixture that cites it (`sha256sum contracts/design-options/v1/fixtures/<file>.json`), and only
+then run both contracts' `verify-fixtures.mjs`. Editing in the other order silently leaves stale
+digests in place until the next full verification run happens to catch the mismatch --
+`contracts/shared/verify-artifact-digests.mjs`'s own `artifact_digest_mismatch` check is exactly
+that catch, so a CI run WILL fail loudly if this order is skipped, but it is cheaper to get the
+order right up front than to debug a mismatch after the fact.
 
 A fifth fixture
 (`accept-conflict-resolves-collection`) reuses `decision-03`/`decision-04` verbatim as a
