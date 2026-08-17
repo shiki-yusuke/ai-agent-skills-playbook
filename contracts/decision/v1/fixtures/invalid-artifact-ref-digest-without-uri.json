@@ -8,12 +8,10 @@
   "options_ref": {
     "logical_id": "living-twin-pivot-and-scope-2026-08-17",
     "uri": "contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json",
-    "content_digest": "sha256:297f0bf126623dd0af95293b8f4fa6302f79f1a37645955d4d0304f1fb00d745"
+    "content_digest": "sha256:297f0bf126623dd0af95293b8f4fa6302f79f1a37645955d4d0304f1fb00d744"
   },
   "critic_ref": {
     "logical_id": "living-twin:independent-review-diff-2026-08-17",
-    "uri": "docs/decisions/independent-review-diff-2026-08-17.md",
-    "source_repo": "living-twin",
     "content_digest": "sha256:cd5f74ef788595fd9fd25ecb1ea2793bc683507898a34857c1db7dd51055c6c1"
   },
   "selected_option_id": "pivot_go",
@@ -26,7 +24,7 @@
     "description": "「Codexとも確認して妥当だと思える根拠があるのであれば進めて」というユーザーの委任に基づき、独立レビュー担当セッションが根拠を確認のうえ確定した(decision-01冒頭 decided_by)。"
   },
   "conflicts_with": [],
-  "rationale": "Synthetic mutation of accept-living-twin-decision-01-pivot.json for testing only: options_ref.content_digest's last hex digit flipped (...d744 -> ...d745), so it no longer matches the real sha256 of contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json that options_ref.uri actually points at. Individually schema-valid (still matches ^sha256:[0-9a-f]{64}$, the only thing schema validation alone can ever check about a digest) -- only contracts/shared/verify-artifact-digests.mjs's actual byte-level check catches it. This is the exact incident (sol architect-review must-fix 1) the artifact_ref/decision_ref split and this digest-verification module exist to close: a formally-valid content_digest that does not match the file it claims to.",
+  "rationale": "Synthetic mutation of accept-living-twin-decision-01-pivot.json for testing only: critic_ref's uri (and source_repo) removed while content_digest stays -- exercises $defs/artifact_ref's uri-required-when-content_digest-present rule (added after a real incident where an undigested-from-nowhere digest led a reviewer to misattribute and overwrite a correct value; see docs/protocols/decision-v1.md).",
   "accepted_assumptions": [
     "Discoveryの数値閾値は未決(decision-02で確定する)まま、Pivot採用自体は先に確定してよい",
     "本レビューは『独立レビュー』ではなく『盲検再分析(同一エンジン系統)』であり、その呼称の下で根拠として使ってよい(D-4)"
