@@ -2,15 +2,18 @@
   "schema_version": "decision/v1",
   "decision_id": "living-twin-decision-04-two-stage-discovery",
   "intent_ref": {
-    "logical_id": "living-twin-decision-01-pivot-and-scope",
+    "logical_id": "living-twin:user-authored-investigation-brief-prose",
     "digest_omitted_reason": "The originating brief was delivered as prose in a chat session and never persisted as a file, so no content_digest can be computed. Recorded as omitted rather than filled with a placeholder."
   },
   "options_ref": {
     "logical_id": "living-twin-discovery-scope-2026-08-17",
-    "content_digest": "sha256:a083df5ad6658422599053ff436edeee82effc3168117e44416e50f8fb2ae2c2"
+    "uri": "contracts/design-options/v1/fixtures/accept-living-twin-discovery-scope-options.json",
+    "content_digest": "sha256:a51975055b0d54eb746bc16ea8e33c780db76e61ad3d06936a6265286f124710"
   },
   "critic_ref": {
-    "logical_id": "living-twin-discovery-scope-2026-08-17",
+    "logical_id": "living-twin:sol-round2-self-attack",
+    "uri": "docs/research/critic/sol-round2-self-attack.txt",
+    "source_repo": "living-twin",
     "content_digest": "sha256:8da62bdf3e1d2aa511589c75e420eab1a6bc713d5b94f45e617014f6c5beb2df"
   },
   "selected_option_id": "option_d_two_stage_wave",
