@@ -6,7 +6,9 @@
     {
       "id": "accept-spec-lane-0-5-2",
       "type": "event",
-      "files": { "record": "accept-spec-lane-0-5-2.json" },
+      "files": {
+        "record": "accept-spec-lane-0-5-2.json"
+      },
       "expected": "accept",
       "reason_code": null,
       "notes": "npm release spec-lane@0.5.2 (repo shiki-yusuke/spec-lane, tag v0.5.2, merge commit ef1dacc4). source_tree_digest = git rev-parse v0.5.2^{tree}. artifact_digest independently computed by downloading the published tarball and running shasum -a 256 (its sha1 also matched the registry's own dist.shasum e4c767b90f87db80ea7d4916d86837d3d09ea6a3). deployed_at = npm's own recorded publish instant for this version. verification_status=\"verified\" reproduced by this task: `npm install spec-lane@0.5.2` into an empty directory succeeded and `lane --version`/`--help` ran correctly. No lane_id: this release's own tree has no lane-state.json at all."
@@ -14,7 +16,9 @@
     {
       "id": "accept-evidence-docs-0-1-0",
       "type": "event",
-      "files": { "record": "accept-evidence-docs-0-1-0.json" },
+      "files": {
+        "record": "accept-evidence-docs-0-1-0.json"
+      },
       "expected": "accept",
       "reason_code": null,
       "notes": "PyPI release evidence-docs 0.1.0 (repo shiki-yusuke/evidence-docs, tag v0.1.0, merge commit f633feeb4e4777b4fc3470e13c0bec624bfc6a94). source_tree_digest = git rev-parse v0.1.0^{tree}. artifact_digest is the wheel's sha256 as recorded by PyPI's own JSON API (evidence_docs-0.1.0-py3-none-any.whl). deployed_at = PyPI's own recorded upload_time_iso_8601 for that wheel. verification_status=\"verified\" reproduced by this task: `pip install evidence-docs==0.1.0` into a fresh venv succeeded and `evidence-docs --help` ran correctly (also independently stated in this release's own GitHub release notes: 'published wheel verified from the live registry in a clean venv'). No lane_id: no lane-state.json anywhere in this release's tree."
@@ -22,7 +26,9 @@
     {
       "id": "accept-coding-agent-cost-0-1-0",
       "type": "event",
-      "files": { "record": "accept-coding-agent-cost-0-1-0.json" },
+      "files": {
+        "record": "accept-coding-agent-cost-0-1-0.json"
+      },
       "expected": "accept",
       "reason_code": null,
       "notes": "PyPI release coding-agent-cost 0.1.0 (repo shiki-yusuke/agent-cost, tag v0.1.0, merge commit 2b24cd43e30114a6666cfcb284391f7c615213be; PyPI distribution name differs from the repo name because PyPI rejected agent-cost/agent-cost-cli as too similar to an unrelated existing project). source_tree_digest = git rev-parse v0.1.0^{tree}. artifact_digest is the wheel's sha256 as recorded by PyPI's own JSON API. deployed_at = PyPI's own recorded upload_time_iso_8601 for that wheel. verification_status=\"verified\" reproduced by this task: `pip install coding-agent-cost==0.1.0` into a fresh venv succeeded and `agent-cost --help` ran correctly (also independently stated in this release's own GitHub release notes: 'published wheel verified from the live registry in a clean venv'). lane_id omitted, not guessed: this release's tree contains three distinct lane-state.json artifacts, none reaching phase 5_done -- see this file's top-level description."
@@ -30,7 +36,9 @@
     {
       "id": "invalid-personal-dimension",
       "type": "event",
-      "files": { "record": "invalid-personal-dimension.json" },
+      "files": {
+        "record": "invalid-personal-dimension.json"
+      },
       "expected": "reject",
       "all_forbidden_keys_flagged": true,
       "notes": "All 11 forbidden personal-dimension keys planted at once (as extra top-level properties) on top of the real accept-spec-lane-0-5-2 record. Also independently caught 11 times over by additionalProperties:false (this schema's top level is fully closed, unlike measure/v1's deliberately open one) -- this fixture is about proving the scan itself flags every one of the 11 keys individually, not about needing an open field for it to matter."
@@ -38,7 +46,9 @@
     {
       "id": "invalid-missing-artifact-digest",
       "type": "event",
-      "files": { "record": "invalid-missing-artifact-digest.json" },
+      "files": {
+        "record": "invalid-missing-artifact-digest.json"
+      },
       "expected": "reject",
       "reason_code": "$",
       "notes": "artifact_digest is omitted entirely (not set to null) -- the specific failure mode the null-not-zero design of this field exists to reject. A producer MUST make an explicit choice (a real digest, or null to state 'no artifact for this release form'); silently leaving the key out is never valid, unlike an ordinary optional field. Caught by the schema's `required` list, at the top-level object path ($), since artifact_digest is a top-level (non-nested) required property."
@@ -46,7 +56,9 @@
     {
       "id": "invalid-non-utc-deployed-at",
       "type": "event",
-      "files": { "record": "invalid-non-utc-deployed-at.json" },
+      "files": {
+        "record": "invalid-non-utc-deployed-at.json"
+      },
       "expected": "reject",
       "reason_code": "$.deployed_at",
       "notes": "deployed_at uses a numeric \"+00:00\" UTC offset (measure/v1's own convention, since that schema mirrors an external producer's literal Python isoformat() output) instead of the literal \"Z\" suffix this repo-owned protocol requires -- matching trace/v1's occurred_at and attribution/v1's bound_at convention, not measure/v1's, since release-observation/v0 is designed by this repo, not tracking an external producer's own format."
@@ -54,7 +66,9 @@
     {
       "id": "invalid-unknown-environment",
       "type": "event",
-      "files": { "record": "invalid-unknown-environment.json" },
+      "files": {
+        "record": "invalid-unknown-environment.json"
+      },
       "expected": "reject",
       "reason_code": "$.environment",
       "notes": "environment=\"prod\" is not in the v0 closed set (preview | staging | production) -- an abbreviation is still a different string from the enum member, and this schema does not normalize input."
@@ -62,7 +76,9 @@
     {
       "id": "invalid-tree-digest-without-source-ref",
       "type": "event",
-      "files": { "record": "invalid-tree-digest-without-source-ref.json" },
+      "files": {
+        "record": "invalid-tree-digest-without-source-ref.json"
+      },
       "expected": "reject",
       "reason_code": "$",
       "notes": "source_tree_digest is present (a real 40-hex tree id, otherwise byte-identical to accept-spec-lane-0-5-2) but source_ref is omitted entirely -- the exact defect this task exists to close: a digest with no repo/ref recorded beside it names no location and cannot be independently reproduced by anyone. Caught by the schema's top-level `required` list."
@@ -70,7 +86,9 @@
     {
       "id": "invalid-artifact-digest-without-artifact-ref",
       "type": "event",
-      "files": { "record": "invalid-artifact-digest-without-artifact-ref.json" },
+      "files": {
+        "record": "invalid-artifact-digest-without-artifact-ref.json"
+      },
       "expected": "reject",
       "reason_code": "$",
       "notes": "artifact_digest is a real sha256 string (otherwise byte-identical to accept-spec-lane-0-5-2, with a valid source_ref present) but artifact_ref is omitted -- caught by the schema's allOf conditional (artifact_digest is a string -> artifact_ref required), the registry-side analogue of invalid-tree-digest-without-source-ref."
@@ -78,7 +96,9 @@
     {
       "id": "invalid-pypi-without-distribution",
       "type": "event",
-      "files": { "record": "invalid-pypi-without-distribution.json" },
+      "files": {
+        "record": "invalid-pypi-without-distribution.json"
+      },
       "expected": "reject",
       "reason_code": "$.artifact_ref",
       "notes": "registry=\"pypi\" but artifact_ref.distribution is omitted -- otherwise byte-identical to accept-coding-agent-cost-0-1-0's own artifact_ref. Without naming which of the wheel/sdist this digest is of, artifact_digest does not resolve to one file (this task's own live check found the wheel and sdist for coding-agent-cost@0.1.0 have two DIFFERENT sha256 values on PyPI's own JSON API)."
@@ -86,7 +106,9 @@
     {
       "id": "invalid-unverifiable-without-reason",
       "type": "event",
-      "files": { "record": "invalid-unverifiable-without-reason.json" },
+      "files": {
+        "record": "invalid-unverifiable-without-reason.json"
+      },
       "expected": "reject",
       "reason_code": "$.artifact_ref",
       "notes": "Synthetic demo-release@2.0.0 event with artifact_ref.verifiability=\"unverifiable\" but no unverifiable_reason -- 'nobody has tried yet' and 'cannot be done, and here is why' must never share a spelling; this fixture exercises the schema rejecting the former when only the latter is a valid unverifiable claim."
@@ -94,7 +116,9 @@
     {
       "id": "invalid-oci-claiming-registry-metadata",
       "type": "event",
-      "files": { "record": "invalid-oci-claiming-registry-metadata.json" },
+      "files": {
+        "record": "invalid-oci-claiming-registry-metadata.json"
+      },
       "expected": "reject",
       "reason_code": "$.artifact_ref",
       "notes": "Synthetic demo-release@3.0.0 event with registry=\"oci\" and verifiability=\"registry_metadata\" -- rejected because only pypi and npm have been observed and characterized well enough in this task to know their metadata is (PyPI) or is not (npm) sha256-comparable without a fetch; oci/other have no such characterization, so registry_metadata is never an honest claim for them."
@@ -102,7 +126,9 @@
     {
       "id": "accept-unverifiable-with-reason",
       "type": "event",
-      "files": { "record": "accept-unverifiable-with-reason.json" },
+      "files": {
+        "record": "accept-unverifiable-with-reason.json"
+      },
       "expected": "accept",
       "reason_code": null,
       "notes": "SYNTHETIC, not a real release (no real fixture in this directory is genuinely unverifiable as of this writing -- all three real releases resolve to registry_metadata or requires_fetch). Demo-release@4.0.0, registry=\"other\", verifiability=\"unverifiable\" with a non-empty unverifiable_reason -- proves a legitimate unverifiable claim IS accepted, not merely that an illegitimate one (invalid-unverifiable-without-reason) is rejected."
@@ -110,10 +136,25 @@
     {
       "id": "dangling-rollback-of-collection",
       "type": "collection",
-      "files": { "records": ["dangling-rollback-of-collection-1.json", "dangling-rollback-of-collection-2.json"] },
+      "files": {
+        "records": [
+          "dangling-rollback-of-collection-1.json",
+          "dangling-rollback-of-collection-2.json"
+        ]
+      },
       "expected": "reject",
       "reason_code": "dangling_rollback_of_reference",
       "notes": "Two synthetic (clearly non-real, demo-release@*) events, both individually schema-valid: demo-release@1.0.1's rollback_of points to \"demo-release@0.9.9\", a release_id that appears nowhere in this collection (only demo-release@1.0.0 and demo-release@1.0.1 do). Invented rather than sourced from real data because none of today's three real releases is a rollback of anything -- this case could not be populated from actual observations yet."
+    },
+    {
+      "id": "invalid-npm-claiming-registry-metadata",
+      "type": "event",
+      "files": {
+        "record": "invalid-npm-claiming-registry-metadata.json"
+      },
+      "expected": "reject",
+      "reason_code": "$.artifact_ref",
+      "notes": "Added 2026-08-20. The schema already forbids npm + registry_metadata, but nothing exercised that rule -- \"the rule is written\" and \"the rule is shown to hold\" are different facts, and this repo keeps finding the gap between them. Rejected because artifact_digest is fixed to sha256 by its own pattern while npm's registry metadata carries only dist.shasum (sha1) and dist.integrity (sha512), so a fetch-free sha256 comparison against npm's metadata cannot honestly be claimed. The reason is the algorithm npm's metadata happens to expose, not a judgment about npm: if npm ever publishes a per-file sha256, this restriction can be lifted and this fixture retired."
     }
   ]
 }
