@@ -21,10 +21,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createValidator } from "../../shared/schema-validator.mjs";
 import { scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
+import { verifyCohortProvenance } from "../../shared/verify-cohort-provenance.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
 const { validate } = createValidator(HERE);
+
+// Accumulated across every fixture checked by this run (not per-fixture) so main() can print the
+// required always-on unverifiable summary at the end -- same null-not-zero convention
+// contracts/decision/v1/verify-fixtures.mjs uses for its own artifact_ref digest checks: "checked,
+// none found" and "never actually checked" must stay visibly different.
+const allUnverifiable = [];
 
 // sol architect-review must6: the 12-code closed set split into 11 BLOCKING (abstain-forcing)
 // codes and 1 ADVISORY code. DRIFT_WARNING is the only member of the latter -- it may
@@ -51,10 +58,16 @@ function dedupe(arr) {
   return [...new Set(arr)];
 }
 
-function checkDecision(instance) {
+function checkDecision(instance, label) {
   const reasons = [];
   reasons.push(...validate("estimate-decision.schema.json", instance));
   reasons.push(...scanPersonalDimensions(instance).map((v) => `personal_dimension_forbidden_key: ${v}`));
+
+  if (instance && instance.cohort) {
+    const provenanceResult = verifyCohortProvenance([{ label, cohort: instance.cohort }]);
+    reasons.push(...provenanceResult.errors);
+    allUnverifiable.push(...provenanceResult.unverifiable);
+  }
 
   const decision = instance.decision;
   if (decision) {
@@ -161,7 +174,7 @@ function main() {
 
   for (const entry of manifest.fixtures) {
     const instance = readFixtureJson(entry.files.record);
-    const reasons = checkDecision(instance);
+    const reasons = checkDecision(instance, entry.files.record);
     const category = reasons.length > 0 ? "reject" : "accept";
 
     let ok = category === entry.expected;
@@ -178,6 +191,11 @@ function main() {
   }
 
   console.log(`\n${manifest.fixtures.length - failures}/${manifest.fixtures.length} fixtures passed.`);
+
+  const uniqueUnverifiable = dedupe(allUnverifiable);
+  console.log(`\ncohort_provenance verification: ${uniqueUnverifiable.length} unverifiable.`);
+  for (const u of uniqueUnverifiable) console.log(`  [unverifiable] ${u}`);
+
   if (failures > 0) {
     console.error(`\n${failures} fixture(s) FAILED.`);
     process.exit(1);

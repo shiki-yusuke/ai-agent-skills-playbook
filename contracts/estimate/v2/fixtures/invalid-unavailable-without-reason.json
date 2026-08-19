@@ -14,9 +14,9 @@
     "token_basis": "native",
     "execution_profile_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     "cohort_provenance": {
-      "routing_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." },
-      "prompt_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." },
-      "execution_profile_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." }
+      "routing_policy_digest": { "kind": "unavailable" },
+      "prompt_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: no real policy object exists to reference." },
+      "execution_profile_digest": { "kind": "unavailable", "reason": "synthetic fixture value: no real policy object exists to reference." }
     }
   },
   "population": { "candidate_count": 0, "eligible_count": 0, "excluded_by_reason": {} },

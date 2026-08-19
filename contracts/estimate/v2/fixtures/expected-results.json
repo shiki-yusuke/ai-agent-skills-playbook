@@ -117,7 +117,7 @@
       "files": { "record": "invalid-cohort-digest-not-hex.json" },
       "expected": "reject",
       "reason_code": "$.cohort.routing_policy_digest",
-      "notes": "sol architect-review must7: routing_policy_digest carries a \"sha256:\" prefix, which the tightened pattern (^[0-9a-f]{64}$, bare hex only) no longer accepts."
+      "notes": "Repurposed for the cohort-provenance round (see CHANGELOG.md \"Breaking: cohort digest fields now require a sha256: prefix\"): routing_policy_digest is bare 64-hex with NO \"sha256:\" prefix, which the now-tightened pattern (^sha256:[0-9a-f]{64}$) no longer accepts. Originally (pre-round) this fixture exercised the opposite violation -- a prefixed value against a bare-hex-only pattern -- and was inverted in place rather than renamed, since the fixture id (\"not-hex\", i.e. \"not a bare hex string\") still honestly describes the new violation shape."
     },
     {
       "id": "invalid-abstained-with-predicted",
@@ -167,6 +167,55 @@
       "expected": "reject",
       "reason_code": "$.prediction_interval.calibration_sample_size",
       "notes": "sol architect-review 3rd round must2: prediction_interval.calibration_sample_size is 0 -- a leave-one-out calibration computed from zero samples is not a calibration, it's the absence of one (already representable as status==\"insufficient_data\"). Minimum raised from 0 to 1."
+    },
+    {
+      "id": "accept-cohort-provenance-inline-verified",
+      "files": { "record": "accept-cohort-provenance-inline-verified.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "cohort-provenance round: exercises all three cohort_provenance kinds in one record -- routing_policy_digest is `inline` (a synthetic object whose sha256(JCS(object)) genuinely equals the sibling digest field; contracts/shared/verify-cohort-provenance.mjs recomputes and confirms the match), prompt_policy_digest is `locator` (a synthetic uri, reported unverifiable but structurally valid), execution_profile_digest is `unavailable` (with reason). Proves the `inline` recompute-and-compare path actually works, not just that its shape validates."
+    },
+    {
+      "id": "accept-unavailable-with-reason",
+      "files": { "record": "accept-unavailable-with-reason.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "cohort-provenance round: all three cohort_provenance entries are `unavailable` with a non-empty `reason` -- the ordinary honest shape when no locator or inline object can be recorded (e.g. a private policy repo). Confirms a legitimate `unavailable` entry is accepted, not merely that a missing one is rejected."
+    },
+    {
+      "id": "invalid-cohort-provenance-missing-entry",
+      "files": { "record": "invalid-cohort-provenance-missing-entry.json" },
+      "expected": "reject",
+      "reason_code": "cohort_provenance_missing_entry",
+      "notes": "cohort-provenance round: cohort_provenance carries entries for routing_policy_digest and prompt_policy_digest but omits execution_profile_digest entirely -- also independently caught by schema `required` on cohort_provenance's own three subfields (defense in depth, same convention as invalid-excluded-by-reason-personal-dimension), but this fixture specifically exercises contracts/shared/verify-cohort-provenance.mjs's own missing-entry check, which is meant to work standalone against JSON that was never schema-validated."
+    },
+    {
+      "id": "invalid-inline-without-object",
+      "files": { "record": "invalid-inline-without-object.json" },
+      "expected": "reject",
+      "reason_code": "cohort_provenance_inline_without_object",
+      "notes": "cohort-provenance round: cohort_provenance.routing_policy_digest has kind==\"inline\" but no `object` -- the whole point of `inline` is having the actual object on hand to recompute a digest from."
+    },
+    {
+      "id": "invalid-locator-without-uri",
+      "files": { "record": "invalid-locator-without-uri.json" },
+      "expected": "reject",
+      "reason_code": "cohort_provenance_locator_without_uri",
+      "notes": "cohort-provenance round: cohort_provenance.routing_policy_digest has kind==\"locator\" but no `uri` -- a locator that names nothing locates nothing."
+    },
+    {
+      "id": "invalid-unavailable-without-reason",
+      "files": { "record": "invalid-unavailable-without-reason.json" },
+      "expected": "reject",
+      "reason_code": "cohort_provenance_unavailable_without_reason",
+      "notes": "cohort-provenance round: cohort_provenance.routing_policy_digest has kind==\"unavailable\" but no `reason` -- an unresolvable reference must say why, not just assert that it is unresolvable."
+    },
+    {
+      "id": "invalid-inline-digest-mismatch",
+      "files": { "record": "invalid-inline-digest-mismatch.json" },
+      "expected": "reject",
+      "reason_code": "cohort_provenance_inline_digest_mismatch",
+      "notes": "cohort-provenance round, the verification mechanism's own core test: cohort_provenance.routing_policy_digest has kind==\"inline\" with an `object` present, but sha256(JCS(object)) does NOT equal routing_policy_digest's value. Not catchable by schema validation at all (a JCS-then-sha256 recomputation is not expressible as a JSON Schema keyword in this repo's validator subset) -- only contracts/shared/verify-cohort-provenance.mjs's actual recompute-and-compare catches this."
     }
   ]
 }

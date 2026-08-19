@@ -135,7 +135,7 @@
       "additionalProperties": false
     },
     "cohort": {
-      "description": "What this decision's comparison population is scoped to. Required in full even for an abstained decision -- several reason_codes (MODEL_GENERATION_MISMATCH, ROUTING_PROFILE_MISMATCH, TOKEN_BASIS_MISMATCH, TARGET_BASIS_UNSUPPORTED) are only meaningful if the cohort they're a mismatch against is recorded, not omitted.",
+      "description": "What this decision's comparison population is scoped to. Required in full even for an abstained decision -- several reason_codes (MODEL_GENERATION_MISMATCH, ROUTING_PROFILE_MISMATCH, TOKEN_BASIS_MISMATCH, TARGET_BASIS_UNSUPPORTED) are only meaningful if the cohort they're a mismatch against is recorded, not omitted. The cohort's identity is the tuple (model_generation, routing_policy_digest, prompt_policy_digest, token_basis, execution_profile_digest): two decisions with all five equal are claiming to have drawn from the same comparison population. `cohort_provenance` (below) is what makes that claim checkable rather than an assertion resting on three opaque hashes.",
       "type": "object",
       "required": [
         "agent_type",
@@ -146,18 +146,42 @@
         "prompt_policy_digest",
         "measure_contract_version",
         "token_basis",
-        "execution_profile_digest"
+        "execution_profile_digest",
+        "cohort_provenance"
       ],
       "properties": {
         "agent_type": { "type": "string", "minLength": 1 },
         "model_provider": { "type": "string", "minLength": 1 },
         "model_generation": { "type": "string", "minLength": 1 },
         "model_id": { "type": "string", "minLength": 1 },
-        "routing_policy_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "prompt_policy_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "routing_policy_digest": {
+          "description": "Content digest of the routing policy object in effect for this cohort (e.g. this repo's own model-bindings.json-shaped role->model mapping, or an equivalent producer-side routing table) -- sha256 of that object after RFC 8785 JSON Canonicalization Scheme normalization (contracts/shared/jcs.mjs's `canonicalize`, a repo-local JCS subset: recursively sorted object keys, no floats, no non-ASCII keys), formatted `sha256:<64 lowercase hex>`. Two decisions carrying the same value here are claiming their routing policy was byte-for-byte the same object post-normalization -- see `cohort_provenance.routing_policy_digest` for how that claim can actually be checked (recomputed and compared for `inline`, or merely named for `locator`/`unavailable`).",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "prompt_policy_digest": {
+          "description": "Content digest of the prompt/system-prompt policy object in effect for this cohort -- same JCS-then-sha256 construction as `routing_policy_digest` (contracts/shared/jcs.mjs), formatted `sha256:<64 lowercase hex>`. See `cohort_provenance.prompt_policy_digest` for how the referenced object can be recovered or verified.",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
         "measure_contract_version": { "type": "string", "minLength": 1 },
         "token_basis": { "type": "string", "minLength": 1 },
-        "execution_profile_digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        "execution_profile_digest": {
+          "description": "Content digest of the execution profile object in effect for this cohort (agent harness/tool-access/sandbox configuration) -- same JCS-then-sha256 construction as `routing_policy_digest` (contracts/shared/jcs.mjs), formatted `sha256:<64 lowercase hex>`. See `cohort_provenance.execution_profile_digest` for how the referenced object can be recovered or verified.",
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "cohort_provenance": {
+          "description": "For each of the three digest fields above, how its referenced policy object can actually be recovered or checked -- closing the gap `additionalProperties: false` on `cohort` would otherwise leave: a digest alone has nowhere to record what it is a digest OF. Modeled on decision/v1's $defs/artifact_ref honest-reference convention (content_digest+uri, verified byte-for-byte by contracts/shared/verify-artifact-digests.mjs when the uri resolves inside this repo) but adapted for a JCS-normalized-object digest rather than a raw file digest: `inline` carries the actual pre-normalization object so contracts/shared/verify-cohort-provenance.mjs can recompute and compare it directly (no filesystem or network access needed -- this is the strongest state and can run in CI unconditionally); `locator` names where the object lives without embedding it (checkable structurally -- something is named -- but not digest-verifiable by this repo's own CI); `unavailable` is an honest admission that no resolution path exists (e.g. a policy object that lives in a private repo and cannot be shared), and MUST carry `reason`. There is deliberately no fourth 'no referent needed' value: unlike `decision/v1`'s digest_omitted_reason (where the digest itself may legitimately not exist), all three digests here are unconditionally required, so their provenance is either resolvable in one of these two ways or honestly marked as not resolvable -- never silently absent.",
+          "type": "object",
+          "required": ["routing_policy_digest", "prompt_policy_digest", "execution_profile_digest"],
+          "properties": {
+            "routing_policy_digest": { "$ref": "#/$defs/digest_provenance_entry" },
+            "prompt_policy_digest": { "$ref": "#/$defs/digest_provenance_entry" },
+            "execution_profile_digest": { "$ref": "#/$defs/digest_provenance_entry" }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },
@@ -216,5 +240,56 @@
       "additionalProperties": false
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "digest_provenance_entry": {
+      "description": "One of three honest states for how a single cohort digest field's referenced object can be recovered -- see `cohort.cohort_provenance`'s own description for the full rationale. `kind` is the closed discriminator (this schema's own convention elsewhere, e.g. `decision.status`/`applicability.status`/`drift.status`, all closed enums rather than field-presence inference) that selects which of the three shapes below applies; the allOf/if/then block enforces that the field its `kind` requires is actually present, not merely conventionally expected.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["inline", "locator", "unavailable"] },
+        "object": {
+          "description": "REQUIRED when kind==\"inline\". The pre-normalization policy object itself (arbitrary shape -- this schema does not constrain what a routing/prompt/execution policy object looks like, only that recomputing sha256(JCS(object)) via contracts/shared/jcs.mjs must equal the sibling cohort digest field's value). This is the strongest of the three states: contracts/shared/verify-cohort-provenance.mjs recomputes and compares it, with no filesystem or network access, so this check runs unconditionally in CI.",
+          "type": "object"
+        },
+        "uri": {
+          "description": "REQUIRED when kind==\"locator\". Where the referenced policy object can be found -- a path (optionally paired with `source_repo` when it is relative to a different repo than this one, mirroring decision/v1's $defs/artifact_ref convention) or any other stable locator a human or later tooling could use to go find the actual object. contracts/shared/verify-cohort-provenance.mjs does not attempt to fetch or hash whatever `uri` names (a JCS-normalized-object digest cannot be re-derived from raw file bytes the way an artifact_ref's byte-for-byte digest can) -- it only checks that `uri` is present and reports the entry as unverifiable, always, never silently treated as passing.",
+          "type": "string",
+          "minLength": 1
+        },
+        "source_repo": {
+          "description": "Optional, only meaningful alongside `uri` under kind==\"locator\": set when `uri` is relative to a DIFFERENT repo than this one (same convention as decision/v1's $defs/artifact_ref `source_repo`). Never present under any other `kind`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "description": "REQUIRED when kind==\"unavailable\". Why no locator or inline object can be recorded (e.g. the policy object lives in a private repo that cannot be shared, or predates this field and was never persisted anywhere). This is the honest 'cannot be resolved' state -- it is never used to mean 'no referent is needed,' which this schema does not represent at all (all three digest fields are unconditionally required, so their provenance is always either resolvable or honestly marked unresolvable).",
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "description": "Optional free-text annotation, e.g. marking a fixture's `object`/`uri` as synthetic rather than a real policy object. Never load-bearing for verification.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "description": "kind==\"inline\" requires `object` -- the whole point of this state is having the actual object on hand to recompute against.",
+          "if": { "properties": { "kind": { "const": "inline" } } },
+          "then": { "required": ["object"] }
+        },
+        {
+          "description": "kind==\"locator\" requires `uri` -- a locator that names nothing locates nothing.",
+          "if": { "properties": { "kind": { "const": "locator" } } },
+          "then": { "required": ["uri"] }
+        },
+        {
+          "description": "kind==\"unavailable\" requires `reason` -- an unresolvable reference must say why, not just assert that it is unresolvable.",
+          "if": { "properties": { "kind": { "const": "unavailable" } } },
+          "then": { "required": ["reason"] }
+        }
+      ]
+    }
+  }
 }
