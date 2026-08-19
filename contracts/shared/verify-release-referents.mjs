@@ -40,11 +40,13 @@
 //     through the default CLI flags -- downloading and hashing an entire published tarball on
 //     every run would make this repo's build depend on an external registry's uptime and the
 //     tarball's continued availability, and a transient failure there says nothing about whether
-//     THIS repo's own contract is correct. A `registry_metadata` ref whose `registry` this module
-//     does not know how to resolve (i.e. anything other than pypi -- the schema does not forbid
-//     `npm`+`registry_metadata`, only `oci`/`other`+`registry_metadata`; see this repo's own
-//     report on this gap) is reported UNVERIFIABLE with an explicit "no resolver implemented"
-//     reason, never silently skipped and never treated as a pass.
+//     THIS repo's own contract is correct. The schema itself already forbids `npm`/`oci`/`other`
+//     from claiming `verifiability: "registry_metadata"` at all (structural check above), so in
+//     practice a `registry_metadata` ref reaching this online step should always be `pypi` --
+//     this resolver still guards the case anyway (i.e. anything other than pypi is reported
+//     UNVERIFIABLE with an explicit "no resolver implemented" reason, never silently skipped and
+//     never treated as a pass), so this module stays correct even when run against raw JSON that
+//     was never schema-validated first.
 //
 // Every record that could not be resolved is counted and listed as UNVERIFIABLE, never silently
 // treated as "fine" -- same principle verify-artifact-digests.mjs's own header states: "cannot be
@@ -111,6 +113,11 @@ export function checkStructural(record) {
     if ((ref.registry === "oci" || ref.registry === "other") && ref.verifiability === "registry_metadata") {
       errors.push(
         `artifact_ref_unsupported_registry_metadata_claim: registry ${JSON.stringify(ref.registry)} claims verifiability "registry_metadata", but neither oci nor other has a repo-characterized metadata shape known to be sha256-comparable without a fetch.`,
+      );
+    }
+    if (ref.registry === "npm" && ref.verifiability === "registry_metadata") {
+      errors.push(
+        `artifact_ref_npm_registry_metadata_unsupported: registry "npm" claims verifiability "registry_metadata", but npm's own registry metadata exposes only dist.shasum (sha1) and dist.integrity (sha512), never a sha256 -- and artifact_digest is fixed to sha256, so no fetch-free comparison against npm's metadata can honestly be made today (this may be revisited if npm's registry ever starts publishing a per-file sha256).`,
       );
     }
   }
