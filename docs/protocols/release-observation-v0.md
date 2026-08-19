@@ -47,7 +47,9 @@ Schema:
 | `release_id` | yes | Stable identifier for this specific release (recommended convention for a registry package: `<distribution-name>@<version>`, e.g. `"coding-agent-cost@0.1.0"` — the name actually registered with the registry, which is not always the source repo's own name). |
 | `lane_id` | no | The one delivery-lane run this release traces to, when there is exactly one. **Absent, not null,** when it does not — see the field's own schema description for why v0 deliberately does not distinguish "no lane at all" from "more than one lane bundled into this release" (both real cases observed in this contract's own fixtures; see the fixture manifest's provenance note). |
 | `source_tree_digest` | yes | The git tree object id this release was built from — literally the output of `git rev-parse <tag-or-commit>^{tree}` (dereferenced through an annotated tag if the release tag is one). 40 hex characters for a SHA-1 repository (git's current default), 64 for SHA-256. |
+| `source_ref` | yes | **Required alongside `source_tree_digest`** (see "Referents" below). `{repo, ref, resolution: "git_tree"}` — where the digest can actually be reproduced: `git -C <repo> rev-parse <ref>^{tree}`. |
 | `artifact_digest` | yes (nullable) | `sha256:<64 hex>` digest of the artifact this release shipped, or **explicit `null`** meaning "this release form has no single content-addressable artifact." The field itself can never be omitted — see "null-not-zero" below. |
+| `artifact_ref` | required exactly when `artifact_digest` is a real digest string; forbidden when it is `null` | See "Referents" below. `{registry, package, version, distribution?, registry_url?, verifiability, unverifiable_reason?}` — where `artifact_digest` can actually be checked, and how confidently. |
 | `environment` | yes | Closed set: `preview \| staging \| production`, reusing D5's own environment vocabulary without importing its transition logic. |
 | `deployed_at` | yes | UTC only, literal `Z` suffix (same convention as `trace/v1`'s `occurred_at` / `attribution/v1`'s `bound_at` — see "Timestamp convention" below). The instant the artifact actually became reachable in the named environment, not the merge-commit time and not the moment a human got around to recording this event. |
 | `verification_status` | yes | `not_measured \| verified \| failed` — whether the deployed artifact was actually exercised post-deploy (installed and run) and found to work. `not_measured` is an honest, explicit value, never silently defaulted to `verified`. |
@@ -74,6 +76,73 @@ principle `attribution-v1.md` uses for `tokens.exact_attributed`/`tokens.total_m
 genuinely doesn't apply" and "someone forgot to record it" must never collapse into the same
 absent value.
 
+### Referents: `source_ref` and `artifact_ref`
+
+Until this revision, `source_tree_digest` and `artifact_digest` were bare digest strings with no
+recorded referent: a 40/64-hex string and a `sha256:...` string that named no repo, no ref, no
+registry, and no file. This is the same defect class `design-options/v1`'s own `artifact_ref`
+split closed for `content_digest` (see that contract's CHANGELOG and
+`contracts/shared/verify-artifact-digests.mjs`'s header for the real incident that motivated it):
+a pointer whose referent is not recorded can be **neither verified nor falsified by anyone** —
+"cannot be checked" is not a neutral state, and a schema `pattern` alone only ever proves a string
+is *shaped like* a digest, never that it is the truth about any actual file or tree.
+
+Concretely, before this revision the D5 Release Evidence Bundle's own claim (a signed/unsigned
+chain where tampering with any one digest is detectable) did **not** hold for this contract's own
+digests: with no `repo`/`ref` or `registry`/`package`/`distribution` recorded, an altered
+`source_tree_digest` or `artifact_digest` was **not distinguishable from a correct one** by any
+mechanical check — there was nothing to resolve it against. `source_ref` and `artifact_ref` close
+that gap for `release-observation/v0`'s own two digests specifically; a full evidence-closed
+release verification chain across the *entire* Release Evidence Bundle remains D5/E-phase work
+(see "Relationship to a future release-evidence contract" below).
+
+- **`source_ref`** (`{repo, ref, resolution}`) is required on every event, unconditionally, in
+  step with `source_tree_digest` itself already being unconditionally required. `repo` is a
+  durable identifier (e.g. `"shiki-yusuke/agent-cost"`), **never a local absolute filesystem
+  path** — a path on the machine that recorded the event names nothing for a later reader on a
+  different machine or date. `resolution` is a closed enum with one member today, `"git_tree"`
+  (kept as an enum rather than a bare `const` so a future non-git resolution mechanism can be
+  added without a breaking rename).
+- **`artifact_ref`** (`{registry, package, version, distribution?, registry_url?, verifiability,
+  unverifiable_reason?}`) is required exactly when `artifact_digest` is a real digest string, and
+  forbidden when it is `null` (there is nothing to point at). `distribution` is required when
+  `registry` is `"pypi"`: a single PyPI release commonly publishes both a wheel and an sdist under
+  the same package+version with **different** sha256 values each (confirmed live against both
+  PyPI fixtures in this directory: `coding-agent-cost@0.1.0`'s wheel and sdist have two different
+  digests) — without naming which file, the digest does not resolve to one artifact.
+
+`verifiability` (`registry_metadata | requires_fetch | unverifiable`) is the core of this design,
+and is measured per-registry, not asserted in the abstract:
+
+- **`registry_metadata`** — the registry's own metadata publishes a digest under the *same*
+  algorithm (sha256), so a check needs no fetch of the artifact itself. Confirmed live for PyPI:
+  `https://pypi.org/pypi/<project>/<version>/json`'s `urls[].digests.sha256`, keyed by
+  `urls[].filename`, matches both PyPI accept fixtures in this directory exactly.
+- **`requires_fetch`** — the registry's metadata exposes a digest under a *different* algorithm
+  only. Confirmed live for npm: `registry.npmjs.org`'s `dist` object exposes `shasum` (sha1) and
+  `integrity` (sha512), **never** sha256 — checking `spec-lane@0.5.2`'s `artifact_digest` required
+  downloading `dist.tarball` and hashing it (also cross-checked against the registry's own
+  `dist.shasum`, which matched).
+- **`unverifiable`** — no publicly reachable registry metadata or artifact exists at all (e.g. a
+  private registry). `unverifiable_reason` is required whenever this value is used, so "nobody has
+  tried yet" is never confused with "cannot be done."
+
+Neither `npm` nor `oci`/`other` may claim `verifiability: "registry_metadata"`, though for two
+different reasons — the restriction is always about what has been *measured*, never a ranking of
+registries:
+
+- **`npm`**: its metadata shape **is** characterized (that is exactly how `requires_fetch` above
+  was established) — it simply never carries a sha256, and `artifact_digest` is fixed to sha256 by
+  this schema's own `pattern`. A fetch-free sha256 comparison against npm metadata cannot honestly
+  be claimed today. If npm's registry ever starts publishing a per-file sha256, this MAY be
+  revisited.
+- **`oci`/`other`**: neither has been characterized *at all* by this task — nothing is known yet
+  about an OCI registry's or an unspecified `"other"` registry's metadata shape, so claiming
+  fetch-free verifiability for either would be an unmeasured assertion, not a measured fact.
+
+Verification of these referents (both the CI-safe structural rules above and the opt-in online
+resolution) lives in `contracts/shared/verify-release-referents.mjs` — see "Verification" below.
+
 ### Timestamp convention
 
 `deployed_at` uses the literal-`Z`-suffix UTC convention (`trace/v1`'s `occurred_at`,
@@ -94,8 +163,8 @@ verified by
 directory is the machine-readable table of which fixture is expected to be accepted or rejected,
 and its own top-level `description` states this directory's exact provenance in detail.
 
-Three accept fixtures, each a **real release published the day this contract was written**, not
-a hand-authored example:
+Three accept fixtures are each a **real release published the day this contract was written**,
+not a hand-authored example:
 
 1. `spec-lane@0.5.2` (npm)
 2. `evidence-docs@0.1.0` (PyPI)
@@ -106,20 +175,73 @@ release's own `git rev-parse <tag>^{tree}`; `artifact_digest` from the npm tarba
 downloaded-and-hashed sha256 (cross-checked against the registry's declared sha1) or PyPI's own
 recorded wheel sha256; `deployed_at` from the registry's own recorded publish instant;
 `verification_status: "verified"` reproduced by actually installing each package from its live
-registry into a clean environment and running its CLI. None of the three carries a `lane_id` —
-two have no lane involvement in their release tree at all, and the third has *three* distinct
-lane-state.json artifacts in its tree with no single one able to claim the release without
-misrepresenting the other two (see the fixture manifest's own provenance note for the exact
-`git grep`/`git ls-tree` evidence). This is reported here as a genuine v0 scope gap, not
-papered over with a picked-arbitrarily value.
+registry into a clean environment and running its CLI. `source_ref`/`artifact_ref` on all three
+were confirmed the same way (see "Referents" above): `git -C <repo> rev-parse <tag>^{tree}` run
+directly against each release's own source repo, and each PyPI wheel's `distribution` matched
+against `urls[].filename` in that release's own live `pypi.org` JSON API response. None of the
+three carries a `lane_id` — two have no lane involvement in their release tree at all, and the
+third has *three* distinct lane-state.json artifacts in its tree with no single one able to claim
+the release without misrepresenting the other two (see the fixture manifest's own provenance note
+for the exact `git grep`/`git ls-tree` evidence). This is reported here as a genuine v0 scope gap,
+not papered over with a picked-arbitrarily value.
 
-Beyond schema validation and the personal-dimension scan, one semantic MUST neither expresses
-alone: a `rollback_of` reference **MUST** resolve to some other event's `release_id` within the
-same checked collection of events — checkable only across more than one event at a time, the
-same reason `attribution/v1` has its own "binding-collection" fixture type. Since none of
-today's three real releases is a rollback of anything, this one fixture (`dangling-rollback-of-
-collection`) uses two clearly-labeled synthetic `demo-release@...` events instead — the one
-fixture in this directory not sourced from real data, and named accordingly.
+A fourth accept fixture, `accept-unverifiable-with-reason`, is **synthetic** (labelled
+`demo-release@4.0.0`, not a real release — no real fixture in this directory is genuinely
+unverifiable as of this writing): it proves a legitimate `artifact_ref.verifiability:
+"unverifiable"` claim, paired with a non-empty `unverifiable_reason`, is actually **accepted**,
+not merely that an illegitimate one is rejected (the negative fixture below).
+
+Six negative fixtures exercise the referent rules specifically (`source_ref`/`artifact_ref`
+required, `pypi` needs `distribution`, `unverifiable` needs a reason, `oci`/`other` cannot claim
+`registry_metadata`) — see `expected-results.json` for the exact mutation and reason code each
+one exercises.
+
+Beyond schema validation and the personal-dimension scan, verify-fixtures.mjs also runs two kinds
+of check no schema alone can express:
+
+- One semantic MUST across a whole collection: a `rollback_of` reference **MUST** resolve to some
+  other event's `release_id` within the same checked collection of events — checkable only across
+  more than one event at a time, the same reason `attribution/v1` has its own "binding-collection"
+  fixture type. Since none of today's three real releases is a rollback of anything, this one
+  fixture (`dangling-rollback-of-collection`) uses two clearly-labeled synthetic
+  `demo-release@...` events instead — the one fixture in this directory not sourced from real
+  data, and named accordingly.
+- `contracts/shared/verify-release-referents.mjs`'s `checkStructural` (no network, no local repo
+  access) — the same `source_ref`/`artifact_ref` completeness rules the schema's own
+  `required`/`allOf` already enforce, re-checked independently so that shared module stays useful
+  standalone against arbitrary JSON that was never run through the schema validator (the same
+  reason `decision/v1`'s own `verify-fixtures.mjs` re-checks
+  `contracts/shared/verify-artifact-digests.mjs`'s rules independently of its own schema).
+
+### Online referent verification (opt-in, never required for CI)
+
+`contracts/shared/verify-release-referents.mjs` is also a standalone CLI that resolves
+`source_ref`/`artifact_ref` against the outside world — **never run by CI, never run by
+`verify-fixtures.mjs`, and never touching the network or a local checkout unless explicitly
+asked**:
+
+```
+node contracts/shared/verify-release-referents.mjs \
+  --repo-path shiki-yusuke/agent-cost=/path/to/local/agent-cost/checkout \
+  --verify-registry \
+  contracts/release-observation/v0/fixtures/accept-coding-agent-cost-0-1-0.json
+```
+
+- `--repo-path <repo>=<path>` (repeatable) or the `RELEASE_OBSERVATION_REPO_PATHS` JSON env var
+  supplies a local checkout for a `source_ref.repo` — without one, that event's `source_ref` is
+  reported `unverifiable`, never silently skipped and never treated as a pass.
+- `--verify-registry` (or `RELEASE_OBSERVATION_VERIFY_REGISTRY=1`) is required before **any**
+  network call is made, and only ever resolves `artifact_ref`s whose `verifiability` is
+  `"registry_metadata"` (today: `pypi` only). A `"requires_fetch"` ref (npm) is **never** fetched
+  by this module even with the flag on — see that module's own header for why CI must not depend
+  on downloading and hashing a tarball on every run, and why that decision is intentionally not
+  overridable by a flag.
+
+Run against this task's own real fixtures, this reproduces the exact independent verification the
+fixture manifest already documents in prose (`coding-agent-cost@0.1.0`'s `source_ref` resolves via
+a local `agent-cost` checkout; its `artifact_ref` resolves via a live PyPI query; `spec-lane@0.5.2`'s
+`source_ref` resolves locally, but its `artifact_ref` correctly stays `unverifiable` — `requires_fetch`
+is deliberately never auto-resolved).
 
 ## Relationship to a future release-evidence contract
 
