@@ -1,23 +1,31 @@
 #!/usr/bin/env node
 // Verifies contracts/release-observation/v0/fixtures/* against
-// release-observation-event.schema.json, plus one semantic MUST neither schema alone can
-// express (see docs/protocols/release-observation-v0.md):
+// release-observation-event.schema.json, plus semantic MUSTs neither schema alone can express
+// (see docs/protocols/release-observation-v0.md):
 //   - a `rollback_of` value MUST match some OTHER event's `release_id` within the same checked
 //     collection of events (a dangling reference -- a release claiming to roll back a release
 //     nobody has recorded is either a typo or a recording gap, either way not a fact this
 //     contract should silently accept) -- only checkable across more than one event at a time,
 //     mirroring attribution/v1's own "binding-collection" fixture type for exactly the same
 //     reason (a cross-record check no single-record validation can express).
+//   - `source_ref`/`artifact_ref` structural completeness (contracts/shared/verify-release-referents.mjs's
+//     `checkStructural`) -- redundant with this schema's own `required`/`allOf` rules (this is
+//     the CI-safe, no-network, no-local-repo subset of that module's checks; see its own header
+//     for the opt-in online resolution this script deliberately does NOT run), re-checked here
+//     independently so the shared module stays useful standalone against arbitrary JSON that was
+//     never run through this schema validator -- same reason decision/v1's own verify-fixtures.mjs
+//     re-checks contracts/shared/verify-artifact-digests.mjs's rules independently of its schema.
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
-// Usage: node verify-fixtures.mjs   (no arguments, no install step)
+// Usage: node verify-fixtures.mjs   (no arguments, no install step, no network access)
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createValidator } from "../../shared/schema-validator.mjs";
 import { FORBIDDEN_PERSONAL_DIMENSION_KEYS, scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
+import { checkStructural } from "../../shared/verify-release-referents.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
@@ -31,6 +39,7 @@ function checkEvent(event) {
   const reasons = [];
   reasons.push(...validate("release-observation-event.schema.json", event));
   reasons.push(...scanPersonalDimensions(event).map((v) => `personal_dimension_forbidden_key: ${v}`));
+  reasons.push(...checkStructural(event));
   return dedupe(reasons);
 }
 
