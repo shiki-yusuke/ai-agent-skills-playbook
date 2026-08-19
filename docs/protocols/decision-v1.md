@@ -42,10 +42,11 @@ to represent.
   the single most important finding**): every record states which channel/session its instruction
   actually arrived through, and an explicit (possibly empty) list of conflicts detected against
   other decisions. See "Why decision_channel exists" below.
-- The personal-dimension denylist, same as every other contract in this repo. `critic_engine` (on
-  the design-options/v1 side) and `decision_channel`/`conflict` field names were deliberately
-  chosen to avoid the forbidden `reviewer`/`author` key names entirely, rather than relying on the
-  scanner alone.
+- The personal-dimension denylist, same as every other contract in this repo. `engine_ref`/`critic`
+  (on the design-options/v1 side -- renamed from `critic_engine` 2026-08-18, see that contract's
+  own CHANGELOG.md) and `decision_channel`/`conflict` field names were deliberately chosen to
+  avoid the forbidden `reviewer`/`author` key names entirely, rather than relying on the scanner
+  alone.
 
 **v1 explicitly does NOT guarantee:**
 

@@ -8,7 +8,7 @@
   "options_ref": {
     "logical_id": "living-twin-discovery-thresholds-2026-08-17",
     "uri": "contracts/design-options/v1/fixtures/accept-living-twin-discovery-thresholds-options.json",
-    "content_digest": "sha256:99cb0c5c1a2ea55bab6fb6e92a456fc42a722503ad69c89aa7d29949592c9f1e"
+    "content_digest": "sha256:d142f00306a6d57531919d6109f3d0d800f3487d054747d4bfe05c3ed8184f1f"
   },
   "critic_ref": {
     "logical_id": "living-twin:terra-independent-threshold-derivation",

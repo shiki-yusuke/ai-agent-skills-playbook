@@ -119,12 +119,6 @@
         "session_ref": "01a00ed8-c9e0-78a3-a32d-1ae6a6dbebce"
       },
       "prior_involvement": "shaped_options",
-      "review_output_ref": {
-        "logical_id": "living-twin:sol-round2-self-attack",
-        "uri": "docs/research/critic/sol-round2-self-attack.txt",
-        "source_repo": "living-twin",
-        "content_digest": "sha256:8da62bdf3e1d2aa511589c75e420eab1a6bc713d5b94f45e617014f6c5beb2df"
-      },
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": [
         "pivot_go",
@@ -175,16 +169,5 @@
       "6〜8週の外部反復価値試験が原因修正後の再試験でも未達",
       "芯を維持した合法・安全な実装が不可能と判明する"
     ]
-  },
-  "author": "forbidden",
-  "reviewer": "forbidden",
-  "assignee": "forbidden",
-  "owner": "forbidden",
-  "user_id": "forbidden",
-  "username": "forbidden",
-  "email": "forbidden",
-  "display_name": "forbidden",
-  "handle": "forbidden",
-  "chat_id": "forbidden",
-  "real_name": "forbidden"
+  }
 }

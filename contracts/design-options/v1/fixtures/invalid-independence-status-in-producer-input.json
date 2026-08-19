@@ -130,7 +130,8 @@
         "pivot_go",
         "kill",
         "alternative_pivot"
-      ]
+      ],
+      "independence_status": "different_lineage"
     },
     {
       "critic": {
@@ -175,16 +176,5 @@
       "6〜8週の外部反復価値試験が原因修正後の再試験でも未達",
       "芯を維持した合法・安全な実装が不可能と判明する"
     ]
-  },
-  "author": "forbidden",
-  "reviewer": "forbidden",
-  "assignee": "forbidden",
-  "owner": "forbidden",
-  "user_id": "forbidden",
-  "username": "forbidden",
-  "email": "forbidden",
-  "display_name": "forbidden",
-  "handle": "forbidden",
-  "chat_id": "forbidden",
-  "real_name": "forbidden"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": "design-options/v1",
-  "design_options_id": "demo-self-referential-digest",
+  "design_options_id": "demo-invalid-shaped-dependency-with-scope-ref",
   "intent_ref": {
     "logical_id": "this-repo:LICENSE",
     "uri": "LICENSE",
@@ -9,9 +9,10 @@
   "artifact_shapers": [
     {
       "engine_ref": {
-        "kind": "human",
-        "human_ref": "demo:author",
-        "is_decision_maker": false
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-sol"
       },
       "how": "authored"
     }
@@ -19,7 +20,7 @@
   "options": [
     {
       "option_id": "demo_option",
-      "summary": "Synthetic demo option, invented solely so contracts/shared/verify-artifact-digests.mjs has at least one design-options/v1 fixture it can actually verify byte-for-byte inside CI -- every living-twin-sourced accept fixture in this directory carries source_repo and is honestly unverifiable in CI by design.",
+      "summary": "Synthetic negative case. observation_scope_ref is meaningful ONLY for none_observed_in_recorded_scope. Attaching it to shaped_dependency asserts a scoped non-observation that the prior_involvement value itself contradicts, so the schema rejects it rather than silently ignoring the field.",
       "key_assumptions": [
         "demo assumption"
       ],
@@ -38,16 +39,12 @@
   "critic_reviews": [
     {
       "critic": {
-        "kind": "human",
-        "human_ref": "demo:third-party-reviewer",
-        "is_decision_maker": false
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "model_id": "claude-demo-variant"
       },
-      "prior_involvement": "none_observed_in_recorded_scope",
-      "observation_scope_ref": {
-        "logical_id": "this-repo:LICENSE",
-        "uri": "LICENSE",
-        "content_digest": "sha256:6aa9203532be4d8d905482f69e8bba71f4948cce00a620ccd9eab10950e87a93"
-      },
+      "prior_involvement": "shaped_dependency",
       "review_output_ref": {
         "logical_id": "this-repo:LICENSE",
         "uri": "LICENSE",
@@ -56,7 +53,12 @@
       "reviewed_at": "2026-01-01T00:00:00Z",
       "target_option_ids": [
         "demo_option"
-      ]
+      ],
+      "observation_scope_ref": {
+        "logical_id": "this-repo:LICENSE",
+        "uri": "LICENSE",
+        "content_digest": "sha256:6aa9203532be4d8d905482f69e8bba71f4948cce00a620ccd9eab10950e87a93"
+      }
     }
   ],
   "decision_request": {

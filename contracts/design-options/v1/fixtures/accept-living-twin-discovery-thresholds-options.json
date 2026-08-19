@@ -7,6 +7,51 @@
     "source_repo": "living-twin",
     "content_digest": "sha256:48a2bed9fe9936d54ef972fa0c2111a0870469c1635755ad829bdd8b2b4540e6"
   },
+  "artifact_shapers": [
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "unknown_fields": ["model_id"]
+      },
+      "how": "authored",
+      "how_note": "Claudeの調査セッションが、sol/terraそれぞれの生の閾値導出出力(docs/research/critic/)を本fixtureのoptions[]構造(summary/key_assumptions/falsifiers/...)へ要約・構造化した。数値そのものの由来はsol/terra(下記)。"
+    },
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-sol",
+        "session_ref": "01a00ed8-c9e0-78a3-a32d-1ae6a6dbebce"
+      },
+      "how": "authored",
+      "how_note": "sol_proposed_thresholdsの数値提案そのものを行った(decision-02 §0)。導出根拠は示されていない。"
+    },
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-terra",
+        "session_ref": "01a00ee3-74f6-7de2-ba68-fcdf0e7755af"
+      },
+      "how": "authored",
+      "how_note": "terra_independent_thresholdsの数値をsolの提案を見せずに独立に導出した(decision-02 §0)。"
+    },
+    {
+      "engine_ref": {
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "unknown_fields": ["model_id"],
+        "session_ref": "living-twin-sol-vs-terra-cross-check"
+      },
+      "how": "authored",
+      "how_note": "sol/terraの閾値を並べた突合表(decision-02 §1)を作成し、それが decision-02 の内容そのものになった。すなわちこのセッションは選択肢セット(の比較・提示形)を組み立てた側でもある。"
+    }
+  ],
   "options": [
     {
       "option_id": "sol_proposed_thresholds",
@@ -45,14 +90,36 @@
   ],
   "critic_reviews": [
     {
-      "independence_status": "different_lineage",
-      "critic_engine": "gpt-5.6-terra",
+      "critic": {
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-terra",
+        "session_ref": "01a00ee3-74f6-7de2-ba68-fcdf0e7755af"
+      },
+      "prior_involvement": "shaped_options",
+      "review_output_ref": {
+        "logical_id": "living-twin:terra-independent-threshold-derivation",
+        "uri": "docs/research/critic/terra-independent-threshold-derivation.txt",
+        "source_repo": "living-twin",
+        "content_digest": "sha256:02966e8b9c1691aff48b052411a91047940958454f07ed0b29d0d498a6b7e4a1"
+      },
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": ["terra_independent_thresholds"]
     },
     {
-      "independence_status": "same_session",
-      "critic_engine": "independent-review-session (cross-check compiler, sol vs terra table)",
+      "critic": {
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "unknown_fields": ["model_id"],
+        "session_ref": "living-twin-sol-vs-terra-cross-check"
+      },
+      "prior_involvement": "shaped_options",
+      "review_output_ref": {
+        "logical_id": "living-twin:sol-vs-terra-cross-check-table",
+        "digest_omitted_reason": "sol/terraの突合表(decision-02 §1)を作成したClaudeセッション自身の生出力は個別ファイルとして保存されていない。sol/terraそれぞれの生出力は既にreview_output_ref/artifact_shapers[].engine_refで個別に参照済みのため、それらを流用すると誤帰属になる。捏造を避けるため参照先なしとして正直に記録する。"
+      },
       "reviewed_at": "2026-08-17T00:00:00Z",
       "target_option_ids": ["sol_proposed_thresholds", "terra_independent_thresholds"]
     }

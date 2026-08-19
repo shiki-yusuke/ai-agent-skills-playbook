@@ -1,6 +1,6 @@
 {
   "schema_version": "design-options/v1",
-  "design_options_id": "demo-self-referential-digest",
+  "design_options_id": "demo-derivation-different-lineage-qualifying",
   "intent_ref": {
     "logical_id": "this-repo:LICENSE",
     "uri": "LICENSE",
@@ -9,9 +9,10 @@
   "artifact_shapers": [
     {
       "engine_ref": {
-        "kind": "human",
-        "human_ref": "demo:author",
-        "is_decision_maker": false
+        "kind": "model",
+        "provider": "openai",
+        "family": "gpt-5.6",
+        "model_id": "gpt-5.6-sol"
       },
       "how": "authored"
     }
@@ -19,7 +20,7 @@
   "options": [
     {
       "option_id": "demo_option",
-      "summary": "Synthetic demo option, invented solely so contracts/shared/verify-artifact-digests.mjs has at least one design-options/v1 fixture it can actually verify byte-for-byte inside CI -- every living-twin-sourced accept fixture in this directory carries source_repo and is honestly unverifiable in CI by design.",
+      "summary": "Synthetic demo option. This fixture is a purely synthetic derivation-table coverage case, NOT sourced from the living-twin case. No real fixture in this repo currently has a critic whose FINAL closest-across-all-shapers relationship is different_lineage (every real critic is closer to the Claude authoring shaper than that) -- this fixture exists so that branch, and the fully-qualifying outcome it enables, has at least one exercising case.",
       "key_assumptions": [
         "demo assumption"
       ],
@@ -38,9 +39,10 @@
   "critic_reviews": [
     {
       "critic": {
-        "kind": "human",
-        "human_ref": "demo:third-party-reviewer",
-        "is_decision_maker": false
+        "kind": "model",
+        "provider": "anthropic",
+        "family": "claude",
+        "model_id": "claude-demo-variant"
       },
       "prior_involvement": "none_observed_in_recorded_scope",
       "observation_scope_ref": {
