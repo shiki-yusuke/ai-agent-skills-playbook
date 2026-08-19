@@ -12,7 +12,6 @@
     "registry": "pypi",
     "package": "coding-agent-cost",
     "version": "0.1.0",
-    "distribution": "coding_agent_cost-0.1.0-py3-none-any.whl",
     "verifiability": "registry_metadata"
   },
   "environment": "production",
