@@ -60,6 +60,54 @@
       "notes": "environment=\"prod\" is not in the v0 closed set (preview | staging | production) -- an abbreviation is still a different string from the enum member, and this schema does not normalize input."
     },
     {
+      "id": "invalid-tree-digest-without-source-ref",
+      "type": "event",
+      "files": { "record": "invalid-tree-digest-without-source-ref.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "source_tree_digest is present (a real 40-hex tree id, otherwise byte-identical to accept-spec-lane-0-5-2) but source_ref is omitted entirely -- the exact defect this task exists to close: a digest with no repo/ref recorded beside it names no location and cannot be independently reproduced by anyone. Caught by the schema's top-level `required` list."
+    },
+    {
+      "id": "invalid-artifact-digest-without-artifact-ref",
+      "type": "event",
+      "files": { "record": "invalid-artifact-digest-without-artifact-ref.json" },
+      "expected": "reject",
+      "reason_code": "$",
+      "notes": "artifact_digest is a real sha256 string (otherwise byte-identical to accept-spec-lane-0-5-2, with a valid source_ref present) but artifact_ref is omitted -- caught by the schema's allOf conditional (artifact_digest is a string -> artifact_ref required), the registry-side analogue of invalid-tree-digest-without-source-ref."
+    },
+    {
+      "id": "invalid-pypi-without-distribution",
+      "type": "event",
+      "files": { "record": "invalid-pypi-without-distribution.json" },
+      "expected": "reject",
+      "reason_code": "$.artifact_ref",
+      "notes": "registry=\"pypi\" but artifact_ref.distribution is omitted -- otherwise byte-identical to accept-coding-agent-cost-0-1-0's own artifact_ref. Without naming which of the wheel/sdist this digest is of, artifact_digest does not resolve to one file (this task's own live check found the wheel and sdist for coding-agent-cost@0.1.0 have two DIFFERENT sha256 values on PyPI's own JSON API)."
+    },
+    {
+      "id": "invalid-unverifiable-without-reason",
+      "type": "event",
+      "files": { "record": "invalid-unverifiable-without-reason.json" },
+      "expected": "reject",
+      "reason_code": "$.artifact_ref",
+      "notes": "Synthetic demo-release@2.0.0 event with artifact_ref.verifiability=\"unverifiable\" but no unverifiable_reason -- 'nobody has tried yet' and 'cannot be done, and here is why' must never share a spelling; this fixture exercises the schema rejecting the former when only the latter is a valid unverifiable claim."
+    },
+    {
+      "id": "invalid-oci-claiming-registry-metadata",
+      "type": "event",
+      "files": { "record": "invalid-oci-claiming-registry-metadata.json" },
+      "expected": "reject",
+      "reason_code": "$.artifact_ref",
+      "notes": "Synthetic demo-release@3.0.0 event with registry=\"oci\" and verifiability=\"registry_metadata\" -- rejected because only pypi and npm have been observed and characterized well enough in this task to know their metadata is (PyPI) or is not (npm) sha256-comparable without a fetch; oci/other have no such characterization, so registry_metadata is never an honest claim for them."
+    },
+    {
+      "id": "accept-unverifiable-with-reason",
+      "type": "event",
+      "files": { "record": "accept-unverifiable-with-reason.json" },
+      "expected": "accept",
+      "reason_code": null,
+      "notes": "SYNTHETIC, not a real release (no real fixture in this directory is genuinely unverifiable as of this writing -- all three real releases resolve to registry_metadata or requires_fetch). Demo-release@4.0.0, registry=\"other\", verifiability=\"unverifiable\" with a non-empty unverifiable_reason -- proves a legitimate unverifiable claim IS accepted, not merely that an illegitimate one (invalid-unverifiable-without-reason) is rejected."
+    },
+    {
       "id": "dangling-rollback-of-collection",
       "type": "collection",
       "files": { "records": ["dangling-rollback-of-collection-1.json", "dangling-rollback-of-collection-2.json"] },
