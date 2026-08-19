@@ -8,7 +8,7 @@
   "options_ref": {
     "logical_id": "living-twin-pivot-and-scope-2026-08-17",
     "uri": "contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json",
-    "content_digest": "sha256:692d5067cdd8fba17433d8b48bfaaedda08cdc7e680ce62c7fe42259a7b271ad"
+    "content_digest": "sha256:9f5eb795cfdc8c9e25254f0d051bf8517256f58532c6a2f2871ae75128a0223d"
   },
   "critic_ref": {
     "logical_id": "living-twin:independent-review-diff-2026-08-17",
