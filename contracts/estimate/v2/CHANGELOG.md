@@ -78,6 +78,16 @@ compatibility-breaking judgment call was made:
   `sha256:` prefix, `cohort_provenance` is now required, and any producer input missing either will
   be rejected.
 
+**The "not yet frozen" qualifier in `estimate-v2.md`'s Versioning section was added as part of
+this change.** Before it, that section stated the immutability rule conditionally ("no change of
+any kind is permitted within v2 **after freeze**") while nothing anywhere in this repo declared
+the freeze to have actually happened -- so the rule's precondition was unmet, not overridden. This
+distinction matters: an in-place revision that overrides a rule already in force would be a
+different, more serious kind of judgment call than one made while that rule's own trigger
+condition had never fired. `design-options/v1` already carried the equivalent "itself is not yet
+frozen" qualifier for its own contract before its in-place revision; this entry follows that
+precedent rather than establishing a new one.
+
 ### `invalid-cohort-digest-not-hex.json`'s violation inverted
 
 Pre-round, this fixture's `routing_policy_digest` carried an unwanted `"sha256:"` prefix against
