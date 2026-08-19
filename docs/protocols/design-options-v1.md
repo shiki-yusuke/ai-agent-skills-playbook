@@ -148,9 +148,13 @@ further** -- see "Open questions" below.
 `same_lineage_different_order` (the old enum's fourth value) is **deprecated**: recognized in
 prose/history, never derived.
 
-#### (C) Prior involvement: `shaped_options | reviewed_predecessor | none_observed_in_recorded_scope | unknown`
+#### (C) Prior involvement: `shaped_options | shaped_dependency | reviewed_predecessor | none_observed_in_recorded_scope | unknown`
 
 `shaped_options` = this same engine_ref also appears in `artifact_shapers[]`.
+`shaped_dependency` = did NOT shape the artifact under review, but DID shape a different artifact
+that this one depends on -- "naive to these documents, non-naive to the substrate". Weaker
+contamination than `shaped_options`, but not non-involvement. Added 2026-08-19 after a second
+project applying this contract hit exactly this state on the day it was published; see CHANGELOG.
 `reviewed_predecessor` = reviewed an earlier/related round without itself shaping the final
 options. `none_observed_in_recorded_scope` = no prior involvement found within a stated,
 checkable scope (`observation_scope_ref`, required together with this value) -- **not** a claim
@@ -159,6 +163,19 @@ involvement can be evidenced, its universal absence cannot (the architect ruling
 revision was explicit on this point). `unknown` is the honest default whenever this has not
 actually been checked -- the field is required precisely so "not checked" cannot collapse into
 silence.
+
+**`shaped_dependency` and `unknown` must not be collapsed into one value even though the gate
+treats them identically.** Both fail the qualifying conjunction, so no verdict changes. But one
+says *the scope of involvement is known and it lies in a dependency* -- a positively verifiable
+fact, since an involvement record exists for that dependency -- while the other says *the
+classification could not be determined at all*. Anyone re-assessing independence later needs
+different things from each. Same null-not-zero rule this repo applies to measurement ("not
+measured" is not "measured as zero").
+
+`observation_scope_ref` is rejected unless `prior_involvement` is
+`none_observed_in_recorded_scope`. It was previously required for that value but not forbidden for
+the others, which let a record attach a scoped non-observation reference to a value that
+contradicts it and still validate.
 
 #### The qualifying gate is a conjunction
 
