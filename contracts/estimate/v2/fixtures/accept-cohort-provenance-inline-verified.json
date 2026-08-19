@@ -1,0 +1,41 @@
+{
+  "schema_version": "estimate/v2",
+  "target": { "metric": "cost_usd", "unit": "usd" },
+  "decision": { "status": "abstained", "reason_codes": ["NOVEL_SURFACE_UNKNOWN"] },
+  "applicability": { "status": "unknown" },
+  "cohort": {
+    "agent_type": "claude-code",
+    "model_provider": "anthropic",
+    "model_generation": "claude-5",
+    "model_id": "claude-sonnet-5",
+    "routing_policy_digest": "sha256:2a6bdf8e8a590d590d263a9c95d52226a73404560dd6d608745809b33268f000",
+    "prompt_policy_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "measure_contract_version": "agent-metrics/v1",
+    "token_basis": "native",
+    "execution_profile_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "cohort_provenance": {
+      "routing_policy_digest": {
+        "kind": "inline",
+        "object": {
+          "kind": "routing_policy",
+          "version": "synthetic-demo-1",
+          "roles": { "builder": "gpt-5.6-terra", "architect": "gpt-5.6-sol" }
+        },
+        "notes": "Synthetic object, not a real routing policy -- exists only to demonstrate that contracts/shared/verify-cohort-provenance.mjs actually recomputes sha256(JCS(object)) via contracts/shared/jcs.mjs and compares it against routing_policy_digest above, rather than trusting the `inline` kind at face value."
+      },
+      "prompt_policy_digest": {
+        "kind": "locator",
+        "uri": "https://internal.example/policies/prompt-policy-v7.json",
+        "notes": "Synthetic uri, not a real internal resource -- demonstrates the `locator` kind: named but not fetchable/hashable by this repo's CI, so it is reported unverifiable, never silently treated as passing."
+      },
+      "execution_profile_digest": {
+        "kind": "unavailable",
+        "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference."
+      }
+    }
+  },
+  "population": { "candidate_count": 0, "eligible_count": 0, "excluded_by_reason": {} },
+  "prediction_interval": { "status": "insufficient_data" },
+  "coverage_history": { "frozen_predictions_only": true },
+  "drift": { "status": "insufficient_data" }
+}
