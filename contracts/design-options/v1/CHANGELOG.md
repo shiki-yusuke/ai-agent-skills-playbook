@@ -225,3 +225,36 @@ sourced from any real event: `accept-derivation-same_provider_different_family.j
 `accept-derivation-different_lineage.json` (also the only model-vs-model qualifying=true example in
 this directory), `accept-derivation-human_third_party.json`, and
 `accept-derivation-unknown-human-decision-maker.json`.
+
+## 2026-08-19 — `prior_involvement: shaped_dependency` added
+
+**Why**: the contract was applied by a second project on the day it was published, and immediately
+hit a state that none of the four original `prior_involvement` values could express. An engine was
+made review-only for a new layer's design documents, but had already shaped the parent-layer
+specification those documents build on. That side recorded it as "naive to the layer's documents,
+non-naive to the substrate".
+
+None of the existing values fit:
+
+| value | why it was wrong |
+|---|---|
+| `shaped_options` | false -- the artifact under review was not shaped by this critic |
+| `reviewed_predecessor` | wrong relation -- it shaped a *dependency*, not an earlier revision of these options |
+| `none_observed_in_recorded_scope` | would have been a lie -- involvement IS observed, in the dependency |
+| `unknown` | would have discarded a positively verifiable fact |
+
+`shaped_dependency` fails the qualifying conjunction exactly as `unknown` does, so no gate behaviour
+changes. The point is the recorded information, not the verdict: **"the scope of involvement is
+known" and "the classification could not be determined" must not be collapsed into one value**, because
+anyone re-assessing independence later needs different things from each. This is the same
+null-not-zero distinction this repo applies elsewhere ("not measured" vs "measured as zero").
+
+Also tightened in the same change: `observation_scope_ref` is now rejected unless
+`prior_involvement` is `none_observed_in_recorded_scope`. Previously it was *required* for that value
+but not *forbidden* for the others, so a record could attach a scoped non-observation reference to a
+value that contradicts it, and the schema would have accepted it silently.
+
+**Note on how this was found.** This is not a defect a review of the contract in isolation would have
+surfaced: the gap only appeared once a second, independent case tried to record itself. That path --
+publish, apply to a real second case, find what cannot be expressed -- is the intended way this
+repo's contracts are supposed to evolve, and it is recorded here rather than smoothed over.

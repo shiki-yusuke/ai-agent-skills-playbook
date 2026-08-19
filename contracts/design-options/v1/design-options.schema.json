@@ -243,11 +243,12 @@
         "prior_involvement": {
           "enum": [
             "shaped_options",
+            "shaped_dependency",
             "reviewed_predecessor",
             "none_observed_in_recorded_scope",
             "unknown"
           ],
-          "description": "Whether THIS critic already had a hand in forming the very options being reviewed, BEFORE this review -- the dimension the old `independence_status` enum silently conflated with lineage distance (CHANGELOG.md 2026-08-18: this repo's own real case had a critic whose `independence_status` was asserted as a lineage label when the actual finding was prior involvement, and the enum had no word for that). `shaped_options` = this same engine_ref (or a clear continuation of it) also appears in this document's own `artifact_shapers[]`. `reviewed_predecessor` = this critic reviewed an earlier or related round of material that fed into these options, without itself appearing in `artifact_shapers[]`. `none_observed_in_recorded_scope` = no prior involvement was found within a stated, checkable scope (`observation_scope_ref`, required together with this value) -- this is NOT a claim of universal non-involvement, only that none was observed within what was actually examined. A bare `none` is deliberately NOT in this enum: positive involvement can be evidenced, its universal absence cannot (null-not-zero, same principle as this repo's other 'state what was actually checked' fields). `unknown` is the correct, honest default whenever this has not actually been checked -- never omit the field instead, since it is required precisely so 'not checked' cannot collapse into silence."
+          "description": "Whether THIS critic already had a hand in forming the very options being reviewed, BEFORE this review -- the dimension the old `independence_status` enum silently conflated with lineage distance (CHANGELOG.md 2026-08-18: this repo's own real case had a critic whose `independence_status` was asserted as a lineage label when the actual finding was prior involvement, and the enum had no word for that). `shaped_options` = this same engine_ref (or a clear continuation of it) also appears in this document's own `artifact_shapers[]`. `reviewed_predecessor` = this critic reviewed an earlier or related round of material that fed into these options, without itself appearing in `artifact_shapers[]`. `none_observed_in_recorded_scope` = no prior involvement was found within a stated, checkable scope (`observation_scope_ref`, required together with this value) -- this is NOT a claim of universal non-involvement, only that none was observed within what was actually examined. A bare `none` is deliberately NOT in this enum: positive involvement can be evidenced, its universal absence cannot (null-not-zero, same principle as this repo's other 'state what was actually checked' fields). `unknown` is the correct, honest default whenever this has not actually been checked -- never omit the field instead, since it is required precisely so 'not checked' cannot collapse into silence. `shaped_dependency` = this critic did NOT shape the artifact under review, but DID shape a different artifact that the one under review depends on. Weaker contamination than `shaped_options`, but not non-involvement. Real case that produced this value (found the same day this contract was published, by a second project applying it): an engine was made review-only for a new layer's design documents, but had already shaped the parent-layer specification those documents build on -- recorded there as \"naive to the layer's documents, non-naive to the substrate\". MUST NOT be collapsed into `unknown`: this state is a positively verifiable fact (an involvement record exists for the dependency), whereas `unknown` means the classification could not be determined at all. Both fail the qualifying conjunction identically, but they carry different information for anyone re-assessing independence later -- the same null-not-zero distinction this repo applies elsewhere (\"not measured\" vs \"measured as zero\")."
         },
         "observation_scope_ref": {
           "$ref": "#/$defs/artifact_ref",
@@ -294,6 +295,28 @@
             "required": [
               "observation_scope_ref"
             ]
+          }
+        },
+        {
+          "description": "observation_scope_ref is meaningful ONLY for none_observed_in_recorded_scope. Attaching it to shaped_options / shaped_dependency / reviewed_predecessor / unknown claims a scoped non-observation that the prior_involvement value itself contradicts, so it is rejected rather than silently ignored.",
+          "if": {
+            "not": {
+              "properties": {
+                "prior_involvement": {
+                  "const": "none_observed_in_recorded_scope"
+                }
+              },
+              "required": [
+                "prior_involvement"
+              ]
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "observation_scope_ref"
+              ]
+            }
           }
         }
       ]
