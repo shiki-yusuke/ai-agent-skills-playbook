@@ -9,11 +9,16 @@
     "model_provider": "anthropic",
     "model_generation": "claude-5",
     "model_id": "claude-sonnet-5",
-    "routing_policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    "prompt_policy_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "routing_policy_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "prompt_policy_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "measure_contract_version": "agent-metrics/v1",
     "token_basis": "native",
-    "execution_profile_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    "execution_profile_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "cohort_provenance": {
+      "routing_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." },
+      "prompt_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." },
+      "execution_profile_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." }
+    }
   },
   "population": { "candidate_count": 5, "eligible_count": 5, "excluded_by_reason": {} },
   "prediction_interval": {

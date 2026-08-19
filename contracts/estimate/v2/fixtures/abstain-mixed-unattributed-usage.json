@@ -8,11 +8,16 @@
     "model_provider": "openai",
     "model_generation": "gpt-5.6",
     "model_id": "gpt-5.6-terra",
-    "routing_policy_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-    "prompt_policy_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "routing_policy_digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "prompt_policy_digest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
     "measure_contract_version": "agent-metrics/v1",
     "token_basis": "native",
-    "execution_profile_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    "execution_profile_digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "cohort_provenance": {
+      "routing_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." },
+      "prompt_policy_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." },
+      "execution_profile_digest": { "kind": "unavailable", "reason": "synthetic fixture value: this repo's estimate/v2 fixtures are hand-authored examples of a decision shape (see fixtures/expected-results.json's own description), not captured real output, so no real routing/prompt/execution policy object exists to reference." }
+    }
   },
   "population": { "candidate_count": 12, "eligible_count": 0, "excluded_by_reason": { "MIXED_OR_UNATTRIBUTED_USAGE": 12 } },
   "prediction_interval": { "status": "insufficient_data" },
