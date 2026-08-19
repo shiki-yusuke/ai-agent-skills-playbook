@@ -127,13 +127,18 @@ and is measured per-registry, not asserted in the abstract:
   private registry). `unverifiable_reason` is required whenever this value is used, so "nobody has
   tried yet" is never confused with "cannot be done."
 
-`oci`/`other` registries may never claim `verifiability: "registry_metadata"` — this task has only
-characterized pypi (yes) and npm (no); nothing is known yet about an OCI registry's or an
-unspecified `"other"` registry's metadata shape, so claiming fetch-free verifiability for either
-would be an unmeasured assertion, not a measured fact. (Note: the schema does **not** similarly
-forbid `npm`+`registry_metadata` — only pypi has an implemented resolver either way; see
-`contracts/shared/verify-release-referents.mjs`'s own header and this task's own report for that
-open point.)
+Neither `npm` nor `oci`/`other` may claim `verifiability: "registry_metadata"`, though for two
+different reasons — the restriction is always about what has been *measured*, never a ranking of
+registries:
+
+- **`npm`**: its metadata shape **is** characterized (that is exactly how `requires_fetch` above
+  was established) — it simply never carries a sha256, and `artifact_digest` is fixed to sha256 by
+  this schema's own `pattern`. A fetch-free sha256 comparison against npm metadata cannot honestly
+  be claimed today. If npm's registry ever starts publishing a per-file sha256, this MAY be
+  revisited.
+- **`oci`/`other`**: neither has been characterized *at all* by this task — nothing is known yet
+  about an OCI registry's or an unspecified `"other"` registry's metadata shape, so claiming
+  fetch-free verifiability for either would be an unmeasured assertion, not a measured fact.
 
 Verification of these referents (both the CI-safe structural rules above and the opt-in online
 resolution) lives in `contracts/shared/verify-release-referents.mjs` — see "Verification" below.

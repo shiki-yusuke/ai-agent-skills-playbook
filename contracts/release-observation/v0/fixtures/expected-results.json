@@ -154,7 +154,7 @@
       },
       "expected": "reject",
       "reason_code": "$.artifact_ref",
-      "notes": "Added 2026-08-20. The schema already forbids npm + registry_metadata, but nothing exercised that rule -- \"the rule is written\" and \"the rule is shown to hold\" are different facts, and this repo keeps finding the gap between them. Rejected because artifact_digest is fixed to sha256 by its own pattern while npm's registry metadata carries only dist.shasum (sha1) and dist.integrity (sha512), so a fetch-free sha256 comparison against npm's metadata cannot honestly be claimed. The reason is the algorithm npm's metadata happens to expose, not a judgment about npm: if npm ever publishes a per-file sha256, this restriction can be lifted and this fixture retired."
+      "notes": "registry=\"npm\" with verifiability=\"registry_metadata\" (otherwise byte-identical to accept-spec-lane-0-5-2) -- rejected because npm's own registry metadata (confirmed live: registry.npmjs.org's dist object) exposes only dist.shasum (sha1) and dist.integrity (sha512), never sha256, and artifact_digest is fixed to sha256 by this schema's own pattern. The restriction is about the algorithm npm's metadata happens to expose, not a judgment about npm -- if npm's registry ever starts publishing a per-file sha256 this MAY be revisited. Fixture added in review: the schema rule existed with its reason written out, but nothing exercised it -- \"the rule is written\" and \"the rule is shown to hold\" are different facts, and an unexercised rule is indistinguishable from one that silently stopped applying."
     }
   ]
 }

@@ -136,7 +136,7 @@
         },
         "verifiability": {
           "enum": ["registry_metadata", "requires_fetch", "unverifiable"],
-          "description": "How `artifact_digest` can actually be checked against this registry, measured per-registry, not asserted in the abstract: `registry_metadata` -- the registry's own metadata publishes a digest using the SAME algorithm (sha256) for this exact `distribution`, so a check needs no fetch of the artifact itself (PyPI's JSON API's `urls[].digests.sha256`, confirmed real for both PyPI fixtures in this directory). `requires_fetch` -- the registry's metadata only publishes a digest under a DIFFERENT algorithm (npm's registry metadata exposes `dist.shasum` (sha1) and `dist.integrity` (sha512), never sha256), so checking `artifact_digest` requires downloading `dist.tarball` and hashing it. `unverifiable` -- no publicly reachable registry metadata or artifact exists to check against at all (e.g. a private registry with no public read access); `unverifiable_reason` (required whenever this value is used -- schema `allOf` below) MUST say why, so 'nobody has tried yet' is never confused with 'cannot be done.'"
+          "description": "How `artifact_digest` can actually be checked against this registry, measured per-registry, not asserted in the abstract: `registry_metadata` -- the registry's own metadata publishes a digest using the SAME algorithm (sha256) for this exact `distribution`, so a check needs no fetch of the artifact itself (PyPI's JSON API's `urls[].digests.sha256`, confirmed real for both PyPI fixtures in this directory). `requires_fetch` -- the registry's metadata only publishes a digest under a DIFFERENT algorithm (npm's registry metadata exposes `dist.shasum` (sha1) and `dist.integrity` (sha512), never sha256), so checking `artifact_digest` requires downloading `dist.tarball` and hashing it -- this is why `registry: \"npm\"` may never pair with `verifiability: \"registry_metadata\"` (schema `allOf` below): `artifact_digest` is fixed to sha256 (this field's own `pattern`), and npm's metadata never carries one, so a fetch-free sha256 comparison against npm's metadata cannot honestly be claimed today. If npm's registry ever starts publishing a per-file sha256, this MAY be revisited then -- the restriction is about the algorithm npm's metadata happens to expose, not a judgment about npm itself. `unverifiable` -- no publicly reachable registry metadata or artifact exists to check against at all (e.g. a private registry with no public read access); `unverifiable_reason` (required whenever this value is used -- schema `allOf` below) MUST say why, so 'nobody has tried yet' is never confused with 'cannot be done.'"
         },
         "unverifiable_reason": {
           "type": "string",
@@ -166,9 +166,22 @@
           }
         },
         {
-          "description": "registry is oci or other -> verifiability MUST NOT be registry_metadata (neither format has a repo-defined metadata shape this contract can rely on being sha256-comparable; only pypi and npm have been observed and characterized).",
+          "description": "registry is oci or other -> verifiability MUST NOT be registry_metadata (neither format has a repo-characterized metadata shape this contract knows to be sha256-comparable without a fetch -- the restriction is about what has and has not been measured, not a ranking of registries; a future version MAY lift this once oci/other's own metadata shape is actually characterized).",
           "if": {
             "properties": { "registry": { "enum": ["oci", "other"] } },
+            "required": ["registry"]
+          },
+          "then": {
+            "not": {
+              "properties": { "verifiability": { "const": "registry_metadata" } },
+              "required": ["verifiability"]
+            }
+          }
+        },
+        {
+          "description": "registry is npm -> verifiability MUST NOT be registry_metadata (npm's own registry metadata exposes only dist.shasum (sha1) and dist.integrity (sha512), never a sha256 -- and artifact_digest is fixed to sha256 by this schema's own pattern, so no fetch-free comparison against npm's metadata can honestly be made today. Same reasoning as `verifiability`'s own description; kept as a separate allOf entry from the oci/other one above because the underlying reason is different -- npm's metadata shape IS characterized, it simply does not carry the needed algorithm, whereas oci/other are rejected for being uncharacterized at all).",
+          "if": {
+            "properties": { "registry": { "const": "npm" } },
             "required": ["registry"]
           },
           "then": {
