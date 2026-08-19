@@ -8,6 +8,7 @@
     "schema_version",
     "release_id",
     "source_tree_digest",
+    "source_ref",
     "artifact_digest",
     "environment",
     "deployed_at",
@@ -29,12 +30,20 @@
     "source_tree_digest": {
       "type": "string",
       "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$",
-      "description": "The git tree object id this release was built from -- i.e. the actual output of `git rev-parse <tag-or-commit>^{tree}`, dereferenced through an annotated tag if the release tag is one (never the tag object id or the commit id itself, both of which are different objects from the tree). 40 lowercase hex characters for a SHA-1 git repository (git's current default, and what every real fixture in this directory actually uses -- `git rev-parse --show-object-format` on each source repo confirms `sha1`), or 64 for a repository that has migrated to SHA-256 object format (`git rev-parse --show-object-format` reports `sha256`) -- this schema accepts either length because the underlying fact (git's own object id) is real either way, not because v0 has observed a SHA-256 repository."
+      "description": "The git tree object id this release was built from -- i.e. the actual output of `git rev-parse <tag-or-commit>^{tree}`, dereferenced through an annotated tag if the release tag is one (never the tag object id or the commit id itself, both of which are different objects from the tree). 40 lowercase hex characters for a SHA-1 git repository (git's current default, and what every real fixture in this directory actually uses -- `git rev-parse --show-object-format` on each source repo confirms `sha1`), or 64 for a repository that has migrated to SHA-256 object format (`git rev-parse --show-object-format` reports `sha256`) -- this schema accepts either length because the underlying fact (git's own object id) is real either way, not because v0 has observed a SHA-256 repository. A bare digest here names no location on its own -- see `source_ref` (required alongside this field) for where it can actually be reproduced."
+    },
+    "source_ref": {
+      "$ref": "#/$defs/source_ref",
+      "description": "REQUIRED alongside `source_tree_digest` (this field is always present, since `source_tree_digest` itself is unconditionally required on every event -- see this schema's own `required` list). Records where `source_tree_digest` can be independently reproduced: `git -C <repo> rev-parse <ref>^{tree}` MUST equal `source_tree_digest`. Without this, `source_tree_digest` is a 40/64-hex string that names no repo and no ref -- it can be neither verified nor falsified by anyone, the same defect design-options/v1's own artifact_ref split fixed for `content_digest` (see docs/protocols/release-observation-v0.md)."
     },
     "artifact_digest": {
       "type": ["string", "null"],
       "pattern": "^sha256:[0-9a-f]{64}$",
-      "description": "Content digest of the artifact this release actually shipped (a package tarball, a wheel, a container image, a content-root manifest, ...), in the same 'sha256:<64 hex>' form trace/v1's ref.content_digest uses. REQUIRED to be present on every event -- but its value MAY be `null`, and null is not the same fact as omitting the field (the field cannot be omitted at all; this key's absence is a schema violation, not a valid 'unrecorded' state). `null` means an explicit, positive claim: 'this release form has no single content-addressable artifact to digest' (e.g. a deploy that is itself just a git-tree checkout with no separate build step). A real digest string means 'here is the one artifact this release shipped, and its content digest, so a later audit can independently recompute and compare it.' Forcing every event to make one of these two explicit choices -- never leaving the question simply unanswered -- is this contract's null-not-zero application: 'genuinely has no artifact' and 'someone forgot to record the artifact' must never collapse into the same absent value the way they would if this field were merely optional. The `pattern` below only ever applies when the value actually is a string (this repo's shared validator guards every `pattern` check on `typeof instance === \"string\"`), so it never fires against a legitimate `null`."
+      "description": "Content digest of the artifact this release actually shipped (a package tarball, a wheel, a container image, a content-root manifest, ...), in the same 'sha256:<64 hex>' form trace/v1's ref.content_digest uses. REQUIRED to be present on every event -- but its value MAY be `null`, and null is not the same fact as omitting the field (the field cannot be omitted at all; this key's absence is a schema violation, not a valid 'unrecorded' state). `null` means an explicit, positive claim: 'this release form has no single content-addressable artifact to digest' (e.g. a deploy that is itself just a git-tree checkout with no separate build step). A real digest string means 'here is the one artifact this release shipped, and its content digest, so a later audit can independently recompute and compare it.' Forcing every event to make one of these two explicit choices -- never leaving the question simply unanswered -- is this contract's null-not-zero application: 'genuinely has no artifact' and 'someone forgot to record the artifact' must never collapse into the same absent value the way they would if this field were merely optional. The `pattern` below only ever applies when the value actually is a string (this repo's shared validator guards every `pattern` check on `typeof instance === \"string\"`), so it never fires against a legitimate `null`. When this is a real digest string, `artifact_ref` (schema `allOf` below) is REQUIRED alongside it -- a bare digest names no registry, package, or file."
+    },
+    "artifact_ref": {
+      "$ref": "#/$defs/artifact_ref",
+      "description": "REQUIRED exactly when `artifact_digest` is a real digest string; FORBIDDEN when `artifact_digest` is `null` (there is nothing to point at -- see schema `allOf` below). Records where `artifact_digest` can be independently checked, and how confidently: registries differ in whether their own metadata exposes a comparable digest at all -- see `$defs/artifact_ref`'s own `verifiability` field."
     },
     "environment": {
       "enum": ["preview", "staging", "production"],
@@ -59,5 +68,117 @@
       "description": "Whether this release's shipped quality (correctness/regressions observed after deploy, as distinct from verification_status's narrower 'did it install and run at all') has been assessed. `not_measured` is the expected v0 value for every release recorded so far -- v0 is observation-only and does not itself run or require a quality assessment; it only requires the field be stated honestly rather than defaulted to a value implying quality was checked when it was not. Named to match the existing dashboard design's own `quality status` concept (D9) so a future projection built from this ledger does not need a second vocabulary for the same idea."
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "description": "artifact_digest is a real digest string -> artifact_ref required (a bare digest names no registry/package/file for anyone to check it against).",
+      "if": {
+        "properties": { "artifact_digest": { "type": "string" } },
+        "required": ["artifact_digest"]
+      },
+      "then": { "required": ["artifact_ref"] },
+      "else": {
+        "not": { "required": ["artifact_ref"] }
+      }
+    }
+  ],
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "description": "Where `source_tree_digest` can be independently reproduced. Resolution is always `git -C <repo> rev-parse <ref>^{tree}` for the one resolution kind v0 knows about (`git_tree`) -- see the field's own description for why this is kept as an enum rather than a bare const.",
+      "required": ["repo", "ref", "resolution"],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A repo identifier (e.g. \"shiki-yusuke/agent-cost\"), never a local absolute filesystem path -- a path on the machine that recorded this event names nothing durable for a later reader on a different machine or a later date."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The tag or commit `source_tree_digest` was dereferenced from (e.g. \"v0.1.0\"), passed as `<ref>` in `git -C <repo> rev-parse <ref>^{tree}`."
+        },
+        "resolution": {
+          "enum": ["git_tree"],
+          "description": "How to resolve `source_tree_digest` against `repo`+`ref`. `git_tree` is the only member today: git's own tree object id, dereferenced through an annotated tag when `ref` is one. Kept as an enum (not a bare const) so a future non-git resolution mechanism (e.g. a different VCS's manifest hash) can be added as a new member without a breaking rename of this field."
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifact_ref": {
+      "type": "object",
+      "description": "Where `artifact_digest` can be independently checked, and how confidently -- registries differ in whether their own published metadata exposes a digest comparable to `artifact_digest` at all; that difference is exactly what `verifiability` records, and it is the reason this object is not simply a URI.",
+      "required": ["registry", "package", "version", "verifiability"],
+      "properties": {
+        "registry": {
+          "enum": ["pypi", "npm", "oci", "other"],
+          "description": "Which registry `package`/`version` (and `distribution`, for pypi) are resolved against."
+        },
+        "package": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The package/image name as registered with `registry` (may differ from the source repo's own name -- see `release_id`'s own description for a real case of this)."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The published version string as registered with `registry`."
+        },
+        "distribution": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The exact distributed file `artifact_digest` is of (e.g. \"coding_agent_cost-0.1.0-py3-none-any.whl\"). REQUIRED when `registry` is \"pypi\" (schema `allOf` below): a single PyPI release commonly publishes both a wheel and an sdist under the same package+version, each with its OWN sha256 -- without naming which file, `artifact_digest` does not resolve to one artifact. Optional for other registries where one package+version names exactly one artifact today (npm's single tarball per version, an OCI image's single manifest digest)."
+        },
+        "registry_url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Set only when the artifact was NOT published to the default public registry for `registry` (pypi.org for pypi, registry.npmjs.org for npm). Omit entirely for an ordinary public-registry release. v0 does not attempt to detect \"non-default\" structurally (there is no field this schema can check that value against) -- a producer publishing to a private registry MUST set this honestly; it is not schema-enforced the way the rest of this object's required-ness is."
+        },
+        "verifiability": {
+          "enum": ["registry_metadata", "requires_fetch", "unverifiable"],
+          "description": "How `artifact_digest` can actually be checked against this registry, measured per-registry, not asserted in the abstract: `registry_metadata` -- the registry's own metadata publishes a digest using the SAME algorithm (sha256) for this exact `distribution`, so a check needs no fetch of the artifact itself (PyPI's JSON API's `urls[].digests.sha256`, confirmed real for both PyPI fixtures in this directory). `requires_fetch` -- the registry's metadata only publishes a digest under a DIFFERENT algorithm (npm's registry metadata exposes `dist.shasum` (sha1) and `dist.integrity` (sha512), never sha256), so checking `artifact_digest` requires downloading `dist.tarball` and hashing it. `unverifiable` -- no publicly reachable registry metadata or artifact exists to check against at all (e.g. a private registry with no public read access); `unverifiable_reason` (required whenever this value is used -- schema `allOf` below) MUST say why, so 'nobody has tried yet' is never confused with 'cannot be done.'"
+        },
+        "unverifiable_reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why `verifiability` is \"unverifiable\". REQUIRED whenever `verifiability` is \"unverifiable\", FORBIDDEN otherwise (schema `allOf` below) -- same null-not-zero-shaped mutual exclusivity decision/v1's own `artifact_ref` uses for `content_digest`/`digest_omitted_reason`: a real reason and 'this doesn't apply' must never share a spelling."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "description": "registry is pypi -> distribution required (wheel vs sdist have different digests under the same package+version; see `distribution`'s own description).",
+          "if": {
+            "properties": { "registry": { "const": "pypi" } },
+            "required": ["registry"]
+          },
+          "then": { "required": ["distribution"] }
+        },
+        {
+          "description": "verifiability is unverifiable -> unverifiable_reason required; any other verifiability -> unverifiable_reason forbidden (mutually exclusive, not merely independently optional).",
+          "if": {
+            "properties": { "verifiability": { "const": "unverifiable" } },
+            "required": ["verifiability"]
+          },
+          "then": { "required": ["unverifiable_reason"] },
+          "else": {
+            "not": { "required": ["unverifiable_reason"] }
+          }
+        },
+        {
+          "description": "registry is oci or other -> verifiability MUST NOT be registry_metadata (neither format has a repo-defined metadata shape this contract can rely on being sha256-comparable; only pypi and npm have been observed and characterized).",
+          "if": {
+            "properties": { "registry": { "enum": ["oci", "other"] } },
+            "required": ["registry"]
+          },
+          "then": {
+            "not": {
+              "properties": { "verifiability": { "const": "registry_metadata" } },
+              "required": ["verifiability"]
+            }
+          }
+        }
+      ]
+    }
+  }
 }

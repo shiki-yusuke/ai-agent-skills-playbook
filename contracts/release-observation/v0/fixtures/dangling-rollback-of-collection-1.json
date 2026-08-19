@@ -2,6 +2,11 @@
   "schema_version": "release-observation/v0",
   "release_id": "demo-release@1.0.0",
   "source_tree_digest": "0000000000000000000000000000000000000001",
+  "source_ref": {
+    "repo": "demo-org/demo-release",
+    "ref": "v1.0.0",
+    "resolution": "git_tree"
+  },
   "artifact_digest": null,
   "environment": "production",
   "deployed_at": "2026-08-01T00:00:00Z",

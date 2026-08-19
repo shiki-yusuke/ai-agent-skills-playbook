@@ -2,6 +2,11 @@
   "schema_version": "release-observation/v0",
   "release_id": "spec-lane@0.5.2",
   "source_tree_digest": "02b1595d25c20e521cf19bdb88c9001b573387f9",
+  "source_ref": {
+    "repo": "shiki-yusuke/spec-lane",
+    "ref": "v0.5.2",
+    "resolution": "git_tree"
+  },
   "environment": "production",
   "deployed_at": "2026-08-14T19:04:59.556Z",
   "verification_status": "verified",

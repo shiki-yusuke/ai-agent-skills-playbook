@@ -2,7 +2,18 @@
   "schema_version": "release-observation/v0",
   "release_id": "spec-lane@0.5.2",
   "source_tree_digest": "02b1595d25c20e521cf19bdb88c9001b573387f9",
+  "source_ref": {
+    "repo": "shiki-yusuke/spec-lane",
+    "ref": "v0.5.2",
+    "resolution": "git_tree"
+  },
   "artifact_digest": "sha256:af3c2467ae863aa2fb40116f3ce130a42a7079f249396e3c58c1684d59086a97",
+  "artifact_ref": {
+    "registry": "npm",
+    "package": "spec-lane",
+    "version": "0.5.2",
+    "verifiability": "requires_fetch"
+  },
   "environment": "prod",
   "deployed_at": "2026-08-14T19:04:59.556Z",
   "verification_status": "verified",
