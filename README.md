@@ -109,6 +109,22 @@ Decision–Evidence Graph の正本エッジ（append-only JSONL、1行=1イベ�
 - Protocol document: [`docs/protocols/attribution-v1.md`](docs/protocols/attribution-v1.md)
 - Conformance fixtures: [`contracts/attribution/v1/`](contracts/attribution/v1/)
 
+### review-findings:v1 / promotion-receipt:v0 / release-approval:v0
+
+Evidence-Closed Delivery の Shadow Evidence Contracts（3本組）。「何を観測したか（review-findings）→ 人間承認以外の述語をどう機械評価したか（promotion-receipt）→ 誰が exact digest に対して承認したか（release-approval、唯一の promotion authority）」という Authority DAG を構成する。3本とも **DRAFT — NOT FROZEN**。
+
+- Status: **DRAFT（draft_revision 1）**。schema/fixture/protocol文書はこのリポジトリがSSOTだが、reference 実装（emitter/receipt evaluator/approval ledger consumer）はまだ無い。freeze はこのリポジトリの freeze-after-exercise 規律に従う（`release-evidence/v0` 同様、実際の shadow/live 運用実証が先）
+- Protocol documents: [`docs/protocols/review-findings-v1.md`](docs/protocols/review-findings-v1.md) / [`docs/protocols/promotion-receipt-v0.md`](docs/protocols/promotion-receipt-v0.md) / [`docs/protocols/release-approval-v0.md`](docs/protocols/release-approval-v0.md)
+- Conformance fixtures: [`contracts/review-findings/v1/`](contracts/review-findings/v1/) / [`contracts/promotion-receipt/v0/`](contracts/promotion-receipt/v0/) / [`contracts/release-approval/v0/`](contracts/release-approval/v0/)
+- KPI・数値解禁条件・外部根拠・運用上限などの正本値: [`docs/evidence-closed-delivery-frozen-decisions.md`](docs/evidence-closed-delivery-frozen-decisions.md)
+
+設計原則（詳細はprotocol文書側の記述が正本。ここでは複製せず要点のみ）:
+
+- `promotion-receipt` の `verdict` は `ready_for_approval | ineligible | abstained` のみ。`eligible` は authority 循環のため存在しない。`human_release_approval` は述語として存在しない（`release-approval` の event が唯一の promotion authority）
+- `promotion-receipt` 評価は決定論的（LLM呼び出し0）。`effective_risk` / `policy_digest` は評価開始時に凍結し、評価結果から再導出しない
+- `release-approval` の全 kind（`break_glass_approve` を含む）が exact digest 束縛（receipt/bundle/selection manifest/target）を免除されない
+- 個人識別次元を持たない（`review-findings` の `reviewer` は `contracts/shared/personal-dimensions.mjs` の禁止キーと衝突するため `assessor` に改名済み）。数値 confidence フィールドは3契約とも一切持たない
+
 ### impact-scan:v1
 
 [`pre-implementation-impact-scan`](skills/pre-implementation-impact-scan/) skill が定める、実装着手前レポート末尾の構造化出力 block（```impact-scan:v1```フェンス）の機械可読schema。生の観測値のみを運び、集約スコアや digest は含めない（消費側が自分で再計算する）。
