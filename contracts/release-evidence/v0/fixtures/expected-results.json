@@ -1,0 +1,98 @@
+{
+ "protocol_version": "release-evidence/v0",
+ "fixture_format_version": "1",
+ "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. `type` selects the check: \"bundle\" (one Release Evidence Bundle against release-evidence-bundle.schema.json + personal-dimension scan), \"event\" (one release event against release-event.schema.json + the scan), \"event-collection\" (an array of events checked together: schema per event, then the transition-graph fold, the same-bundle_digest-per-release invariant, and the dangling-rollback check -- the cross-record rules no single-record validation can express, same convention as release-observation/v0's \"collection\"). PROVENANCE: accept-bundle-spec-lane-0-6-0 carries REAL values measured 2026-08-22 (git commit/tree from the v0.6.0 tag, npm tarball sha256 fetched and hashed live, recipe/toolchain digests hashed from the tag's docs/releasing.md and package.json). accept-bundle-static-site-synthetic and every event fixture are SYNTHETIC shapes -- the static-site values are placeholders to be replaced with real measured ones by the first Pages deploy-adapter exercise, which is also the gate for freezing v1 (re-plan 2026-08-22).",
+ "fixtures": [
+  {
+   "file": "accept-bundle-spec-lane-0-6-0.json",
+   "type": "bundle",
+   "expected": "accept"
+  },
+  {
+   "file": "accept-bundle-static-site-synthetic.json",
+   "type": "bundle",
+   "expected": "accept"
+  },
+  {
+   "file": "invalid-bundle-lane-null-without-reason.json",
+   "type": "bundle",
+   "expected": "reject",
+   "reason_code": "missing required property \"lane_ref_omitted_reason\""
+  },
+  {
+   "file": "invalid-bundle-signature-present.json",
+   "type": "bundle",
+   "expected": "reject",
+   "reason_code": "$.integrity.signature"
+  },
+  {
+   "file": "invalid-bundle-static-site-missing-manifest.json",
+   "type": "bundle",
+   "expected": "reject",
+   "reason_code": "missing required property \"content_manifest_digest\""
+  },
+  {
+   "file": "invalid-bundle-repo-local-path.json",
+   "type": "bundle",
+   "expected": "reject",
+   "reason_code": "$.source.repo"
+  },
+  {
+   "file": "accept-events-happy-path.json",
+   "type": "event-collection",
+   "expected": "accept"
+  },
+  {
+   "file": "accept-events-rollback.json",
+   "type": "event-collection",
+   "expected": "accept"
+  },
+  {
+   "file": "accept-events-staging-and-failed.json",
+   "type": "event-collection",
+   "expected": "accept"
+  },
+  {
+   "file": "reject-events-production-before-preview.json",
+   "type": "event-collection",
+   "expected": "reject",
+   "reason_code": "illegal_transition"
+  },
+  {
+   "file": "reject-events-bundle-digest-drift.json",
+   "type": "event-collection",
+   "expected": "reject",
+   "reason_code": "bundle_digest_mismatch_within_release"
+  },
+  {
+   "file": "reject-events-dangling-rollback.json",
+   "type": "event-collection",
+   "expected": "reject",
+   "reason_code": "dangling_rollback_reference"
+  },
+  {
+   "file": "reject-events-no-prepared-first.json",
+   "type": "event-collection",
+   "expected": "reject",
+   "reason_code": "illegal_transition"
+  },
+  {
+   "file": "invalid-event-prepared-with-environment.json",
+   "type": "event",
+   "expected": "reject",
+   "reason_code": "$.environment"
+  },
+  {
+   "file": "invalid-event-failed-without-reason.json",
+   "type": "event",
+   "expected": "reject",
+   "reason_code": "missing required property \"reason\""
+  },
+  {
+   "file": "invalid-event-personal-dimension.json",
+   "type": "event",
+   "expected": "reject",
+   "reason_code": "personal_dimension_forbidden_key"
+  }
+ ]
+}
