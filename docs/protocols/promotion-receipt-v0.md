@@ -49,6 +49,12 @@ receipt. `break_glass_authorized` is likewise not a receipt verdict — break-gl
 **approval event**, never a machine verdict; the predicate vector inside a receipt always
 records its real, unmodified status even when a human later chooses to bypass some of it.
 
+`release-approval/v0` additionally restricts *which* approval kind may bind to a non-ready
+receipt (sol architect ask-1/R22, enforced there, not here): `approval_granted` is valid only
+against a receipt whose `verdict` is `ready_for_approval`; only `break_glass_approve` may bind
+to an `ineligible` or `abstained` receipt, and it must carry the audit fields (`incident_ref`,
+`bypassed_predicate_ids`) that make the exception visible rather than silent.
+
 ## Verdict derivation is enforced by the verifier, not asserted by the fixture
 
 Given a receipt's `predicates[]`, restricted to those with `applicability: "applicable"`:
@@ -66,7 +72,7 @@ carrying an unfavorable predicate vector. `not_applicable` predicates never infl
 derivation (their `status` is schema-forced to `unknown`, but they are excluded from the
 "applicable" filter above, so an inapplicable predicate can never itself cause `abstained`).
 
-## `predicate_id`: closed per phase, and `human_release_approval` exists in neither
+## `predicate_id`: closed per phase, complete per phase, and `human_release_approval` exists in neither
 
 - `evaluation_phase: "pre_promotion"` → predicates are drawn only from `artifact_identity`,
   `review_admissibility`, `verification_coverage`, `preview_verified`, `rollback_target_valid`,
@@ -79,25 +85,55 @@ derivation (their `status` is schema-forced to `unknown`, but they are excluded 
   sets in one receipt, or naming `human_release_approval` as a predicate, is rejected at the
   schema level.
 
+**A receipt must carry its ENTIRE phase's predicate set, exactly once each — no fewer, no
+duplicates** (sol architect must-1, R21): a `pre_promotion` receipt is rejected unless it
+contains all six `pre_promotion` predicate_ids; a `post_deploy` receipt is rejected unless it
+contains `deployed_artifact_readback`. This is enforced by `verify-fixtures.mjs`, not the
+schema (a single array item's schema cannot see its siblings). Additionally, **the three
+always-on `pre_promotion` predicates (`artifact_identity`, `review_admissibility`,
+`verification_coverage`) and post_deploy's own `deployed_artifact_readback` can never be
+`not_applicable`.** This closes an escape hatch a design round flagged: marking every predicate
+`not_applicable` leaves zero *applicable* predicates, and the verdict derivation above then
+defaults to `ready_for_approval` by vacuous truth (no applicable predicate is ever
+`contradicted` or `unknown` if there are no applicable predicates at all). Forcing these four
+predicates to always be evaluated removes that vacuous-pass path entirely.
+
 A predicate whose `status` is `satisfied` or `contradicted` must carry at least one
-`evidence_refs[]` entry — an assertion with no evidence behind it is rejected. `unknown`
-predicates may have empty `evidence_refs` (there is, definitionally, nothing yet to cite).
+`evidence_refs[]` entry of a **resolvable kind** — `review_finding` or `release_evidence`.
+`kind: "other"` is auxiliary information only: an `other`-only reference can never, by itself,
+back a `satisfied` or `contradicted` status (sol architect must-2a). This half of the rule is
+checkable without a ledger and is enforced by this contract's own `verify-fixtures.mjs`; whether
+the cited evidence *actually resolves* to something real is `release-approval/v0`'s composite
+fixture's job (see below).
 
-## `evidence_refs`: an opaque reference this contract does not resolve alone
+## `evidence_refs`: what this contract can check alone, and what it can't
 
-Each `evidence_refs[]` entry is `{kind, ref, digest}`. `kind: "review_finding"` names a
-`review-findings/v1` record as `"<record_id>#<finding_id-or-scope-tag>"`, with `digest`
-expected to equal that record's `subject.digest` **exactly**. `kind: "release_evidence"` names
-a `release-evidence/v0` release/bundle. `kind: "other"` is opaque and never resolved by any
-verifier in this repo.
+Each `evidence_refs[]` entry is `{kind, ref, digest}`.
+
+- `kind: "review_finding"` names a `review-findings/v1` record as
+  `"<record_id>#<finding_id>"` (must resolve to a real finding in that record) or
+  `"<record_id>#scope"` (valid only when that record's `outcome` is
+  `none_observed_in_recorded_scope`). `digest` is bound to the **WHOLE record's** JCS (RFC 8785)
+  sha256 (sol architect must-2b/R23) — **not** `subject.digest`. This distinction matters:
+  editing a finding's `claim`, `severity`, or `outcome` after the fact changes the record's own
+  digest even though `subject.digest` (bound to the scanned tree, not the record's content) can
+  stay the same. A reference recorded against the pre-edit digest is stale the instant the
+  content changes (TEST-12).
+- `kind: "release_evidence"` names a `release-evidence/v0` release/bundle by `release_id`.
+- `kind: "other"` is opaque and never resolved by any verifier in this repo.
 
 **This contract's own `verify-fixtures.mjs` does not resolve `evidence_refs` against a real
 review-findings record or a real release-evidence bundle** — a bare receipt fixture does not
-carry either alongside it. That cross-contract resolution — "does this digest actually belong
-to the record it claims to" — is checked only by `release-approval/v0`'s composite ledger
-fixture, which bundles review-findings records, one receipt, and approval events together (see
-that protocol's TEST-09). A receipt that references a stale digest will pass this contract's
-own fixture check and fail there instead.
+carry either alongside it; it can only check the *structural* rule above (a resolvable-kind ref
+must exist). The *actual* resolution — recomputing the real record/bundle digest and confirming
+the reference's anchor and digest both check out — is `release-approval/v0`'s composite ledger
+fixture's job, which bundles review-findings records, an optional array of embedded
+release-evidence bundles, one receipt, and approval events together (see that protocol's
+TEST-06/TEST-09/TEST-12). A `release_evidence` reference to a bundle that isn't embedded in a
+given composite fixture is not itself an error — it simply doesn't count as resolved, and a
+predicate backed *only* by such a reference is rejected as unresolved there (must-2c). A receipt
+that references a stale or non-existent digest will pass this contract's own fixture check and
+fail in the composite instead.
 
 ## `semantic_digest`: what TOCTOU actually compares
 
@@ -141,7 +177,11 @@ self-consistency loop the source plan explicitly rules out (Codex sol Round 2 ar
 ## Verification
 
 `node contracts/promotion-receipt/v0/verify-fixtures.mjs` checks every fixture against
-`promotion-receipt.schema.json` plus: verdict derivation (above), `semantic_digest`
-recomputation (above), the numeric-confidence scan, and the personal-dimension scan
-(`contracts/shared/personal-dimensions.mjs`). See the fixtures directory's
-`expected-results.json` for the declared outcome of each fixture.
+`promotion-receipt.schema.json` plus: predicate-set completeness and always-applicable
+enforcement (above, R21), the structural half of resolvable-evidence-kind (above, R9),
+real-calendar-date validity for `evaluated_at` (a value that matches the UTC-Z pattern but does
+not `Date.parse` to a real date/time, e.g. `"2026-99-99T00:00:00Z"`, is rejected), verdict
+derivation (above), `semantic_digest` recomputation (above), the broadened numeric-confidence
+scan (matches any key whose lowercased name *contains* `"confidence"`), and the
+personal-dimension scan (`contracts/shared/personal-dimensions.mjs`). See the fixtures
+directory's `expected-results.json` for the declared outcome of each fixture.
