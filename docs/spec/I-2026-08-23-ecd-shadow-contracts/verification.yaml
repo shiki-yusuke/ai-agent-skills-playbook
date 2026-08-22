@@ -1,0 +1,142 @@
+schema_version: "1.0"
+intent_id: I-2026-08-23-ecd-shadow-contracts
+test_matrix:
+  - ears_rule: Rule R1-R7 (review-findings/v1 schema + semantic)
+    test_type: unit
+    test_file: contracts/review-findings/v1/verify-fixtures.mjs
+    test_name: fixtures 25/25 (accept/invalid/reject)
+    status: added
+    note: outcome 3値の相互制約、assessor 制約、locations 整合、実在日時、個人次元/confidence scan
+  - ears_rule: Rule R8-R13, R21 (promotion-receipt/v0 schema + verdict 導出 + 述語完全性 +
+      semantic_digest)
+    test_type: unit
+    test_file: contracts/promotion-receipt/v0/verify-fixtures.mjs
+    test_name: fixtures 21/21
+    status: added
+    note: checkPredicateCompleteness (pre 6述語/post 1述語・重複拒否・常設 applicable
+      強制)、verdict 導出一致、semantic_digest 再計算、resolvable evidence kind
+  - ears_rule: Rule R14-R19, R22-R24 (release-approval/v0 event + composite cross-record)
+    test_type: unit
+    test_file: contracts/release-approval/v0/verify-fixtures.mjs
+    test_name: fixtures 45/45 (composite 含む)
+    status: added
+    note: event_id/receipt_digest/record_digest 再計算、embed bundle の
+      schema+union+個人次元検証、revocation 4経路、R22 (approval は ready_for_approval
+      のみ)、anchor 規則
+  - ears_rule: Rule R20 (凍結事項ドキュメント)
+    test_type: manual
+    test_file: docs/evidence-closed-delivery-frozen-decisions.md
+    status: added
+    note: KPI 母数・期間・FP 判定者 / H 起動条件と証拠源 / I 解禁数値表 / 外部根拠の出典・日付・適用範囲 / 運用上限・縮退順序 /
+      ベースライン凍結値の存在を目視確認
+  - ears_rule: 回帰 (既存契約への影響なし)
+    test_type: regression
+    test_file: contracts/shared/repo-checks.mjs
+    test_name: 全13契約 verify-fixtures + repo-checks
+    status: existing
+    note: CI と同一の discovery 方式でローカル実行、全 exit 0
+test_gaps:
+  - taxonomy: observability_gap
+    description: 自由文フィールド (claim/notes) への個人情報の value レベル混入は機械検出不能。protocol doc の
+      normative MUST + レビュー規律で対処 (critic.yaml security lens 参照)
+    priority: medium
+  - taxonomy: compatibility_missed
+    description: contracts/shared/schema-validator.mjs が oneOf を評価しない (sol 3巡目で発見)。本
+      lane は release-approval verifier 内の union 補完で対処したが、shared validator の
+      oneOf 対応は別タスク (全契約横断)
+    location: contracts/shared/schema-validator.mjs
+    priority: high
+  - taxonomy: missing_state
+    description: selection_manifest_digest の指す selection manifest 契約が未定義。v0 draft では
+      opaque digest + caveat (protocol doc に明記)
+    priority: medium
+manual_verification:
+  - id: MV-01
+    description: "改変注入: composite の receipt_digest / receipt_semantic_digest /
+      event_id をそれぞれ1文字改変"
+    expected_status: 3件とも verifier が exit 非0 で検出 (2026-08-23 実施済み)
+  - id: MV-02
+    description: "改変注入: composite 内 finding の claim 差し替え (record_digest 束縛の確認)"
+    expected_status: 検出 (2026-08-23 実施済み)
+  - id: MV-03
+    description: "改変注入: accept receipt から述語を1つ削除 (R21 完全性)"
+    expected_status: 検出 (2026-08-23 実施済み)
+  - id: MV-04
+    description: "改変注入: 相互一致するが embed bundle に解決しない bundle_digest (must-2 の穴の再現)"
+    expected_status: 検出 (2026-08-23 実施済み)
+  - id: MV-05
+    description: "改変注入: digest 整合済みの union 違反 bundle (lane_ref: 42) の embed"
+    expected_status: 検出 (2026-08-23 実施済み)
+goal_stopping_condition:
+  - 全13契約の verify-fixtures.mjs + repo-checks.mjs が exit 0
+  - sol architect レビューの must が全て解消し最終 gate PASS (5巡目 2026-08-23)
+  - 改変注入テスト MV-01〜05 が全て検出側に倒れる
+spec_consensus:
+  spec_ssot_ref: docs/spec/I-2026-08-23-ecd-shadow-contracts/spec.md
+  spec_digest: f38ccb4ab55fc6ec9c067e20078c0b555f7277367d918dcd6332d7638621e765
+  verification_digest: 132ad62352e99cfa4da02a4bbeda5196e9441b6d41e05be3b14c4844677d2453
+  deviations:
+    - spec_ref: spec.md R1-R24 全体
+      actual: 逸脱なしを確認。実装中に spec 側を Revision 2 で更新した2点 (reviewer→assessor 改名 /
+        locations.path 追加) と sol レビュー由来の強化 (R21-R24) は、いずれも spec.md に反映済みで実装と一致
+      action: accept
+      status: resolved
+      rationale: sol architect レビュー5巡 (NG→NG→NG→NG→PASS) を経て spec と実装の authority
+        を一本化。spec.md Revision 2 が正、実装は全13 verifier + 改変注入 MV-01〜05 で検証済み
+  reviewer_ack:
+    reviewer_kind: independent_agent
+    reviewer_id: gpt-5.6-sol
+    acked_at: 2026-08-22T20:00:03.197Z
+    spec_sha256: f38ccb4ab55fc6ec9c067e20078c0b555f7277367d918dcd6332d7638621e765
+    verification_sha256: 132ad62352e99cfa4da02a4bbeda5196e9441b6d41e05be3b14c4844677d2453
+success_criteria_matrix:
+  - criterion: 3契約それぞれに schema + valid/invalid fixtures + verify-fixtures.mjs
+      が存在し、node verify-fixtures.mjs が3契約すべてで exit 0 で通る
+    covered_by: test
+    evidence: contracts/{review-findings/v1,promotion-receipt/v0,release-approval/v0}/
+      に schema+fixtures+verifier。25/21/45 fixtures 全 PASS、repo-checks も exit 0
+    negation_test: MV-01〜05 の改変注入で verifier が exit 非0 になることを実機確認 (通るだけの verifier ではない)
+  - criterion: replay fixture で none_observed_in_recorded_scope の走査scope欠落 /
+      authority 不足 / digest mismatch / contradiction / applicable unknown の
+      abstain 化の5系統が invalid または reject として検出される
+    covered_by: test
+    evidence: ①invalid-none-observed-empty-{paths,lenses}
+      ②reject-composite-approval-granted-non-ready-receipt (authority 不足 = 非
+      ready への通常承認) ③reject-composite-fake-receipt-digest /
+      reject-composite-stale-bundle-digest
+      ④reject-contradicted-but-verdict-abstained
+      ⑤reject-unknown-but-verdict-ready
+    negation_test: 各系統の reject/invalid fixture 自体が負例 (expected-results.json で期待
+      reject/invalid を宣言し、verifier が accept したら fixture 検証が fail する構造)
+  - criterion: promotion-receipt の verdict は ready_for_approval|ineligible|abstained
+      のみで eligible を持たず、human_release_approval を述語として評価しない (authority 循環の排除)
+    covered_by: test
+    evidence: schema の verdict enum は3値のみ (grep で eligible 不在を確認)。predicate_id enum
+      に human_release_approval 不在 + schema description に意図を明記
+    negation_test: invalid-predicate-human-release-approval.json が schema レベルで invalid になる
+  - criterion: 個人次元 scan (contracts/shared/personal-dimensions.mjs) が3契約の verifier
+      に配線され、reviewer/approver に人名・実行IDを含む fixture が拒否される
+    covered_by: test
+    evidence: 3 verifier とも scanPersonalDimensions を全 fixture に適用。なお契約フィールド名は禁止キー
+      reviewer との衝突回避のため assessor (spec.md Revision 2 に記録)
+    negation_test: reject-personal-dimension-in-params.json /
+      invalid-principal-id-with-at-sign.json が拒否される
+  - criterion: 数値 confidence フィールドが3契約の schema のどこにも存在しない
+    covered_by: test
+    evidence: grep で3 schema に confidence キー不在を確認 + 3 verifier に lowercase 包含一致の
+      confidence scan (防御的)
+    negation_test: invalid-additional-property-confidence.json /
+      reject-numeric-confidence-in-params.json が拒否される
+  - criterion: 凍結事項 (KPI 母数・期間・FP 判定者 / H 起動条件の証拠源 / 外部根拠の出典・日付・適用範囲) が
+      docs/evidence-closed-delivery-frozen-decisions.md に記録される
+    covered_by: diff
+    evidence: docs/evidence-closed-delivery-frozen-decisions.md に全項目を記録
+      (正本プランから転記、ベースライン凍結値込み)
+    negation_test: 機械的負例なし (文書要件)。各項目の存在は目視確認済み (test_matrix R20 行)
+cross_check_intent_vs_spec:
+  performed_at: 2026-08-23 (Phase 3)
+  finding: 方向②の点検で spec.md Revision 2 (R21-R24) が intent.success より強い条件
+    (述語完全性・approval の ready 限定・record_digest 束縛・重複 event reject)
+    を定めていることを確認。ただしこれらは sol レビューが要求した実装上の強化であり、intent.success
+    の6条件はその弱い側の含意として全て満たされる。intent.yaml の success を書き換える必要なし (SSOT の条件はすべて diff
+    で成立)。逆方向①も1行ずつ突合済み (success_criteria_matrix)

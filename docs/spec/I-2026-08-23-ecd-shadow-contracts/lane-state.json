@@ -1,0 +1,117 @@
+{
+  "schema_version": "3.0",
+  "intent_id": "I-2026-08-23-ecd-shadow-contracts",
+  "tracker_url": null,
+  "pr_url": null,
+  "pr_provenance": null,
+  "owner": "shiki-yusuke",
+  "current_phase": "4_verify",
+  "status": "running",
+  "created_at": "2026-08-22T18:20:56.789Z",
+  "updated_at": "2026-08-22T20:00:19.952Z",
+  "phase_history": [
+    {
+      "phase": "1_intent",
+      "started_at": "2026-08-22T18:20:56.789Z",
+      "ended_at": "2026-08-22T18:29:23.491Z",
+      "result": "completed",
+      "retry_count": 0
+    },
+    {
+      "phase": "2_spec",
+      "started_at": "2026-08-22T18:29:23.491Z",
+      "ended_at": "2026-08-22T19:58:42.532Z",
+      "result": "completed",
+      "retry_count": 0
+    },
+    {
+      "phase": "3_implement",
+      "started_at": "2026-08-22T19:58:42.532Z",
+      "result": "completed",
+      "retry_count": 0,
+      "ended_at": "2026-08-22T20:00:19.952Z"
+    },
+    {
+      "phase": "4_verify",
+      "started_at": "2026-08-22T20:00:19.952Z",
+      "result": "in_progress",
+      "retry_count": 0
+    }
+  ],
+  "halt_info": null,
+  "retry_log": [],
+  "effective_risk_log": [
+    {
+      "gate_id": "validate",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T18:21:56.993Z"
+    },
+    {
+      "gate_id": "validate",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T18:25:55.100Z"
+    },
+    {
+      "gate_id": "phase_advance",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T18:29:23.491Z"
+    },
+    {
+      "gate_id": "validate",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T19:05:22.029Z"
+    },
+    {
+      "gate_id": "phase_advance",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T19:58:42.532Z"
+    },
+    {
+      "gate_id": "validate",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T20:00:03.289Z"
+    },
+    {
+      "gate_id": "phase_advance",
+      "effective_risk": "medium",
+      "applied_rule_ids": [],
+      "profile_digest": "d72951e0e685b0a1e0ea7d370fbce3e7f45f8e549d28657a123735486c2c88ca",
+      "evaluated_at": "2026-08-22T20:00:19.952Z"
+    }
+  ],
+  "mode_resolution_log": [],
+  "cost_ledger": [],
+  "usage_import_attempts": [],
+  "usage_import_gate_overrides": [],
+  "gate_ruleset_version": "1.0",
+  "gate_snapshots": {
+    "premise_evidence": {
+      "method": "data",
+      "reproduced": true,
+      "recorded_at": "2026-08-22T18:29:23.491Z"
+    },
+    "success_criteria": {
+      "criteria": [
+        "3契約それぞれに schema + valid/invalid fixtures + verify-fixtures.mjs が存在し、node verify-fixtures.mjs が3契約すべてで exit 0 で通る",
+        "replay fixture で none_observed_in_recorded_scope の走査scope欠落 / authority 不足 / digest mismatch / contradiction / applicable unknown の abstain 化の5系統が invalid または reject として検出される",
+        "promotion-receipt の verdict は ready_for_approval|ineligible|abstained のみで eligible を持たず、human_release_approval を述語として評価しない (authority 循環の排除)",
+        "個人次元 scan (contracts/shared/personal-dimensions.mjs) が3契約の verifier に配線され、reviewer/approver に人名・実行IDを含む fixture が拒否される",
+        "数値 confidence フィールドが3契約の schema のどこにも存在しない",
+        "凍結事項 (KPI 母数・期間・FP 判定者 / H 起動条件の証拠源 / 外部根拠の出典・日付・適用範囲) が docs/evidence-closed-delivery-frozen-decisions.md に記録される"
+      ],
+      "recorded_at": "2026-08-22T20:00:19.952Z"
+    }
+  }
+}
