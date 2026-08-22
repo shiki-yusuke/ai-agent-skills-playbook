@@ -1,0 +1,61 @@
+{
+  "bundles": [
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "orbit-api@2026.9.1",
+      "source": {
+        "repo": "shiki-yusuke/orbit-api",
+        "commit_sha": "4819a653622da0dd5ef6bb44b50b0046689e70a6",
+        "tree_digest": "c809f503068832adb1554cf23120b668f2cc74ef",
+        "ref": "v2026.9.1",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "review": null,
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:0141f168b8a7362c264f27ee825b39b410c9d3dee3d72adc070c3c6a635832bd",
+          "artifact_ref": {
+            "registry": "other",
+            "package": "orbit-api",
+            "version": "1.0.0",
+            "verifiability": "registry_metadata"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:c30c9c548fa0184deb397eb0b959e9892c651d481e13a38695f518d6ebb867bb",
+        "toolchain_digest": "sha256:887d32f44cb1dd994889a58d3ee8332c87fc96d3f0e1642020b5c7187034773c"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": null
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      },
+      "lane_ref_omitted": {
+        "code": "no_lane_scheduled_rebuild",
+        "note": "release-collection fixture: synthetic bundle with no contributing lane for this attempt."
+      },
+      "review_omitted": {
+        "code": "scheduled_rebuild_deploys_reviewed_main",
+        "note": "release-collection fixture: synthetic bundle with no per-release review recorded."
+      }
+    }
+  ],
+  "events": [
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.9.1#01",
+      "release_id": "orbit-api@2026.9.1",
+      "kind": "prepared",
+      "environment": null,
+      "occurred_at": "2026-08-23T00:00:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:2260af93cb7d92f93ea08e7737ccb82b5b4563c590405b9e6626e21d8bf5b333"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "bundles": [
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "orbit-api@2026.9.4",
+      "source": {
+        "repo": "shiki-yusuke/orbit-api",
+        "commit_sha": "41bd39994621e691186ec6ac20c6c27e135deed2",
+        "tree_digest": "67fc0d565e5b4d3b919a3bf14fda21fce3b0eb9b",
+        "ref": "v2026.9.4",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "review": {
+        "pr": 44,
+        "head_sha": "b4a1b78b02682788e54143cc66dd9980197200ef",
+        "decision": "commented"
+      },
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:0f2d685134883f78f19126645571ae25c41b3f8db3f8b566e7f17d316b3a3abb",
+          "artifact_ref": {
+            "registry": "other",
+            "package": "orbit-api",
+            "version": "1.0.0",
+            "verifiability": "registry_metadata"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:1a964b98786736b4cbb9ce22ca56728d8f37d905e0304067b15f49926df55f74",
+        "toolchain_digest": "sha256:830593b022d187600a765b0c4de8bc278934e6e215f63387d4885f7d0c0324a2"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": null
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      },
+      "lane_ref_omitted": {
+        "code": "no_lane_scheduled_rebuild",
+        "note": "release-collection fixture: synthetic bundle with no contributing lane for this attempt."
+      }
+    }
+  ],
+  "events": [
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.9.4#01",
+      "release_id": "orbit-api@2026.9.4",
+      "kind": "prepared",
+      "environment": null,
+      "occurred_at": "2026-08-23T00:00:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:5a330320aa988c7b7dc4d7b34c1147549cb9ecd3d72f7f8718284cb1ade85bdf"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.9.4#02",
+      "release_id": "orbit-api@2026.9.4",
+      "kind": "deployed",
+      "environment": "preview",
+      "occurred_at": "2026-08-23T00:05:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:5a330320aa988c7b7dc4d7b34c1147549cb9ecd3d72f7f8718284cb1ade85bdf"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.9.4#03",
+      "release_id": "orbit-api@2026.9.4",
+      "kind": "verified",
+      "environment": "preview",
+      "occurred_at": "2026-08-23T00:10:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:5a330320aa988c7b7dc4d7b34c1147549cb9ecd3d72f7f8718284cb1ade85bdf"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.9.4#04",
+      "release_id": "orbit-api@2026.9.4",
+      "kind": "deployed",
+      "environment": "production",
+      "occurred_at": "2026-08-23T00:20:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:5a330320aa988c7b7dc4d7b34c1147549cb9ecd3d72f7f8718284cb1ade85bdf",
+      "staging_skipped": true
+    }
+  ]
+}

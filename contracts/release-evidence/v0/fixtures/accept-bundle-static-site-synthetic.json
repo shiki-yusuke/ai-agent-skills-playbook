@@ -1,0 +1,35 @@
+{
+  "schema_version": "release-evidence/v0",
+  "release_id": "agent-metrics-dashboard@2026-08-22",
+  "source": {
+    "repo": "shiki-yusuke/agent-metrics-harvester",
+    "commit_sha": "0000000000000000000000000000000000000abc",
+    "tree_digest": "0000000000000000000000000000000000000def",
+    "resolution": "git_tree"
+  },
+  "lane_ref": null,
+  "lane_ref_omitted": {
+    "code": "no_lane_scheduled_rebuild",
+    "note": "Scheduled daily dashboard rebuild from main; no lane exists per rebuild. Per-change lanes (if any) govern the PRs that reached main, not this deploy."
+  },
+  "review": null,
+  "review_omitted": {
+    "code": "scheduled_rebuild_deploys_reviewed_main",
+    "note": "Scheduled rebuild deploys whatever main already contains; each contributing PR carried its own review, but no review corresponds to this deploy event itself."
+  },
+  "artifacts": [
+    {
+      "kind": "static_site",
+      "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "content_manifest_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "build": {
+    "recipe_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "recipe_ref": ".github/workflows/dashboard.yml",
+    "toolchain_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+  },
+  "known_deviations": [],
+  "rollback": { "previous_release_id": "agent-metrics-dashboard@2026-08-21" },
+  "integrity": { "level": "digest_only", "signature": null }
+}
