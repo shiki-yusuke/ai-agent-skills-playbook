@@ -5,7 +5,7 @@ confidence: high
 per_lens:
   - lens_id: lifecycle_management
     result: applicable
-    finding: "凍結済み契約 (release-evidence/v0 は FROZEN) の検証が事後に厳格化される。凍結時に通っていた fixture が通らなくなれば freeze 規律との緊張になるが、期待結果が変わらないこと (R6) を回帰条件にしているため、変わった場合は fixture 側でなく実装の bug として扱う"
+    finding: "凍結済み契約 (release-evidence/v0 は FROZEN) の検証が事後に厳格化される。判断根拠 (sol レビューで明文化): 凍結対象は schema/protocol/fixtures であり、それらは本変更で不変。本変更は『既存実装 (validator) の過少検証を凍結済み正本へ一致させる修正』なので freeze 規律に反しない。期待結果が変わらないこと (R6) が回帰条件で、変わった場合は fixture 側でなく実装の bug として扱う"
     taxonomy: compatibility_missed
     evidence: "release-evidence の全40 fixture は凍結時点で oneOf 分岐に正しく一致している想定。R5(e) + R6 が実測で確認する"
     knowledge_candidates: []
@@ -49,6 +49,7 @@ halt_triggers: []
 missing_scenarios: []
 wrong_assumptions: []
 open_questions:
-  - "lane repo 等に vendor 済みの validator copy は commit pin のため本変更後も oneOf 未対応のまま。再 vendor のタイミング (UPSTREAM 手順) は別タスク"
+  - "lane repo 等に vendor 済みの validator copy は commit pin のため本変更後も oneOf 未対応のまま。再 vendor のタイミング (UPSTREAM 手順) は別タスク (owner と時期を tasks.md に固定済み)"
+  - "$ref の early return は assertion sibling を評価しない (draft 2020-12 は $ref sibling を許容)。現 repo の使用範囲は description のみのため実害なし。subset 境界の明記 or 解消は別 lane 判断 (sol ask)"
 required_actions:
   - "R5(e) の実 schema 回帰は release-evidence の fixtures を read-only 参照し、コピーを作らない"
