@@ -1,0 +1,59 @@
+schema_version: "1.0"
+intent_id: I-2026-08-23-ecd-shadow-contracts
+execution_mode: manual
+budget: []
+intent:
+  business_goal: "Evidence-Closed Delivery マイルストーン F: 契約3種 (review-findings/v1,
+    promotion-receipt/v0, release-approval/v0) の draft_revision を playbook
+    (契約SSOT) に追加し、release 判定の証拠を shadow で記録できる基盤を作る。設計は正本プラン scalable-scone.md
+    (Codex sol 6ラウンド収束・凍結可判定) で確定済み。R-pilot 非 enrollment (8月の基盤タスク = 循環除外)"
+  user_visible_intent: 契約を vendor する実装 repo (spec-lane / release-evidence)
+    が、schema + fixtures + verify-fixtures.mjs の確立パターンで3契約を参照できる。promotion
+    authority は人間 approval のみで、receipt は決定論的 (LLM 呼び出し 0)
+  success:
+    - "3契約それぞれに schema + valid/invalid fixtures + verify-fixtures.mjs が存在し、node verify-fixtures.mjs が3契約すべてで exit 0 で通る"
+    - "replay fixture で none_observed_in_recorded_scope の走査scope欠落 / authority 不足 / digest mismatch / contradiction / applicable unknown の abstain 化の5系統が invalid または reject として検出される"
+    - "promotion-receipt の verdict は ready_for_approval|ineligible|abstained のみで eligible を持たず、human_release_approval を述語として評価しない (authority 循環の排除)"
+    - "個人次元 scan (contracts/shared/personal-dimensions.mjs) が3契約の verifier に配線され、reviewer/approver に人名・実行IDを含む fixture が拒否される"
+    - "数値 confidence フィールドが3契約の schema のどこにも存在しない"
+    - "凍結事項 (KPI 母数・期間・FP 判定者 / H 起動条件の証拠源 / 外部根拠の出典・日付・適用範囲) が docs/evidence-closed-delivery-frozen-decisions.md に記録される"
+  non_goal:
+    - "lane / release-evidence への vendoring (別 lane で実施)"
+    - "契約の freeze (draft_revision のまま。freeze は freeze-after-exercise 規律に従い実運用後)"
+    - "shadow 評価 CLI・promotion gate の実装 (契約のみ)"
+    - "auto-fix (マイルストーン I、解禁条件成立後)"
+    - "cohort-2 live task への導入 (cohort 完了 + データ lock まで禁止)"
+  constraints:
+    - "verifier は zero npm dependencies (既存契約と同一規律)"
+    - "数値 confidence 禁止 / 個人次元 fail-closed / null-not-zero / append-only"
+    - "additionalProperties: false + schema_version literal (既存契約パターン準拠)"
+    - "promotion authority は release-approval (人間) のみ。receipt は決定論的評価"
+  primary_user: 運用者本人 + 契約を vendor する実装 repo の保守者
+  state_segments: []
+  known_affected_behavior: []
+  declared_risk: medium
+ai_inferred_scope:
+  affected_layers:
+    - contracts
+    - docs
+  related_files: []
+  required_docs: []
+  confidence: low
+  open_questions: []
+  allowed_paths:
+    - contracts/review-findings/**
+    - contracts/promotion-receipt/**
+    - contracts/release-approval/**
+    - docs/protocols/review-findings-v1.md
+    - docs/protocols/promotion-receipt-v0.md
+    - docs/protocols/release-approval-v0.md
+    - docs/evidence-closed-delivery-frozen-decisions.md
+    - README.md
+    - docs/spec/I-2026-08-23-ecd-shadow-contracts/**
+  forbidden_paths: []
+
+premise_evidence:
+  required: true
+  method: data
+  reproduced: true
+  evidence: "前提 =「release 判定の証拠が記録されていない」。2026-08-23 のベースライン計測 (正本プラン scalable-scone.md に凍結) で実データ確認済み: 固定窓 2026-08-08〜08-22 の 11 release (git tag 10 + release-evidence ledger 1) 中、機械記録された evidence chain (sealed bundle + read-back) を持つのは dashboard daily の1件のみ。手動操作の記録は 2件のみ (lane v0.7.0 = 8手順 / daily = 0)。false allow は gate 機構が存在しないため分母ゼロ (not_applicable)。abstain event は 0 件観測 (not_yet_exercised)。データ源 = 各 repo git tag 日付 + harvester metrics-data ブランチ release-events.jsonl (3 event) + ~/ai_bus/tasks.md 同時代記録"
