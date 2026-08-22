@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "release-evidence/v0 release event",
+  "description": "DRAFT. One transition of D5's deployment state machine, recorded as one line of an append-only release-events.jsonl. The CURRENT state of a release is always derived by folding its events in order -- no event stores a computed state, and nothing ever rewrites a past line (corrections are new events). The transition GRAPH (prepared -> preview deployed -> preview verified -> [staging] -> production deployed -> production verified / failed / rolled_back) is deliberately NOT expressible in a single-record schema; it is enforced by the collection-level semantic checks in verify-fixtures.mjs and by the implementation, the same split every other contract in this repo uses for cross-record rules.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "release_id",
+    "kind",
+    "environment",
+    "occurred_at",
+    "actor",
+    "bundle_digest"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "release-evidence/v0"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique within the ledger. v0 does not prescribe a derivation; an implementation SHOULD derive it deterministically from (release_id, kind, environment, occurred_at) so a re-emitted event is idempotent rather than duplicated."
+    },
+    "release_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "prepared",
+        "deployed",
+        "verified",
+        "failed",
+        "rolled_back"
+      ],
+      "description": "prepared = the evidence bundle was assembled and pinned (no environment yet). deployed/verified = the bundle's artifacts reached / were verified in `environment`. failed = verification or the deploy itself failed there. rolled_back = this release was withdrawn in favor of rollback_to_release_id."
+    },
+    "environment": {
+      "oneOf": [
+        {
+          "enum": [
+            "preview",
+            "staging",
+            "production"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "null exactly when kind=prepared (schema-enforced below): preparation is environment-less by definition, and every later event names where it happened."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "actor": {
+      "enum": [
+        "human",
+        "ci",
+        "cli"
+      ],
+      "description": "Who caused the transition. Same closed set trace/v1 uses minus `agent` -- v0 deliberately has no autonomous-agent deploy path (D5 defers automatic promotion/rollback outright)."
+    },
+    "bundle_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "sha256 of the canonical (JCS) form of this release's evidence bundle. THE same-artifact invariant lives here: every event of one release_id MUST carry the same bundle_digest (collection check) -- build once, promote the same evidence everywhere. A changed tree means a new bundle means `release prepare` starts over (D5)."
+    },
+    "rollback_to_release_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "rolled_back only (schema-enforced below): must name a release recorded in the same ledger (collection check -- same dangling-reference rule, and same rationale, as release-observation/v0's rollback_of)."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "failed only (schema-enforced below): what failed, human-readable. A failed event with no recorded reason is a fact nobody can act on later."
+    },
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "prepared"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "environment": {
+            "enum": [
+              "preview",
+              "staging",
+              "production"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "rolled_back"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "rollback_to_release_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "required": [
+          "reason"
+        ]
+      }
+    }
+  ]
+}
