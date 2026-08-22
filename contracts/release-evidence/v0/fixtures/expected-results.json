@@ -91,7 +91,7 @@
   {
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "illegal_transition",
+   "reason_code": "preview_skip_unrecorded",
    "files": "reject-events-production-before-preview.json"
   },
   {
@@ -216,6 +216,23 @@
    "expected": "reject",
    "reason_code": "previous_release_unresolved",
    "files": "reject-collection-previous-release-unresolved.json"
+  },
+  {
+   "files": "accept-events-preview-skipped.json",
+   "type": "event-collection",
+   "expected": "accept"
+  },
+  {
+   "files": "reject-events-preview-skip-misrecorded.json",
+   "type": "event-collection",
+   "expected": "reject",
+   "reason_code": "preview_skip_misrecorded"
+  },
+  {
+   "files": "invalid-event-preview-skipped-without-code.json",
+   "type": "event",
+   "expected": "reject",
+   "reason_code": "preview_skipped_code"
   }
  ]
 }
