@@ -62,6 +62,12 @@
 //       `JSON.stringify()`, so two subjects that agree on every field but differ only in key
 //       order compare equal (a real regression the JSON.stringify version had).
 //
+//   round-3 fix (sol architect review, blocker): contracts/shared/schema-validator.mjs does not
+//     evaluate `oneOf` at all, so an embedded bundle's `lane_ref`/`review` (the only two places
+//     release-evidence-bundle.schema.json relies on `oneOf` alone, with no sibling allOf/if-then
+//     enforcement) could be any value -- e.g. `lane_ref: 42` -- and pass `checkEmbeddedBundle`
+//     undetected. `laneRefMatchesUnion`/`reviewMatchesUnion` reproduce each oneOf branch by hand.
+//
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
 import { readFileSync, readdirSync } from "node:fs";
@@ -187,12 +193,60 @@ function resolveReviewFindingRef(ref, findingsById) {
   return { resolved: true, reasons };
 }
 
+// sol architect review round 3, blocker: contracts/shared/schema-validator.mjs does not evaluate
+// `oneOf` at all (it is not in that file's documented supported-keyword list) -- it is used only
+// as prose-adjacent documentation elsewhere in this repo's schemas, with the real enforcement
+// always carried by a sibling allOf/if-then (see e.g. release-evidence/v0's own release-event
+// schema for `environment`). release-evidence-bundle.schema.json's `lane_ref` and `review`
+// properties are the ONLY two places in that schema that rely on `oneOf` ALONE with no such
+// sibling enforcement -- so `validateReleaseEvidence()` above lets a value like `lane_ref: 42` or
+// `review: 42` straight through. These two functions reproduce each `oneOf` branch's
+// required/type rules by hand, read directly off release-evidence-bundle.schema.json's current
+// text (its `lane_ref` oneOf is around line 66; `review`'s is around line 139). If that schema's
+// oneOf shapes ever change, these must be updated to match -- they are NOT re-derived
+// automatically from the schema file.
+const LANE_REF_DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
+const LANE_REF_REQUIRED = ["lane_id", "intent_digest", "spec_digest", "consensus_ack_digest", "verification_digest"];
+const LANE_REF_OPTIONAL = ["premise_evidence_digest", "matrix_digest"];
+
+function laneRefMatchesUnion(value) {
+  if (value === null) return true; // oneOf branch 2: null
+  if (typeof value !== "object" || Array.isArray(value)) return false;
+  const allowed = new Set([...LANE_REF_REQUIRED, ...LANE_REF_OPTIONAL]);
+  if (!Object.keys(value).every((k) => allowed.has(k))) return false;
+  if (!LANE_REF_REQUIRED.every((k) => k in value)) return false;
+  if (typeof value.lane_id !== "string" || value.lane_id.length < 1) return false;
+  for (const k of [...LANE_REF_REQUIRED.slice(1), ...LANE_REF_OPTIONAL]) {
+    if (k in value && !LANE_REF_DIGEST_PATTERN.test(value[k])) return false;
+  }
+  return true; // oneOf branch 1: the lane_ref object shape
+}
+
+const REVIEW_HEAD_SHA_PATTERN = /^([0-9a-f]{40}|[0-9a-f]{64})$/;
+const REVIEW_REQUIRED = ["pr", "head_sha", "decision"];
+const REVIEW_DECISION_ENUM = ["approved", "commented", "self_merged"];
+
+function reviewMatchesUnion(value) {
+  if (value === null) return true; // oneOf branch 2: null
+  if (typeof value !== "object" || Array.isArray(value)) return false;
+  if (!Object.keys(value).every((k) => REVIEW_REQUIRED.includes(k))) return false;
+  if (!REVIEW_REQUIRED.every((k) => k in value)) return false;
+  if (!(Number.isInteger(value.pr) && value.pr >= 1)) return false;
+  if (!REVIEW_HEAD_SHA_PATTERN.test(value.head_sha)) return false;
+  if (!REVIEW_DECISION_ENUM.includes(value.decision)) return false;
+  return true; // oneOf branch 1: the review object shape
+}
+
 // sol architect review round 2, blocker-1: an embedded release-evidence/v0 bundle is validated
-// against ITS OWN schema + the personal-dimension scan -- a composite can no longer embed an
-// arbitrary object and have its JCS digest treated as evidence.
+// against ITS OWN schema + the oneOf-shape supplement above + the personal-dimension scan -- a
+// composite can no longer embed an arbitrary object and have its JCS digest treated as evidence.
 function checkEmbeddedBundle(bundle) {
   const reasons = [];
   reasons.push(...validateReleaseEvidence("release-evidence-bundle.schema.json", bundle));
+  if (bundle !== null && typeof bundle === "object" && !Array.isArray(bundle)) {
+    if (!laneRefMatchesUnion(bundle.lane_ref)) reasons.push("embedded_bundle_union_shape: lane_ref");
+    if (!reviewMatchesUnion(bundle.review)) reasons.push("embedded_bundle_union_shape: review");
+  }
   reasons.push(...scanPersonalDimensions(bundle).map((v) => `personal_dimension_forbidden_key: ${v}`));
   return dedupe(reasons);
 }

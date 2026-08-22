@@ -116,16 +116,23 @@ events]}`. `verify-fixtures.mjs`'s composite check:
    `verify-fixtures.mjs` — never reimplemented here, so the three verifiers can never silently
    drift apart on what "valid" means).
 2. Validates every embedded `bundles[]` entry against **`release-evidence/v0`'s own schema**
-   (read-only reference — `contracts/release-evidence/**` is never modified by this contract) plus
-   the personal-dimension scan, then indexes valid bundles **by their own JCS digest**, not by
+   (read-only reference — `contracts/release-evidence/**` is never modified by this contract),
+   **plus a hand-written supplement for that schema's `lane_ref`/`review` union shapes** (sol
+   architect review round 3, blocker): `contracts/shared/schema-validator.mjs` does not evaluate
+   `oneOf` at all, and those two properties are the only place in the bundle schema that relies on
+   `oneOf` alone with no sibling `allOf`/`if`-`then` enforcement — so, unsupplemented, a value like
+   `lane_ref: 42` would pass straight through. `verify-fixtures.mjs` reproduces each `oneOf`
+   branch's required fields and types by hand for exactly those two properties — **plus** the
+   personal-dimension scan, then indexes valid bundles **by their own JCS digest**, not by
    `release_id`: `release-evidence/v0`'s own fold unit is `(release_id, bundle_digest)`, so one
    release can legitimately have several embedded attempts at different digests side by side.
    **Two embedded bundles sharing the same digest are a duplicate embed and rejected** (sol
    architect review round 2, blocker-1) — an arbitrary object can no longer be embedded and
    treated as real evidence merely because some digest can be computed from it; the bundle has to
-   actually BE a valid release-evidence/v0 bundle, and each attempt is embedded once. A bundle's
-   own SEMANTIC MUSTs (artifacts sorted+unique, hash-width match, etc.) remain
-   `release-evidence/v0`'s own verifier's responsibility — not re-run here.
+   actually BE a valid release-evidence/v0 bundle (schema shape, union shape, and no personal
+   dimension), and each attempt is embedded once. A bundle's own SEMANTIC MUSTs (artifacts
+   sorted+unique, hash-width match, etc.) remain `release-evidence/v0`'s own verifier's
+   responsibility — not re-run here.
 3. Requires the receipt's own `subject.bundle_digest` to resolve to one of those embedded bundles
    (sol architect review round 2, blocker-2) — mutual agreement between `receipt.subject` and
    `approval.subject` alone (checked next) is internal consistency, not evidence resolution; an

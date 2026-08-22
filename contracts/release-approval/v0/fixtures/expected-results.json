@@ -46,6 +46,8 @@
     { "type": "composite", "expected": "reject", "reason_code": "approval_before_evaluation", "files": "reject-composite-approval-before-evaluation.json" },
     { "type": "composite", "expected": "reject", "reason_code": "bundles[0] not individually valid", "files": "reject-composite-embedded-bundle-schema-invalid.json" },
     { "type": "composite", "expected": "reject", "reason_code": "duplicate_embedded_bundle", "files": "reject-composite-embedded-bundle-duplicate-digest.json" },
-    { "type": "composite", "expected": "reject", "reason_code": "bundle_digest_unresolved", "files": "reject-composite-bundle-digest-unresolved.json" }
+    { "type": "composite", "expected": "reject", "reason_code": "bundle_digest_unresolved", "files": "reject-composite-bundle-digest-unresolved.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: lane_ref", "files": "reject-composite-embedded-bundle-lane-ref-union-violation.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: review", "files": "reject-composite-embedded-bundle-review-union-violation.json" }
   ]
 }
