@@ -1,0 +1,34 @@
+[
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@5.0.0#01",
+    "release_id": "demo@5.0.0",
+    "kind": "prepared",
+    "environment": null,
+    "occurred_at": "2026-08-23T00:00:00Z",
+    "actor": "cli",
+    "bundle_digest": "sha256:adbe7fd124991b2fe394c1b9fb83b21a4d71fe9a23f317229ed71e2899d2b496"
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@5.0.0#02",
+    "release_id": "demo@5.0.0",
+    "kind": "deployed",
+    "environment": "preview",
+    "occurred_at": "2026-08-23T00:05:00Z",
+    "actor": "ci",
+    "bundle_digest": "sha256:adbe7fd124991b2fe394c1b9fb83b21a4d71fe9a23f317229ed71e2899d2b496"
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@5.0.0#03",
+    "release_id": "demo@5.0.0",
+    "kind": "failed",
+    "environment": "preview",
+    "occurred_at": "2026-08-23T00:10:00Z",
+    "actor": "cli",
+    "bundle_digest": "sha256:adbe7fd124991b2fe394c1b9fb83b21a4d71fe9a23f317229ed71e2899d2b496",
+    "failure_phase": "deploy",
+    "reason": "declares the wrong failure_phase for the state the attempt was actually in"
+  }
+]

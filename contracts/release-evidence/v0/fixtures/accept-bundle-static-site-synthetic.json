@@ -8,9 +8,15 @@
     "resolution": "git_tree"
   },
   "lane_ref": null,
-  "lane_ref_omitted_reason": "Scheduled daily dashboard rebuild from main; no lane exists per rebuild. Per-change lanes (if any) govern the PRs that reached main, not this deploy.",
+  "lane_ref_omitted": {
+    "code": "no_lane_scheduled_rebuild",
+    "note": "Scheduled daily dashboard rebuild from main; no lane exists per rebuild. Per-change lanes (if any) govern the PRs that reached main, not this deploy."
+  },
   "review": null,
-  "review_omitted_reason": "Scheduled rebuild deploys whatever main already contains; each contributing PR carried its own review, but no review corresponds to this deploy event itself.",
+  "review_omitted": {
+    "code": "scheduled_rebuild_deploys_reviewed_main",
+    "note": "Scheduled rebuild deploys whatever main already contains; each contributing PR carried its own review, but no review corresponds to this deploy event itself."
+  },
   "artifacts": [
     {
       "kind": "static_site",

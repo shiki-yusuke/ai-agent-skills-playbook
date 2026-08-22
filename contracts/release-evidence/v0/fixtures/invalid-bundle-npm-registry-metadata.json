@@ -1,0 +1,44 @@
+{
+  "schema_version": "release-evidence/v0",
+  "release_id": "orbit-api@2026.10.6",
+  "source": {
+    "repo": "shiki-yusuke/orbit-api",
+    "commit_sha": "931726a711c90e1a38bd3c5c3ba237187c6d34a7",
+    "tree_digest": "7f8d414d0eded6aade4391b99b87425382e7ac18",
+    "resolution": "git_tree"
+  },
+  "lane_ref": null,
+  "lane_ref_omitted": {
+    "code": "no_lane_scheduled_rebuild",
+    "note": "invalid-bundle fixture: no lane, single intended schema violation under test."
+  },
+  "review": null,
+  "review_omitted": {
+    "code": "scheduled_rebuild_deploys_reviewed_main",
+    "note": "invalid-bundle fixture: no review, single intended schema violation under test."
+  },
+  "build": {
+    "recipe_digest": "sha256:d867fb681cfa73ef509b8b87818f931790ab4863ef60eabcd0934ad28755c809",
+    "toolchain_digest": "sha256:7499094b9ddbf5afb88d7851ecf9b38661c6bb3869171a097d6985d15b9a280e"
+  },
+  "known_deviations": [],
+  "rollback": {
+    "previous_release_id": null
+  },
+  "integrity": {
+    "level": "digest_only",
+    "signature": null
+  },
+  "artifacts": [
+    {
+      "kind": "package",
+      "digest": "sha256:5ca036eed4006900b0a53e368a64e19a1db63e58f53c06415ba7c58b2c80e422",
+      "artifact_ref": {
+        "registry": "npm",
+        "package": "orbit-api",
+        "version": "2026.10.6",
+        "verifiability": "registry_metadata"
+      }
+    }
+  ]
+}

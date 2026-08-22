@@ -1,0 +1,10 @@
+{
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@6.0.2#01",
+  "release_id": "demo@6.0.2",
+  "kind": "prepared",
+  "environment": null,
+  "occurred_at": "2026-08-24T09:00:00+09:00",
+  "actor": "cli",
+  "bundle_digest": "sha256:ac6ef03bafb266d2951e75505ca8978165774d374f32119a1104ef542451f7f0"
+}

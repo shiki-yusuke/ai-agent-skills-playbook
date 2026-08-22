@@ -1,0 +1,22 @@
+[
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "dup-demo@1.0.0#01",
+    "release_id": "dup-demo@1.0.0",
+    "kind": "prepared",
+    "environment": null,
+    "occurred_at": "2026-08-23T00:00:00Z",
+    "actor": "cli",
+    "bundle_digest": "sha256:4bb9ce7c34fd18c700a88e3d6c4cd97ee2d590d5a9bfea51f4272fed202ff629"
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "dup-demo@1.0.0#01",
+    "release_id": "dup-demo@2.0.0",
+    "kind": "prepared",
+    "environment": null,
+    "occurred_at": "2026-08-23T00:01:00Z",
+    "actor": "cli",
+    "bundle_digest": "sha256:f1f1b592b9069ed90d048adf91d5f32e87f8fe4f9dd0217e5c1f368013437144"
+  }
+]

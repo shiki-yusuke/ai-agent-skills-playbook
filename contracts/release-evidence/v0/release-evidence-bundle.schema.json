@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "release-evidence/v0 Release Evidence Bundle",
-  "description": "DRAFT (v1 freeze happens only after the first deploy-adapter has been exercised against a real deployment -- the platform re-plan of 2026-08-22; freezing an implementation-shaped contract before any implementation has consumed it is exactly the premise_evidence mistake this repo's own history warns about). One bundle = the complete evidence assembled for ONE release BEFORE it is deployed anywhere: what source it was built from, what lane produced it, what review approved it, what artifacts came out of the build, and how the build itself is pinned. The deployment state machine then carries this bundle's digest through every environment (see release-event.schema.json): build once, deploy the same digest everywhere. Field names deliberately extend release-observation/v0's naming (release_id, tree digests, sha256: artifact digests) so that contract remains a strict subset -- a migration is a superset, never a rename.",
+  "description": "DRAFT (v1 freezes only after the first deploy adapter runs against a real deployment; re-plan 2026-08-22). One bundle = the evidence assembled for ONE ATTEMPT of one release, SEALED AT `prepared` AND IMMUTABLE FROM THEN ON: its JCS (RFC 8785) sha256 is the bundle_digest every event of the attempt carries, so any change -- a new tree, a corrected field, a deviation discovered later -- is by definition a NEW attempt starting at prepared, never an edit (sol architect review 2026-08-22, must-3/must-4). Evidence that can only exist after sealing (a merged lane's done overlay) arrives as an `attested` event pinned to this digest, not as a bundle edit. Array order is normative for digest stability: artifacts[] sorted ascending by digest, known_deviations[] sorted ascending, no duplicates in either (collection-checked; JCS canonicalizes keys, not array order -- sol must-5). NOTE: this contract is NOT a superset of release-observation/v0; deriving an observation event from a bundle + its ledger is a defined projection documented in the protocol, with renames stated there explicitly (sol must-1 -- the earlier superset claim was wrong and is withdrawn).",
   "type": "object",
   "required": [
     "schema_version",
@@ -17,356 +17,213 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": {
-      "const": "release-evidence/v0"
-    },
+    "schema_version": { "const": "release-evidence/v0" },
     "release_id": {
       "type": "string",
       "minLength": 1,
-      "description": "Same identity release-observation/v0 uses (e.g. \"spec-lane@0.6.0\", \"agent-metrics-dashboard@2026-08-22\"). One bundle per release_id."
+      "description": "Same identity release-observation/v0 uses (e.g. \"spec-lane@0.6.0\"). Attempts of one release share it; the attempt identity is (release_id, bundle_digest)."
     },
     "source": {
       "type": "object",
-      "required": [
-        "repo",
-        "commit_sha",
-        "tree_digest",
-        "resolution"
-      ],
+      "required": ["repo", "commit_sha", "tree_digest", "resolution"],
       "additionalProperties": false,
       "properties": {
         "repo": {
           "type": "string",
           "minLength": 1,
           "pattern": "^[^/\\s]+/[^/\\s]+$",
-          "description": "Durable identifier (owner/name), never a local filesystem path -- same rule and same incident-derived rationale as release-observation/v0's source_ref.repo."
+          "description": "Durable identifier (owner/name), never a local filesystem path -- same rule and incident-derived rationale as release-observation/v0's source_ref.repo."
         },
         "commit_sha": {
           "type": "string",
-          "pattern": "^[0-9a-f]{40}$"
+          "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$",
+          "description": "40 hex (SHA-1 repo) or 64 hex (SHA-256 repo) -- same dual width release-observation/v0 accepts. Within one source object, commit_sha and tree_digest MUST have the same width (bundle-level semantic check): one repository has one hash algorithm."
         },
         "tree_digest": {
           "type": "string",
-          "pattern": "^[0-9a-f]{40}$",
-          "description": "git tree object id of the commit's root tree. This -- not commit_sha -- is what the production gate compares across a squash merge (D5: a squash rewrites the commit sha but an identical tree proves identical content)."
+          "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$",
+          "description": "git tree object id of the commit's root tree. The tree, not the commit, is what the production gate compares across a squash merge (D5)."
         },
-        "ref": {
-          "type": "string",
-          "minLength": 1
-        },
-        "resolution": {
-          "enum": [
-            "git_tree"
-          ]
-        }
+        "ref": { "type": "string", "minLength": 1 },
+        "resolution": { "enum": ["git_tree"] }
       }
     },
     "lane_ref": {
       "oneOf": [
         {
           "type": "object",
-          "required": [
-            "lane_id",
-            "intent_digest",
-            "spec_digest",
-            "consensus_ack_digest",
-            "verification_digest",
-            "done_overlay_digest"
-          ],
+          "required": ["lane_id", "intent_digest", "spec_digest", "consensus_ack_digest", "verification_digest"],
           "additionalProperties": false,
           "properties": {
-            "lane_id": {
-              "type": "string",
-              "minLength": 1
-            },
-            "intent_digest": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
-            },
-            "spec_digest": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
-            },
-            "consensus_ack_digest": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
-            },
-            "premise_evidence_digest": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
-            },
-            "verification_digest": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
-            },
-            "matrix_digest": {
-              "type": "string",
-              "pattern": "^sha256:[0-9a-f]{64}$"
-            },
-            "done_overlay_digest": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "pattern": "^sha256:[0-9a-f]{64}$",
-              "description": "null until the lane's Phase 5 done overlay exists. The production gate (not this schema) requires it to be non-null; a preview deploy legitimately happens before merge."
-            }
-          }
+            "lane_id": { "type": "string", "minLength": 1 },
+            "intent_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "spec_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "consensus_ack_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "premise_evidence_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "verification_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+            "matrix_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+          },
+          "description": "Digest pins of the lane artifacts that existed AT SEAL TIME. Deliberately no done_overlay_digest: the done overlay cannot exist for a pre-merge preview, and adding it later would change the sealed digest -- it arrives as an `attested` event instead (sol must-3). The production gate for a lane-backed bundle is collection-checked: a lane_done_overlay attestation must precede deployed|production."
         },
-        {
-          "type": "null"
-        }
+        { "type": "null" }
       ],
-      "description": "Digest pins of every lane artifact that produced this release (D5). NULL -- not omitted -- when no lane produced it (a scheduled dashboard rebuild, a docs-only site publish); lane_ref_omitted_reason is then required, same null-with-reason convention decision/v1 uses for estimate_refs."
+      "description": "NULL -- not omitted -- when no lane produced this release; lane_ref_omitted is then required (and forbidden otherwise)."
     },
-    "lane_ref_omitted_reason": {
-      "type": "string",
-      "minLength": 1
+    "lane_ref_omitted": {
+      "type": "object",
+      "required": ["code", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": ["no_lane_scheduled_rebuild", "multiple_contributing_lanes", "legacy_release_predates_contract", "other"],
+          "description": "Closed reason codes, not free text alone: a bare string lets any release opt out of evidence by writing a sentence, and collapses 'no lane exists' with 'many lanes contributed' -- a distinction release-observation/v0 already documented as a known limit (sol must-10). A production gate can allowlist codes; it cannot allowlist prose."
+        },
+        "note": { "type": "string", "minLength": 1 }
+      }
     },
     "review": {
       "oneOf": [
         {
           "type": "object",
-          "required": [
-            "pr",
-            "head_sha",
-            "decision"
-          ],
+          "required": ["pr", "head_sha", "decision"],
           "additionalProperties": false,
           "properties": {
-            "pr": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "head_sha": {
-              "type": "string",
-              "pattern": "^[0-9a-f]{40}$"
-            },
-            "decision": {
-              "enum": [
-                "approved",
-                "commented",
-                "self_merged"
-              ]
-            }
+            "pr": { "type": "integer", "minimum": 1 },
+            "head_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
+            "decision": { "enum": ["approved", "commented", "self_merged"] }
           }
         },
-        {
-          "type": "null"
-        }
+        { "type": "null" }
       ],
-      "description": "The PR review that admitted this source to the default branch. head_sha is read from the GitHub API envelope, never from any marker payload (D11). NULL when no per-release review exists (the scheduled-rebuild case again); review_omitted_reason is then required. D5's own caveat stands: PR approve is NOT release-safety evidence -- this field records provenance, the state machine's verify events record safety."
+      "description": "PR provenance for the source that reached the default branch; head_sha comes from the GitHub API envelope, never a marker payload (D11). NULL with review_omitted for releases with no per-release review. D5's caveat stands: approve is provenance, not release-safety evidence -- the machine's verified events are the safety record. The production gate treats decision=commented as not-a-pass (collection-checked)."
     },
-    "review_omitted_reason": {
-      "type": "string",
-      "minLength": 1
+    "review_omitted": {
+      "type": "object",
+      "required": ["code", "note"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "enum": ["scheduled_rebuild_deploys_reviewed_main", "legacy_release_predates_contract", "other"] },
+        "note": { "type": "string", "minLength": 1 }
+      }
     },
     "artifacts": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": [
-          "kind",
-          "digest"
-        ],
+        "required": ["kind", "digest"],
         "additionalProperties": false,
         "properties": {
-          "kind": {
-            "enum": [
-              "package",
-              "static_site",
-              "container",
-              "binary",
-              "other"
-            ]
-          },
+          "kind": { "enum": ["package", "static_site", "container", "binary", "other"] },
           "digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
-            "description": "For kind=package: digest of the published file (same value release-observation/v0 records as artifact_digest). For kind=static_site: the content root digest -- sha256 over the canonical path->sha256 manifest, NOT over a tarball of the directory (tarballs embed mtimes/ordering; the manifest is reproducible from content alone)."
+            "description": "package: digest of the published file (release-observation/v0's artifact_digest, projected). static_site: the content root digest -- sha256 over the canonical path->sha256 manifest (format normatively defined in the protocol; NOT a tarball digest, which embeds mtimes/ordering)."
           },
           "content_manifest_digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
-            "description": "static_site only (schema-enforced below): digest of the release-manifest.json actually placed into the deployed site and read back after deploy (D5's read-back check). Distinct from `digest` so a reader can verify the manifest file itself without recomputing the whole tree."
+            "description": "static_site only (required there, forbidden elsewhere -- both schema-enforced): digest of the release-manifest.json actually placed into the deployed site and read back after deploy."
           },
           "artifact_ref": {
             "type": "object",
-            "required": [
-              "registry",
-              "package",
-              "version",
-              "verifiability"
-            ],
+            "required": ["registry", "package", "version", "verifiability"],
             "additionalProperties": false,
             "properties": {
-              "registry": {
-                "enum": [
-                  "npm",
-                  "pypi",
-                  "github-pages",
-                  "other"
-                ]
-              },
-              "package": {
-                "type": "string",
-                "minLength": 1
-              },
-              "version": {
-                "type": "string",
-                "minLength": 1
-              },
+              "registry": { "enum": ["npm", "pypi", "github-pages", "other"] },
+              "package": { "type": "string", "minLength": 1 },
+              "version": { "type": "string", "minLength": 1 },
               "distribution": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "description": "Required for pypi (schema-enforced): one PyPI release publishes wheel+sdist with different sha256 each -- release-observation/v0 measured this live; without naming the file the digest resolves to nothing."
               },
-              "registry_url": {
-                "type": "string",
-                "minLength": 1
-              },
+              "registry_url": { "type": "string", "minLength": 1 },
               "verifiability": {
-                "enum": [
-                  "registry_metadata",
-                  "requires_fetch",
-                  "unverifiable"
-                ]
+                "enum": ["registry_metadata", "requires_fetch", "unverifiable"],
+                "description": "Measured per registry, not asserted: release-observation/v0 confirmed live that PyPI metadata exposes sha256 (registry_metadata) and npm exposes only sha1/sha512 (requires_fetch). npm + registry_metadata is therefore schema-rejected."
               },
-              "unverifiable_reason": {
-                "type": "string",
-                "minLength": 1
+              "unverifiable_reason": { "type": "string", "minLength": 1 }
+            },
+            "allOf": [
+              {
+                "if": { "required": ["registry"], "properties": { "registry": { "const": "pypi" } } },
+                "then": { "required": ["distribution"] }
+              },
+              {
+                "if": { "required": ["registry"], "properties": { "registry": { "const": "npm" } } },
+                "then": { "properties": { "verifiability": { "enum": ["requires_fetch", "unverifiable"] } } }
+              },
+              {
+                "if": { "required": ["verifiability"], "properties": { "verifiability": { "const": "unverifiable" } } },
+                "then": { "required": ["unverifiable_reason"] },
+                "else": { "not": { "required": ["unverifiable_reason"] } }
               }
-            }
+            ]
           }
         },
         "allOf": [
           {
-            "if": {
-              "properties": {
-                "kind": {
-                  "const": "static_site"
-                }
-              },
-              "required": [
-                "kind"
-              ]
-            },
-            "then": {
-              "required": [
-                "content_manifest_digest"
-              ]
-            }
+            "if": { "required": ["kind"], "properties": { "kind": { "const": "static_site" } } },
+            "then": { "required": ["content_manifest_digest"] },
+            "else": { "not": { "required": ["content_manifest_digest"] } }
+          },
+          {
+            "if": { "required": ["kind"], "properties": { "kind": { "const": "package" } } },
+            "then": { "required": ["artifact_ref"] }
           }
         ]
-      }
+      },
+      "description": "Sorted ascending by digest, digests unique (collection/bundle semantic check -- array order is inside the JCS digest, so order must be deterministic; sol must-5)."
     },
     "build": {
       "type": "object",
-      "required": [
-        "recipe_digest",
-        "toolchain_digest"
-      ],
+      "required": ["recipe_digest", "toolchain_digest"],
       "additionalProperties": false,
       "properties": {
-        "recipe_digest": {
-          "type": "string",
-          "pattern": "^sha256:[0-9a-f]{64}$",
-          "description": "sha256 of the build recipe as it existed at build time (the CI workflow file, the build script). Pins WHAT was run."
-        },
-        "recipe_ref": {
-          "type": "string",
-          "minLength": 1
-        },
-        "toolchain_digest": {
-          "type": "string",
-          "pattern": "^sha256:[0-9a-f]{64}$",
-          "description": "sha256 of a recorded toolchain descriptor (runtime name+version lines, lockfile digest -- whatever the builder actually pinned, written to a file and hashed). Pins WHAT RAN IT. v0 does not prescribe the descriptor's format, only that it was recorded and hashed."
-        },
-        "toolchain_ref": {
-          "type": "string",
-          "minLength": 1
-        }
+        "recipe_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "recipe_ref": { "type": "string", "minLength": 1 },
+        "toolchain_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "toolchain_ref": { "type": "string", "minLength": 1 }
       }
     },
     "known_deviations": {
       "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "description": "Human-readable deviations knowingly shipped (an accepted spec deviation, a skipped optional gate). Empty array -- not omission -- when there are none."
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Deviations KNOWN AT SEAL TIME only (sol must-4): anything discovered later must not edit the sealed bundle -- it belongs in an append-only record pinned to this bundle's digest (v0 defines no such record yet; v1 will, informed by the first real case). Sorted ascending, unique (semantic check)."
     },
     "rollback": {
       "type": "object",
-      "required": [
-        "previous_release_id"
-      ],
+      "required": ["previous_release_id"],
       "additionalProperties": false,
       "properties": {
         "previous_release_id": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "minLength": 1,
-          "description": "The release to return to if this one is rolled back. NULL only for a first-ever release of a target (nothing exists to return to)."
+          "description": "The release to return to if this one is rolled back; must differ from this bundle's own release_id (semantic check) and, when a ledger is checked alongside, must resolve within it. NULL only for a first-ever release of a target."
         }
       }
     },
     "integrity": {
       "type": "object",
-      "required": [
-        "level",
-        "signature"
-      ],
+      "required": ["level", "signature"],
       "additionalProperties": false,
       "properties": {
-        "level": {
-          "enum": [
-            "digest_only"
-          ],
-          "description": "v0 is digest_only by design (D5: a solo operator whose CI and deploy credentials are the same trust domain gains nothing from signing; the level exists so signed can be ADDED as an enum member when that separation appears, without reshaping the bundle)."
-        },
-        "signature": {
-          "type": "null"
-        }
+        "level": { "enum": ["digest_only"] },
+        "signature": { "type": "null" }
       }
     }
   },
   "allOf": [
     {
-      "if": {
-        "properties": {
-          "lane_ref": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "lane_ref"
-        ]
-      },
-      "then": {
-        "required": [
-          "lane_ref_omitted_reason"
-        ]
-      }
+      "if": { "required": ["lane_ref"], "properties": { "lane_ref": { "type": "null" } } },
+      "then": { "required": ["lane_ref_omitted"] },
+      "else": { "not": { "required": ["lane_ref_omitted"] } }
     },
     {
-      "if": {
-        "properties": {
-          "review": {
-            "type": "null"
-          }
-        },
-        "required": [
-          "review"
-        ]
-      },
-      "then": {
-        "required": [
-          "review_omitted_reason"
-        ]
-      }
+      "if": { "required": ["review"], "properties": { "review": { "type": "null" } } },
+      "then": { "required": ["review_omitted"] },
+      "else": { "not": { "required": ["review_omitted"] } }
     }
   ]
 }

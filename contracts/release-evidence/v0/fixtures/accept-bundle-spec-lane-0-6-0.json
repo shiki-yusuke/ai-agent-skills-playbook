@@ -9,7 +9,10 @@
     "resolution": "git_tree"
   },
   "lane_ref": null,
-  "lane_ref_omitted_reason": "spec-lane 0.6.0 was released (2026-08-20) before release-evidence existed. PR #16 that produced the version bump was lane-managed, but the RELEASE act itself was the 8-step manual procedure in docs/releasing.md with no lane and no assembled bundle; recording a lane_ref here retroactively would fabricate provenance the release never had.",
+  "lane_ref_omitted": {
+    "code": "legacy_release_predates_contract",
+    "note": "spec-lane 0.6.0 was released (2026-08-20) before release-evidence existed. PR #16 that produced the version bump was lane-managed, but the RELEASE act itself was the 8-step manual procedure in docs/releasing.md with no lane and no assembled bundle; recording a lane_ref here retroactively would fabricate provenance the release never had."
+  },
   "review": {
     "pr": 16,
     "head_sha": "9425dadf5a6bbb3877677dd8c2babd241da13d77",
