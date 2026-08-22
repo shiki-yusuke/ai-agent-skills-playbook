@@ -1,0 +1,97 @@
+{
+  "bundles": [
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "agent-metrics-dashboard@2026-08-22",
+      "source": {
+        "repo": "shiki-yusuke/orbit-api",
+        "commit_sha": "186eccdd8fbdd9a0907aa2bcb1c49211d1400553",
+        "tree_digest": "d885e121e6162b0c226b63986016ebb89e17ec5e",
+        "ref": "v2026-08-22",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "review": null,
+      "artifacts": [
+        {
+          "kind": "static_site",
+          "digest": "sha256:9612b173183477ecb5ba6f2888e29216b48187fbc308f0ec22a6cd4106234edd",
+          "content_manifest_digest": "sha256:f61f5d3d7e68dc562f1a78736aa6c2744e5a23a90358e77e902ff7c83ef808f4"
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:53893320e1387156651ad29008fe621646c472a829a9f104d7300c3531107396",
+        "toolchain_digest": "sha256:c77991f0ece3f3bcf2a3d4e19e9b07870dc20dbf33fb35372a30b008b40ddc94"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": null
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      },
+      "lane_ref_omitted": {
+        "code": "no_lane_scheduled_rebuild",
+        "note": "release-collection fixture: synthetic bundle with no contributing lane for this attempt."
+      },
+      "review_omitted": {
+        "code": "scheduled_rebuild_deploys_reviewed_main",
+        "note": "release-collection fixture: synthetic bundle with no per-release review recorded."
+      }
+    }
+  ],
+  "events": [
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "agent-metrics-dashboard@2026-08-22#01",
+      "release_id": "agent-metrics-dashboard@2026-08-22",
+      "kind": "prepared",
+      "environment": null,
+      "occurred_at": "2026-08-22T00:00:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:974e2c8c4610b125413bf707a46321a45e669dd00f549e710703537e5fa53a41"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "agent-metrics-dashboard@2026-08-22#02",
+      "release_id": "agent-metrics-dashboard@2026-08-22",
+      "kind": "deployed",
+      "environment": "preview",
+      "occurred_at": "2026-08-22T00:05:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:974e2c8c4610b125413bf707a46321a45e669dd00f549e710703537e5fa53a41"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "agent-metrics-dashboard@2026-08-22#03",
+      "release_id": "agent-metrics-dashboard@2026-08-22",
+      "kind": "verified",
+      "environment": "preview",
+      "occurred_at": "2026-08-22T00:10:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:974e2c8c4610b125413bf707a46321a45e669dd00f549e710703537e5fa53a41"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "agent-metrics-dashboard@2026-08-22#04",
+      "release_id": "agent-metrics-dashboard@2026-08-22",
+      "kind": "deployed",
+      "environment": "production",
+      "occurred_at": "2026-08-22T00:20:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:974e2c8c4610b125413bf707a46321a45e669dd00f549e710703537e5fa53a41",
+      "staging_skipped": true
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "agent-metrics-dashboard@2026-08-22#05",
+      "release_id": "agent-metrics-dashboard@2026-08-22",
+      "kind": "verified",
+      "environment": "production",
+      "occurred_at": "2026-08-22T00:25:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:974e2c8c4610b125413bf707a46321a45e669dd00f549e710703537e5fa53a41"
+    }
+  ]
+}

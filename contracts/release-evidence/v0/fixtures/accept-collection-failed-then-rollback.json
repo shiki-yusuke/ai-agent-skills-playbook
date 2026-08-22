@@ -1,0 +1,222 @@
+{
+  "bundles": [
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "orbit-api@2026.7.1",
+      "source": {
+        "repo": "shiki-yusuke/orbit-api",
+        "commit_sha": "a945a8d395a473a76f6268d2dcb6da4ce0b92df8",
+        "tree_digest": "879259909eac72b5d592a43ec088ebf72ea0fef2",
+        "ref": "v2026.7.1",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "review": null,
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:80fec44f2355e10ec37d80775220cf9fd7851c1552c5c0290ceabf8915ff507a",
+          "artifact_ref": {
+            "registry": "other",
+            "package": "orbit-api",
+            "version": "1.0.0",
+            "verifiability": "registry_metadata"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:0a7f8f59af3c0c9c4a5bd5a46e6ced9453121d253762d26089e5c40ac61a039d",
+        "toolchain_digest": "sha256:73788682544f413a4fd6f67bcc8bf57e57a94cd5fb3cc4ee4493669ddd72b13b"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": null
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      },
+      "lane_ref_omitted": {
+        "code": "no_lane_scheduled_rebuild",
+        "note": "release-collection fixture: synthetic bundle with no contributing lane for this attempt."
+      },
+      "review_omitted": {
+        "code": "scheduled_rebuild_deploys_reviewed_main",
+        "note": "release-collection fixture: synthetic bundle with no per-release review recorded."
+      }
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "orbit-api@2026.8.1-b",
+      "source": {
+        "repo": "shiki-yusuke/orbit-api",
+        "commit_sha": "d99cb3fa3f57fc0b767da3be9c6b9966f700d8a6",
+        "tree_digest": "484e1361715ae2954bd3ef11b6496386eb1ea3e2",
+        "ref": "v2026.8.1-b",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "review": null,
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:b1296bc0e51d89fbfb27efb175dc40b9138b194e4c94821905165b587e7cbbff",
+          "artifact_ref": {
+            "registry": "other",
+            "package": "orbit-api",
+            "version": "1.0.0",
+            "verifiability": "registry_metadata"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:ebf264b47086085d643a6f3ab056da21aca1f0ae56a778f5fb5a5d742ef15405",
+        "toolchain_digest": "sha256:1fdbf5cd96b468adc6abbcb1863b0089e137b5e2c124c8fe40a071251d4dfab8"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": "orbit-api@2026.7.1"
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      },
+      "lane_ref_omitted": {
+        "code": "no_lane_scheduled_rebuild",
+        "note": "release-collection fixture: synthetic bundle with no contributing lane for this attempt."
+      },
+      "review_omitted": {
+        "code": "scheduled_rebuild_deploys_reviewed_main",
+        "note": "release-collection fixture: synthetic bundle with no per-release review recorded."
+      }
+    }
+  ],
+  "events": [
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.7.1#01",
+      "release_id": "orbit-api@2026.7.1",
+      "kind": "prepared",
+      "environment": null,
+      "occurred_at": "2026-08-21T00:00:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:89b701d433ddb2d1a04fee1b10767e959bcca0b2a39a38972013ce5b520c0901"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.7.1#02",
+      "release_id": "orbit-api@2026.7.1",
+      "kind": "deployed",
+      "environment": "preview",
+      "occurred_at": "2026-08-21T00:05:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:89b701d433ddb2d1a04fee1b10767e959bcca0b2a39a38972013ce5b520c0901"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.7.1#03",
+      "release_id": "orbit-api@2026.7.1",
+      "kind": "verified",
+      "environment": "preview",
+      "occurred_at": "2026-08-21T00:10:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:89b701d433ddb2d1a04fee1b10767e959bcca0b2a39a38972013ce5b520c0901"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.7.1#04",
+      "release_id": "orbit-api@2026.7.1",
+      "kind": "deployed",
+      "environment": "production",
+      "occurred_at": "2026-08-21T00:20:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:89b701d433ddb2d1a04fee1b10767e959bcca0b2a39a38972013ce5b520c0901",
+      "staging_skipped": true
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.7.1#05",
+      "release_id": "orbit-api@2026.7.1",
+      "kind": "verified",
+      "environment": "production",
+      "occurred_at": "2026-08-21T00:25:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:89b701d433ddb2d1a04fee1b10767e959bcca0b2a39a38972013ce5b520c0901"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#01",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "prepared",
+      "environment": null,
+      "occurred_at": "2026-08-22T00:00:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#02",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "deployed",
+      "environment": "preview",
+      "occurred_at": "2026-08-22T00:05:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#03",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "verified",
+      "environment": "preview",
+      "occurred_at": "2026-08-22T00:10:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#04",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "deployed",
+      "environment": "production",
+      "occurred_at": "2026-08-22T00:20:00Z",
+      "actor": "ci",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd",
+      "staging_skipped": true
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#05",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "verified",
+      "environment": "production",
+      "occurred_at": "2026-08-22T00:25:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#06",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "failed",
+      "environment": "production",
+      "occurred_at": "2026-08-22T02:00:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd",
+      "failure_phase": "post_verification",
+      "reason": "production incident: elevated 5xx rate observed after release"
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.8.1-b#07",
+      "release_id": "orbit-api@2026.8.1-b",
+      "kind": "rolled_back",
+      "environment": "production",
+      "occurred_at": "2026-08-22T02:10:00Z",
+      "actor": "human",
+      "bundle_digest": "sha256:fa96f03818c5fea022390bbef80e4b44744ed1e5571446f5cc3072cbedeafddd",
+      "rollback_to_release_id": "orbit-api@2026.7.1",
+      "reason": "rolling back to the last known-good release while the incident is investigated"
+    }
+  ]
+}

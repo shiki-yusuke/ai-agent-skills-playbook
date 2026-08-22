@@ -1,0 +1,106 @@
+[
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.0.0#01",
+  "release_id": "demo@1.0.0",
+  "kind": "prepared",
+  "environment": null,
+  "occurred_at": "2026-08-22T00:00:00Z",
+  "actor": "cli",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.0.0#02",
+  "release_id": "demo@1.0.0",
+  "kind": "deployed",
+  "environment": "preview",
+  "occurred_at": "2026-08-22T00:05:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.0.0#03",
+  "release_id": "demo@1.0.0",
+  "kind": "verified",
+  "environment": "preview",
+  "occurred_at": "2026-08-22T00:10:00Z",
+  "actor": "cli",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.0.0#04",
+  "release_id": "demo@1.0.0",
+  "kind": "deployed",
+  "environment": "production",
+  "occurred_at": "2026-08-22T00:20:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "staging_skipped": true
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.0.0#05",
+  "release_id": "demo@1.0.0",
+  "kind": "verified",
+  "environment": "production",
+  "occurred_at": "2026-08-22T00:25:00Z",
+  "actor": "cli",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.1.0#01",
+  "release_id": "demo@1.1.0",
+  "kind": "prepared",
+  "environment": null,
+  "occurred_at": "2026-08-23T00:00:00Z",
+  "actor": "cli",
+  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.1.0#02",
+  "release_id": "demo@1.1.0",
+  "kind": "deployed",
+  "environment": "preview",
+  "occurred_at": "2026-08-23T00:05:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.1.0#03",
+  "release_id": "demo@1.1.0",
+  "kind": "verified",
+  "environment": "preview",
+  "occurred_at": "2026-08-23T00:10:00Z",
+  "actor": "cli",
+  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.1.0#04",
+  "release_id": "demo@1.1.0",
+  "kind": "deployed",
+  "environment": "production",
+  "occurred_at": "2026-08-23T00:20:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "staging_skipped": true
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@1.1.0#05",
+  "release_id": "demo@1.1.0",
+  "kind": "rolled_back",
+  "environment": "production",
+  "occurred_at": "2026-08-23T01:00:00Z",
+  "actor": "human",
+  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "rollback_to_release_id": "demo@1.0.0",
+  "reason": "regression observed in production"
+ }
+]

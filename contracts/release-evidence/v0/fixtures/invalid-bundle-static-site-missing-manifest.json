@@ -1,0 +1,41 @@
+{
+ "schema_version": "release-evidence/v0",
+ "release_id": "spec-lane@0.6.0",
+ "source": {
+  "repo": "shiki-yusuke/lane",
+  "commit_sha": "1cf34ace9308f87bdf227b73ffd67314e6550cc0",
+  "tree_digest": "dae920dd4851bc740c45e5f9019dab28da0fa703",
+  "ref": "v0.6.0",
+  "resolution": "git_tree"
+ },
+ "lane_ref": null,
+ "lane_ref_omitted": {
+  "code": "legacy_release_predates_contract",
+  "note": "spec-lane 0.6.0 was released (2026-08-20) before release-evidence existed. PR #16 that produced the version bump was lane-managed, but the RELEASE act itself was the 8-step manual procedure in docs/releasing.md with no lane and no assembled bundle; recording a lane_ref here retroactively would fabricate provenance the release never had."
+ },
+ "review": {
+  "pr": 16,
+  "head_sha": "9425dadf5a6bbb3877677dd8c2babd241da13d77",
+  "decision": "self_merged"
+ },
+ "artifacts": [
+  {
+   "kind": "static_site",
+   "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555"
+  }
+ ],
+ "build": {
+  "recipe_digest": "sha256:7efaa1fe5894fb558998e3dd9663b74df9c9496c9de14ee594aa98f1fd7a4c0c",
+  "recipe_ref": "docs/releasing.md@v0.6.0",
+  "toolchain_digest": "sha256:fd012d8104cbf26e6904460841e2ff54b2a5c1d8f7c07dc1966f1e671bcac5cd",
+  "toolchain_ref": "package.json@v0.6.0 (packageManager: pnpm@10.28.2)"
+ },
+ "known_deviations": [],
+ "rollback": {
+  "previous_release_id": "spec-lane@0.5.2"
+ },
+ "integrity": {
+  "level": "digest_only",
+  "signature": null
+ }
+}

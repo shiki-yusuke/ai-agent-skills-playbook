@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "release-evidence/v0 release event",
+  "description": "DRAFT. One transition of D5's deployment state machine, one line of an append-only release-events.jsonl. Current state is always derived by folding; no event stores a computed state; nothing rewrites a past line. THE FOLD UNIT IS AN ATTEMPT: (release_id, bundle_digest). D5's own words -- a changed tree means prepare starts over -- make the re-prepared bundle a NEW attempt of the same release_id, so the same-digest invariant and the transition graph both apply per attempt, never across attempts (sol architect review 2026-08-22, must-4/ask-1). The transition graph itself is enforced by collection-level checks in verify-fixtures.mjs and by implementations; a single-record schema cannot see order.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "release_id",
+    "kind",
+    "environment",
+    "occurred_at",
+    "actor",
+    "bundle_digest"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "release-evidence/v0" },
+    "event_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique within the ledger (collection-checked). Implementations SHOULD derive it deterministically from (release_id, bundle_digest, kind, environment, occurred_at) so a re-emitted event is idempotent rather than duplicated."
+    },
+    "release_id": { "type": "string", "minLength": 1 },
+    "kind": {
+      "enum": ["prepared", "deployed", "verified", "failed", "rolled_back", "attested"],
+      "description": "prepared = the evidence bundle was assembled and sealed (no environment yet). deployed/verified = the bundle's artifacts reached / were verified in `environment`. failed = a deploy attempt, a verification, or post-verification operation failed there (failure_phase says which). rolled_back = this attempt was withdrawn in favor of rollback_to_release_id. attested = a later-arriving piece of evidence (e.g. the lane's Phase-5 done overlay, which cannot exist at seal time for a pre-merge preview) was pinned WITHOUT changing the sealed bundle -- the state-machine position is unchanged by an attested event."
+    },
+    "environment": {
+      "oneOf": [
+        { "enum": ["preview", "staging", "production"] },
+        { "type": "null" }
+      ],
+      "description": "null exactly when kind is prepared or attested (both are environment-less); every other kind names where it happened. Schema-enforced below."
+    },
+    "occurred_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "UTC, literal Z only -- same rule as release-observation/v0's deployed_at, so deriving an observation event never needs timezone normalization (sol should-4)."
+    },
+    "actor": {
+      "enum": ["human", "ci", "cli"],
+      "description": "Who caused the transition. No `agent` member on purpose: v0 has no autonomous deploy path (D5 defers automatic promotion/rollback outright)."
+    },
+    "bundle_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "sha256 of the JCS (RFC 8785) canonical bytes of this attempt's sealed evidence bundle. Verified against the REAL bundle in release-collection fixtures -- a string that merely repeats across events proves nothing (sol must-2). Every event of one attempt MUST carry the same value; a new bundle is a new attempt starting at prepared."
+    },
+    "failure_phase": {
+      "enum": ["deploy", "verification", "post_verification"],
+      "description": "failed only (schema-enforced below): deploy = the deploy attempt itself failed (legal directly from a pre-deploy state); verification = the environment's verification failed after a successful deploy; post_verification = a previously verified release was later observed broken (e.g. production incident). Required so release-observation/v0's verification_status can be machine-derived (sol must-6/ask-4)."
+    },
+    "rollback_to_release_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "rolled_back only (schema-enforced below): must resolve, within the same ledger, to a DIFFERENT release whose own attempt actually reached production (collection check; sol must-8)."
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "description": "failed and rolled_back (schema-enforced below): what failed / why it was withdrawn, human-readable. Required on rolled_back too so a rollback never erases its own cause (sol must-7)."
+    },
+    "staging_skipped": {
+      "const": true,
+      "description": "deployed|production only, and only when the attempt went preview_verified -> production directly: D5 says staging skipping is policy-allowed but the FACT of skipping must be recorded on the event. Collection-checked both ways: required when the fold shows a direct jump, forbidden otherwise."
+    },
+    "attestation": {
+      "type": "object",
+      "required": ["kind", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["lane_done_overlay"] },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "ref": { "type": "string", "minLength": 1 }
+      },
+      "description": "attested only (schema-enforced below). The seal-time/later-evidence split sol's must-3 requires: the bundle stays immutable from `prepared` on, and evidence that can only exist later (a merged lane's done overlay) arrives as an attestation pinned to the same bundle_digest. The production gate for a lane-backed bundle is: a lane_done_overlay attestation exists before deployed|production (collection-checked)."
+    },
+    "notes": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "enum": ["prepared", "attested"] } } },
+      "then": { "properties": { "environment": { "type": "null" } } },
+      "else": { "properties": { "environment": { "enum": ["preview", "staging", "production"] } } }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "failed" } } },
+      "then": { "required": ["failure_phase", "reason"] },
+      "else": { "not": { "required": ["failure_phase"] } }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "rolled_back" } } },
+      "then": { "required": ["rollback_to_release_id", "reason"] },
+      "else": { "not": { "required": ["rollback_to_release_id"] } }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "attested" } } },
+      "then": { "required": ["attestation"] },
+      "else": { "not": { "required": ["attestation"] } }
+    },
+    {
+      "if": {
+        "required": ["kind"],
+        "properties": { "kind": { "enum": ["prepared", "verified", "attested", "rolled_back", "failed"] } }
+      },
+      "then": { "not": { "required": ["staging_skipped"] } }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "enum": ["prepared", "deployed", "verified", "attested"] } } },
+      "then": { "not": { "required": ["reason"] } },
+      "else": {}
+    }
+  ]
+}
