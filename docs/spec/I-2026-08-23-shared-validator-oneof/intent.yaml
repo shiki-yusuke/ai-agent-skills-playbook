@@ -1,0 +1,50 @@
+schema_version: "1.0"
+intent_id: I-2026-08-23-shared-validator-oneof
+execution_mode: manual
+budget: []
+intent:
+  business_goal: "contracts/shared/schema-validator.mjs に JSON Schema 2020-12 の
+    oneOf 評価を実装する。sol 3巡目 (ECD 契約レビュー) で発見された横断的潜在欠陥の根治: oneOf 未評価のため schema
+    が約束する union 制約が全契約で強制されていない (実使用箇所は release-evidence の2 schema)。F lane の
+    test_gaps priority: high の消化。R-pilot 非 enrollment (基盤タスク = 循環除外)"
+  user_visible_intent: "playbook の契約 schema に書かれた oneOf
+    が実際に検証されるようになり、schema-invalid な instance (例: lane_ref: 42 の bundle) が shared
+    validator 単体で invalid になる"
+  success:
+    - "contracts/shared/schema-validator.mjs が JSON Schema 2020-12 の oneOf を評価する (ちょうど1つの subschema に一致しなければ invalid、0件・2件以上一致はいずれも invalid)"
+    - "lane_ref: 42 または review: 42 を含む release-evidence bundle が shared validator 単体で invalid になり、その検証が自動 self-test として CI 経路で実行される"
+    - "全13契約の verify-fixtures.mjs と contracts/shared/repo-checks.mjs が変更後も exit 0 で、既存 fixture の期待結果 (accept/invalid/reject) が1件も変わらない"
+    - "非一致分岐の試行エラーが呼び出し側のエラーリストに漏れない (oneOf の trial evaluation は隔離される)"
+  non_goal:
+    - "anyOf 等の未使用 keyword の追加 (全契約 grep で使用箇所ゼロ、YAGNI)"
+    - "release-approval の union 補完の削除 (防御として維持。コメントを root 対応済みの旨に更新するのみ)"
+    - "契約 schema 自体の変更"
+    - "vendored copy (lane repo 等) の更新 (UPSTREAM marker 手順で別途)"
+  constraints:
+    - "zero npm dependencies を維持"
+    - "既存のエラー報告形式 (reasons 文字列 + path) と整合させる"
+    - "oneOf は同一 schema object の他 keyword と compose し early return しない (既存 allOf / not と同じ規律)"
+    - "$ref を含む分岐でも currentDoc の解決が壊れない"
+  primary_user: 全13契約の verifier とそれを vendor する実装 repo の保守者
+  state_segments: []
+  known_affected_behavior: []
+  declared_risk: medium
+ai_inferred_scope:
+  affected_layers:
+    - contracts
+  related_files: []
+  required_docs: []
+  confidence: low
+  open_questions: []
+  allowed_paths:
+    - contracts/shared/**
+    - contracts/release-approval/v0/verify-fixtures.mjs
+    - docs/spec/I-2026-08-23-shared-validator-oneof/**
+    - docs/spec/I-2026-08-23-ecd-shadow-contracts/lane-state.json
+  forbidden_paths: []
+
+premise_evidence:
+  required: true
+  method: live
+  reproduced: true
+  evidence: "2026-08-23 に実機で再現済み: lane_ref: 42 に改変した release-evidence bundle (digest は実計算で整合) が shared validator の schema 検証を通過することを、release-approval の composite fixture への改変注入 (MV-05) と sol architect レビュー3巡目の独立指摘の両方で確認。原因は validateAgainst が oneOf keyword を評価しないこと。oneOf の実使用箇所は grep で release-evidence の2 schema (release-evidence-bundle.schema.json の lane_ref/review、release-event.schema.json) のみと確認済み" 

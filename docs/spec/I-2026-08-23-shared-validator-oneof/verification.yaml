@@ -1,0 +1,94 @@
+schema_version: "1.0"
+intent_id: I-2026-08-23-shared-validator-oneof
+test_matrix:
+  - ears_rule: "Rule R1-R3 (oneOf 評価: exactly-one / エラー隔離 / compose / $ref)"
+    test_type: unit
+    test_file: contracts/shared/schema-validator.selftest.mjs
+    test_name: selftest 11/11 (inline 系 + compose 双方向 + 2階層 $ref doc 切替)
+    status: added
+  - ears_rule: Rule R4 (サポート keyword 一覧コメントの更新)
+    test_type: manual
+    test_file: contracts/shared/schema-validator.mjs
+    status: added
+    note: 冒頭コメントに oneOf 追記を目視確認
+  - ears_rule: Rule R5 (self-test の CI 配線 + 実 schema 回帰)
+    test_type: integration
+    test_file: contracts/shared/repo-checks.mjs
+    test_name: repo-checks 4番目のチェックとして selftest を実行
+    status: added
+    note: "実 schema 回帰: lane_ref:42 / review:42 が invalid、既存 accept fixture は valid
+      のまま (read-only 参照)"
+  - ears_rule: Rule R6 (全13契約の回帰ゼロ)
+    test_type: regression
+    test_file: contracts/shared/repo-checks.mjs
+    test_name: 全13 verify-fixtures + repo-checks、期待結果 (PASS 件数) 完全一致
+    status: existing
+  - ears_rule: Rule R7 (release-approval 補完の維持、コメントのみ更新)
+    test_type: manual
+    test_file: contracts/release-approval/v0/verify-fixtures.mjs
+    status: existing
+    note: git diff でロジック無変更を確認 (コメント行のみの差分)
+test_gaps:
+  - taxonomy: compatibility_missed
+    description: $ref の early return が assertion sibling を評価しない (draft 2020-12
+      は許容)。現 repo の使用範囲は description sibling のみで実害なし。subset 境界の明記 or 解消は別 lane
+      (sol ask)
+    location: contracts/shared/schema-validator.mjs
+    priority: low
+  - taxonomy: lifecycle_missed
+    description: vendored copy (lane repo 等) は commit pin のため oneOf 未評価のまま。再 vendor
+      タスクを tasks.md に owner・期限付きで登録済み
+    priority: medium
+manual_verification:
+  - id: MV-01
+    description: oneOf 評価を一時無効化 (schema.oneOf → __disabled_oneOf) して selftest を実行
+    expected_status: fail する (空回りでないことを builder と team-lead が独立に確認、2026-08-23)
+goal_stopping_condition:
+  - selftest 11/11 + 全13契約 verify-fixtures + repo-checks が exit 0
+  - sol architect レビュー PASS (must ゼロ、draft 2020-12 一次資料と照合済み)
+spec_consensus:
+  spec_ssot_ref: docs/spec/I-2026-08-23-shared-validator-oneof/spec.md
+  spec_digest: 633cc2ece364e8c4d049d93980f5afe70b52b6e1620d260d4f074873e7902fce
+  verification_digest: f1913ad1488f68ee55403820dde7661c2f6d7dbd7b30f05463dfb44dc14370f3
+  deviations:
+    - spec_ref: spec.md R1-R7 全体
+      actual: 逸脱なしを確認。sol should 対応で selftest が9→11ケースに増えた (spec R5 の最低要件を上回る追加)
+      action: accept
+      status: resolved
+      rationale: sol architect レビュー PASS (must ゼロ、draft 2020-12 一次資料照合)。should 2件は
+        selftest 追加で消化、ask 2件は open_questions と tasks.md に固定
+  reviewer_ack:
+    reviewer_kind: independent_agent
+    reviewer_id: gpt-5.6-sol
+    acked_at: 2026-08-22T21:38:11.140Z
+    spec_sha256: 633cc2ece364e8c4d049d93980f5afe70b52b6e1620d260d4f074873e7902fce
+    verification_sha256: f1913ad1488f68ee55403820dde7661c2f6d7dbd7b30f05463dfb44dc14370f3
+success_criteria_matrix:
+  - criterion: contracts/shared/schema-validator.mjs が JSON Schema 2020-12 の oneOf
+      を評価する (ちょうど1つの subschema に一致しなければ invalid、0件・2件以上一致はいずれも invalid)
+    covered_by: test
+    evidence: selftest の exactly-one / zero-match / multi-match ケース。sol が draft
+      2020-12 の oneOf 定義 (json-schema.org 一次資料) と照合し整合を確認
+    negation_test: zero-match / multi-match ケースが invalid になる。oneOf 無効化で selftest が
+      fail (MV-01)
+  - criterion: "lane_ref: 42 または review: 42 を含む release-evidence bundle が shared
+      validator 単体で invalid になり、その検証が自動 self-test として CI 経路で実行される"
+    covered_by: test
+    evidence: selftest の実 schema 回帰ケース (lane_ref:42 / review:42 → invalid) +
+      repo-checks.mjs への配線 (CI は repo-checks を実行するため自動搭載)
+    negation_test: oneOf 無効化でこの回帰ケースが fail する (MV-01 で実証)
+  - criterion: 全13契約の verify-fixtures.mjs と contracts/shared/repo-checks.mjs が変更後も
+      exit 0 で、既存 fixture の期待結果 (accept/invalid/reject) が1件も変わらない
+    covered_by: test
+    evidence: 変更前後で PASS 件数完全一致 (promotion-receipt 21/21 / release-approval 45/45 /
+      release-evidence 40/40 等) を builder と team-lead が独立に確認
+    negation_test: 期待結果が変わった場合は fixture でなく実装の bug として扱う規律を spec に明記 (変わらなかったので発火せず)
+  - criterion: 非一致分岐の試行エラーが呼び出し側のエラーリストに漏れない (oneOf の trial evaluation は隔離される)
+    covered_by: test
+    evidence: selftest のエラー隔離ケース (非一致分岐の 'expected type' 文言が結果に混入しないことを検証)
+    negation_test: 隔離を外すと当該ケースが fail する構造 (漏れ文言の不在を明示的に assert)
+cross_check_intent_vs_spec:
+  performed_at: 2026-08-23 (Phase 3)
+  finding: "方向②: spec.md R5 の selftest 要件 (a)-(e) と R7 (補完維持) は intent.success
+    より詳細だが、いずれも intent の4条件の実現手段であり、intent より強い『新しい約束』は無い。intent.yaml の変更不要。方向①は
+    success_criteria_matrix で1行ずつ突合済み"

@@ -20,6 +20,10 @@
 //      plus a string-equality check on one field, not real draft 2020-12 meta-schema
 //      validation (this repo's shared validator is a documented subset, not a general
 //      implementation, so it cannot check "does every keyword conform to the meta-schema").
+//   4. schema-validator.mjs self-test (I-2026-08-23-shared-validator-oneof, R5): runs
+//      schema-validator.selftest.mjs's own case list in-process (imported, not spawned -- same
+//      zero-npm-deps discipline, one fewer process to shell out to) so a regression in the
+//      shared validator itself (not any one contract's fixtures) fails this CI-wired check.
 //
 // Zero npm dependencies by design, same as every verify-fixtures.mjs in this repo.
 //
@@ -28,6 +32,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runSelfTest } from "./schema-validator.selftest.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(HERE, "..", "..");
@@ -119,6 +124,17 @@ for (const schemaFile of schemaFiles) {
   } else {
     ok(`${rel(schemaFile)}: valid JSON, declares draft 2020-12`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// 4. schema-validator.mjs self-test (oneOf, and anything else added to it later)
+// ---------------------------------------------------------------------------
+const selftestResults = runSelfTest();
+const selftestFailures = selftestResults.filter((r) => !r.ok);
+if (selftestFailures.length > 0) {
+  for (const r of selftestFailures) fail(`schema-validator.selftest.mjs: ${r.name} -- ${r.detail}`);
+} else {
+  ok(`schema-validator.selftest.mjs: all ${selftestResults.length} case(s) passed`);
 }
 
 console.log(`\n${failures === 0 ? "All repo-checks passed." : `${failures} repo-check(s) FAILED.`}`);
