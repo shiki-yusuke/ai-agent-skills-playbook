@@ -62,11 +62,24 @@
 //       `JSON.stringify()`, so two subjects that agree on every field but differ only in key
 //       order compare equal (a real regression the JSON.stringify version had).
 //
-//   round-3 fix (sol architect review, blocker): contracts/shared/schema-validator.mjs does not
-//     evaluate `oneOf` at all, so an embedded bundle's `lane_ref`/`review` (the only two places
-//     release-evidence-bundle.schema.json relies on `oneOf` alone, with no sibling allOf/if-then
-//     enforcement) could be any value -- e.g. `lane_ref: 42` -- and pass `checkEmbeddedBundle`
-//     undetected. `laneRefMatchesUnion`/`reviewMatchesUnion` reproduce each oneOf branch by hand.
+//   round-3/4 fix (sol architect review, blockers): at the time this was written,
+//     contracts/shared/schema-validator.mjs did not evaluate `oneOf` at all, so an embedded
+//     bundle's `lane_ref`/`review` (the only two places release-evidence-bundle.schema.json
+//     relies on `oneOf` alone, with no sibling allOf/if-then enforcement) could be any value --
+//     e.g. `lane_ref: 42`, or a single-element array coerced through a bare regex `.test()` --
+//     and pass `checkEmbeddedBundle` undetected. `laneRefMatchesUnion`/`reviewMatchesUnion`
+//     reproduce each oneOf branch by hand, with explicit `typeof === "string"` guards before
+//     every pattern test.
+//
+//   UPDATE (I-2026-08-23-shared-validator-oneof): contracts/shared/schema-validator.mjs now
+//     evaluates `oneOf` itself (same repo, separate lane) -- `validateReleaseEvidence()` above
+//     therefore already catches `lane_ref: 42` / `review: 42` on its own. The two functions
+//     below are kept anyway as **defense-in-depth**: they were true independent verification
+//     before that fix existed, this file's own logic did not change, and removing them would
+//     make this contract's own correctness depend entirely on the shared validator never
+//     regressing. Vendored/pinned copies of schema-validator.mjs elsewhere (commit-pinned
+//     UPSTREAM markers) also do not get this fix until they are re-vendored, which this
+//     supplement is unaffected by either way.
 //
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
@@ -193,18 +206,24 @@ function resolveReviewFindingRef(ref, findingsById) {
   return { resolved: true, reasons };
 }
 
-// sol architect review round 3, blocker: contracts/shared/schema-validator.mjs does not evaluate
-// `oneOf` at all (it is not in that file's documented supported-keyword list) -- it is used only
-// as prose-adjacent documentation elsewhere in this repo's schemas, with the real enforcement
-// always carried by a sibling allOf/if-then (see e.g. release-evidence/v0's own release-event
-// schema for `environment`). release-evidence-bundle.schema.json's `lane_ref` and `review`
-// properties are the ONLY two places in that schema that rely on `oneOf` ALONE with no such
-// sibling enforcement -- so `validateReleaseEvidence()` above lets a value like `lane_ref: 42` or
-// `review: 42` straight through. These two functions reproduce each `oneOf` branch's
-// required/type rules by hand, read directly off release-evidence-bundle.schema.json's current
-// text (its `lane_ref` oneOf is around line 66; `review`'s is around line 139). If that schema's
-// oneOf shapes ever change, these must be updated to match -- they are NOT re-derived
-// automatically from the schema file.
+// Originally written (sol architect review round 3, blocker) because
+// contracts/shared/schema-validator.mjs did not evaluate `oneOf` at all -- it was used only as
+// prose-adjacent documentation elsewhere in this repo's schemas, with the real enforcement always
+// carried by a sibling allOf/if-then (see e.g. release-evidence/v0's own release-event schema for
+// `environment`). release-evidence-bundle.schema.json's `lane_ref` and `review` properties were
+// the ONLY two places in that schema that relied on `oneOf` ALONE with no such sibling
+// enforcement -- so `validateReleaseEvidence()` above let a value like `lane_ref: 42` or
+// `review: 42` straight through.
+//
+// UPDATE (I-2026-08-23-shared-validator-oneof): contracts/shared/schema-validator.mjs now
+// evaluates `oneOf` itself (same repo, separate lane), so `validateReleaseEvidence()` above
+// already catches this on its own. These two functions are kept as **defense-in-depth** --
+// removing them would make this contract's correctness depend entirely on the shared validator
+// never regressing, and a commit-pinned vendored copy elsewhere would not get that fix until
+// re-vendored anyway. They reproduce each `oneOf` branch's required/type rules by hand, read
+// directly off release-evidence-bundle.schema.json's current text (its `lane_ref` oneOf is around
+// line 66; `review`'s is around line 139). If that schema's oneOf shapes ever change, these must
+// be updated to match -- they are NOT re-derived automatically from the schema file.
 //
 // round-4 fix (sol architect review, blocker): every string-typed field below is checked with an
 // explicit `typeof v === "string"` BEFORE the regex test, never `pattern.test(v)` alone --
