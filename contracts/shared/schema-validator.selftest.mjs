@@ -107,6 +107,27 @@ export function runSelfTest() {
     assert(validKind.length === 0, `expected a fully valid instance to have zero errors, got: ${JSON.stringify(validKind)}`);
   });
 
+  check("(b) the OTHER compose direction: oneOf matches cleanly, sibling `required` still fails on its own", () => {
+    // Complements the case above (which composed a oneOf FAILURE with a sibling failure) by
+    // fixing the direction sol architect review round 5 asked for directly: oneOf succeeding
+    // (matched exactly 1) must never hide an independent sibling keyword's own failure.
+    const schema = {
+      type: "object",
+      required: ["outer_required_field"],
+      oneOf: [{ type: "object" }],
+    };
+    const errors = [];
+    validateAgainst(schema, {}, schema, "$", errors);
+    assert(
+      errors.some((e) => e.includes('missing required property "outer_required_field"')),
+      `expected the sibling "required" failure to surface even though oneOf matched exactly one branch, got: ${JSON.stringify(errors)}`,
+    );
+    assert(
+      !errors.some((e) => e.includes("oneOf expected exactly one")),
+      `did not expect a oneOf error here -- exactly one branch (the lone {type:"object"}) matches {}, got: ${JSON.stringify(errors)}`,
+    );
+  });
+
   // ---------------------------------------------------------------------------
   // (c) a oneOf branch containing $ref to a local #/$defs/... pointer
   // ---------------------------------------------------------------------------
@@ -127,6 +148,32 @@ export function runSelfTest() {
     validateAgainst(doc, "", doc, "$", badEmpty);
     assert(badEmpty.length === 1, `expected "" to match neither branch (fails minLength via $ref, fails type null), got: ${JSON.stringify(badEmpty)}`);
     assert(badEmpty[0].includes("matched 0"), `unexpected error text: ${badEmpty[0]}`);
+  });
+
+  check("(c) a oneOf branch's EXTERNAL-FILE $ref, whose target itself uses a LOCAL #/$defs/... ref, resolves via the correctly switched currentDoc (real schemas, read-only)", () => {
+    // agent-metrics/v1's token-usage.schema.json is a real, existing schema that (a) is reached
+    // here via an external-file $ref from a oneOf branch, then (b) itself composes a further
+    // external-file $ref (envelope.schema.json) AND resolves its own local #/$defs/tokenUsageData
+    // -- exercising the resolveRef() `doc` switch propagating correctly across two levels, not
+    // just one. Both schema files and the fixture instance below are read directly from
+    // contracts/agent-metrics/v1/ (never copied into this test file).
+    const { validate, validateAgainst: va } = createValidator(path.join(HERE, "..", "agent-metrics", "v1"));
+    const wrapper = { oneOf: [{ $ref: "token-usage.schema.json" }, { type: "null" }] };
+    const fixturePath = path.join(HERE, "..", "agent-metrics", "v1", "fixtures", "valid-minimum.json");
+    const instance = JSON.parse(readFileSync(fixturePath, "utf-8"));
+
+    const errors = [];
+    va(wrapper, instance, wrapper, "$", errors);
+    assert(
+      errors.length === 0,
+      `expected the real accept fixture to match exactly the token-usage.schema.json branch (proving currentDoc switched correctly through its external+local $ref chain), got: ${JSON.stringify(errors)}`,
+    );
+
+    // Sanity: confirm independently (outside the oneOf wrapper) that this fixture is genuinely
+    // valid against token-usage.schema.json -- otherwise the assertion above would be
+    // vacuously true for the wrong reason (e.g. both branches matching).
+    const direct = validate("token-usage.schema.json", instance);
+    assert(direct.length === 0, `sanity check failed: fixtures/valid-minimum.json is not directly valid against token-usage.schema.json: ${JSON.stringify(direct)}`);
   });
 
   // ---------------------------------------------------------------------------
