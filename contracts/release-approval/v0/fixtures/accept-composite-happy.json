@@ -1,0 +1,156 @@
+{
+  "findings": [
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-composite-fix-old",
+      "recorded_at": "2026-08-20T09:00:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/spec-lane",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "scan_scope": {
+        "paths": [
+          "packages/core/src/estimate/adopt.ts"
+        ],
+        "commit_range": {
+          "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "lenses": [
+          "correctness"
+        ]
+      },
+      "assessor": {
+        "kind": "human",
+        "model_cohort": null,
+        "independence": {
+          "code": "human_third_party",
+          "params": {}
+        }
+      },
+      "outcome": "findings_observed",
+      "abstention": null,
+      "findings": [
+        {
+          "finding_id": "F-01",
+          "category": "correctness",
+          "severity": "high",
+          "claim": "abstain check runs after writeEstimateRefs",
+          "locations": [
+            {
+              "path": "adopt.ts",
+              "start_line": 42,
+              "end_line": 58
+            }
+          ],
+          "suggested_fix": "reorder",
+          "evidence_gate": {
+            "oracle_kind": "evigate",
+            "oracle_ref": "evigate://x/y",
+            "predicate": {
+              "code": "regression_reproduced",
+              "params": {}
+            },
+            "required_verdict": "proven"
+          }
+        }
+      ]
+    },
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-composite-fix-new",
+      "recorded_at": "2026-08-23T09:00:00Z",
+      "supersedes_record_id": "rf-composite-fix-old",
+      "subject": {
+        "repository_ref": "shiki-yusuke/spec-lane",
+        "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "scan_scope": {
+        "paths": [
+          "packages/core/src/estimate/adopt.ts"
+        ],
+        "commit_range": {
+          "base": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "head": "cccccccccccccccccccccccccccccccccccccccc"
+        },
+        "lenses": [
+          "correctness"
+        ]
+      },
+      "assessor": {
+        "kind": "human",
+        "model_cohort": null,
+        "independence": {
+          "code": "human_third_party",
+          "params": {}
+        }
+      },
+      "outcome": "none_observed_in_recorded_scope",
+      "abstention": null,
+      "findings": []
+    }
+  ],
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-composite-001",
+    "evaluated_at": "2026-08-23T21:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5",
+      "selection_manifest_digest": "sha256:d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5",
+      "target": "production"
+    },
+    "policy_digest": "sha256:e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5",
+    "effective_risk": "medium",
+    "predicates": [
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-composite-fix-new#scope",
+            "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        ]
+      },
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5"
+          }
+        ]
+      }
+    ],
+    "verdict": "ready_for_approval",
+    "semantic_digest": "sha256:21e7be7114be732ce1a2568b01f137ba16bf25b6d15c98abfab2afac65d00f07"
+  },
+  "approval_events": [
+    {
+      "schema_version": "release-approval/v0",
+      "kind": "approval_granted",
+      "subject": {
+        "receipt_digest": "sha256:0750f1fa1a1cc80dc4f109081fda9ceda6952484604032bf81b3b76e2102971c",
+        "receipt_semantic_digest": "sha256:21e7be7114be732ce1a2568b01f137ba16bf25b6d15c98abfab2afac65d00f07",
+        "bundle_digest": "sha256:c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5",
+        "selection_manifest_digest": "sha256:d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5",
+        "target": "production"
+      },
+      "principal": {
+        "principal_id": "release-captain-04",
+        "issuer": "github-actions-oidc",
+        "role_snapshot": "release-approver"
+      },
+      "occurred_at": "2026-08-23T21:10:00Z",
+      "expires_at": "2026-08-24T21:10:00Z",
+      "event_id": "sha256:320b04f5e33b8e23e3f9cf760619d3b1d0087e66ccaf534a8afb6575695f5004"
+    }
+  ]
+}

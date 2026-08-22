@@ -1,0 +1,28 @@
+{
+  "protocol_version": "release-approval/v0",
+  "fixture_format_version": "1",
+  "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. `type` selects the check: \"event\" (one event against release-approval-event.schema.json + the scans + event_id recomputation, R18), \"ledger\" (an array of events: schema+event_id per event, then duplicate event_id across the array), \"composite\" ({findings:[...review-findings records], receipt:{...one promotion-receipt}, approval_events:[...release-approval events]} -- the ONLY fixture type that can exercise TEST-05/TEST-06/TEST-09, which are cross-contract by nature: each embedded record/receipt is re-validated by its OWN contract's checker, the receipt's REAL JCS sha256 is recomputed and every approval's subject.receipt_digest must resolve to it, every subject field must match the receipt's current values (stale otherwise), and every review_finding evidence_ref must resolve to a findings record whose ACTUAL subject.digest equals the ref's digest.",
+  "fixtures": [
+    { "type": "event", "expected": "accept", "files": "accept-event-approval-granted.json" },
+    { "type": "event", "expected": "accept", "files": "accept-event-break-glass.json" },
+    { "type": "ledger", "expected": "accept", "files": "accept-ledger-grant-then-revoke.json" },
+    { "type": "composite", "expected": "accept", "files": "accept-composite-happy.json" },
+
+    { "type": "event", "expected": "reject", "reason_code": "missing required property \"expires_at\"", "files": "invalid-approval-granted-missing-expires.json" },
+    { "type": "event", "expected": "reject", "reason_code": "missing required property \"expires_at\"", "files": "invalid-break-glass-missing-expires.json" },
+    { "type": "event", "expected": "reject", "reason_code": "missing required property \"incident_ref\"", "files": "invalid-break-glass-missing-incident-ref.json" },
+    { "type": "event", "expected": "reject", "reason_code": "missing required property \"bypassed_predicate_ids\"", "files": "invalid-break-glass-missing-bypassed-predicates.json" },
+    { "type": "event", "expected": "reject", "reason_code": "array length 0 < minItems 1", "files": "invalid-break-glass-empty-bypassed-predicates.json" },
+    { "type": "event", "expected": "reject", "reason_code": "$.principal.principal_id", "files": "invalid-principal-id-with-at-sign.json" },
+    { "type": "event", "expected": "reject", "reason_code": "missing required property \"revoked_approval_event_id\"", "files": "invalid-revoked-without-target-event-id.json" },
+    { "type": "event", "expected": "reject", "reason_code": "must not validate against the \"not\" schema", "files": "invalid-expires-at-on-rejected.json" },
+    { "type": "event", "expected": "reject", "reason_code": "$.occurred_at", "files": "invalid-offset-timestamp.json" },
+    { "type": "event", "expected": "reject", "reason_code": "additional property \"confidence\"", "files": "invalid-additional-property-confidence.json" },
+
+    { "type": "event", "expected": "reject", "reason_code": "event_id_mismatch", "files": "reject-event-id-tampered.json" },
+    { "type": "ledger", "expected": "reject", "reason_code": "duplicate_event_id", "files": "reject-ledger-duplicate-event-id.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "stale_approval_binding", "files": "reject-composite-stale-bundle-digest.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "receipt_digest_unresolved", "files": "reject-composite-fake-receipt-digest.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "evidence_ref_digest_mismatch", "files": "reject-composite-evidence-ref-wrong-digest.json" }
+  ]
+}
