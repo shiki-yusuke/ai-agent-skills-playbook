@@ -21,6 +21,9 @@
     { "files": "invalid-required-verdict-not-proven.json", "expected": "reject", "reason_code": "expected const" },
     { "files": "invalid-offset-timestamp.json", "expected": "reject", "reason_code": "$.recorded_at" },
     { "files": "invalid-additional-property-confidence.json", "expected": "reject", "reason_code": "additional property \"confidence\"" },
+    { "files": "invalid-recorded-at-not-real-date.json", "expected": "reject", "reason_code": "invalid_calendar_timestamp" },
+    { "files": "invalid-location-line-partial.json", "expected": "reject", "reason_code": "location_line_partial" },
+    { "files": "invalid-location-line-order.json", "expected": "reject", "reason_code": "location_line_order" },
 
     { "files": "reject-duplicate-finding-id.json", "expected": "reject", "reason_code": "duplicate_finding_id" },
     { "files": "reject-numeric-confidence-in-params.json", "expected": "reject", "reason_code": "numeric_confidence_forbidden_field" },
