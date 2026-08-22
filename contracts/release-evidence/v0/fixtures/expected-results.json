@@ -11,7 +11,7 @@
   {
    "type": "bundle",
    "expected": "accept",
-   "files": "accept-bundle-static-site-synthetic.json"
+   "files": "accept-bundle-agent-metrics-dashboard.json"
   },
   {
    "type": "bundle",
