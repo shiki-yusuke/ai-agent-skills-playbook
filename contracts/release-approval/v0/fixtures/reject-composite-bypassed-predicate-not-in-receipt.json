@@ -139,7 +139,7 @@
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-stale",
+    "receipt_id": "pr-composite-bgnotinreceipt",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
@@ -206,33 +206,37 @@
       },
       {
         "predicate_id": "privilege_boundary",
-        "applicability": "not_applicable",
+        "applicability": "applicable",
         "status": "unknown",
         "evidence_refs": []
       }
     ],
-    "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839"
+    "verdict": "abstained",
+    "semantic_digest": "sha256:aee7bad3869bc86a9b7291181c8415e065221600989a909b49076ba80b343320"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
-      "kind": "approval_granted",
+      "kind": "break_glass_approve",
       "subject": {
-        "receipt_digest": "sha256:57979db9c15b9136cf853b28e5f44cae63548ce0bcb4af0750c86c86322c13a9",
-        "receipt_semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839",
-        "bundle_digest": "sha256:ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffba",
+        "receipt_digest": "sha256:073f8730e4e35777969c6077abc7bef8ddcdd7149f31b7d8ff8ac78906ea656e",
+        "receipt_semantic_digest": "sha256:aee7bad3869bc86a9b7291181c8415e065221600989a909b49076ba80b343320",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
       },
       "principal": {
-        "principal_id": "release-captain-04",
+        "principal_id": "sre-oncall-primary",
         "issuer": "github-actions-oidc",
         "role_snapshot": "release-approver"
       },
-      "occurred_at": "2026-08-23T21:10:00Z",
+      "occurred_at": "2026-08-23T21:15:00Z",
+      "bypassed_predicate_ids": [
+        "deployed_artifact_readback"
+      ],
+      "incident_ref": "INC-2026-08-23-003",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:4fbeb28fd27767a8303ddd83ea492d8efe8d8a375ccd8761dd68897be836077a"
+      "event_id": "sha256:6fbf647d1512455032e4496ba7a2f9b651bbf671915dcf567aaebaa1a7d32c7c"
     }
   ]
 }

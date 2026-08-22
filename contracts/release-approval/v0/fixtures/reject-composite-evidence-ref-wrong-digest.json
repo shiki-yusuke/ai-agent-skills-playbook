@@ -91,31 +91,65 @@
       "findings": []
     }
   ],
+  "bundles": [
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "spec-lane@0.7.0",
+      "source": {
+        "repo": "shiki-yusuke/spec-lane",
+        "commit_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "tree_digest": "cccccccccccccccccccccccccccccccccccccccc",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "lane_ref_omitted": {
+        "code": "legacy_release_predates_contract",
+        "note": "composite fixture placeholder"
+      },
+      "review": null,
+      "review_omitted": {
+        "code": "legacy_release_predates_contract",
+        "note": "composite fixture placeholder"
+      },
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "artifact_ref": {
+            "registry": "npm",
+            "package": "@shiki-yusuke/spec-lane",
+            "version": "0.7.0",
+            "verifiability": "requires_fetch"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "toolchain_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": "spec-lane@0.6.0"
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      }
+    }
+  ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-001",
+    "receipt_id": "pr-composite-wrongdigest",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
-      "bundle_digest": "sha256:c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5",
-      "selection_manifest_digest": "sha256:d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5",
+      "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
+      "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
       "target": "production"
     },
-    "policy_digest": "sha256:e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5e5",
+    "policy_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
     "effective_risk": "medium",
     "predicates": [
-      {
-        "predicate_id": "review_admissibility",
-        "applicability": "applicable",
-        "status": "satisfied",
-        "evidence_refs": [
-          {
-            "kind": "review_finding",
-            "ref": "rf-composite-fix-new#scope",
-            "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          }
-        ]
-      },
       {
         "predicate_id": "artifact_identity",
         "applicability": "applicable",
@@ -124,23 +158,71 @@
           {
             "kind": "release_evidence",
             "ref": "spec-lane@0.7.0",
-            "digest": "sha256:c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5"
+            "digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f"
           }
         ]
+      },
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-composite-fix-new#scope",
+            "digest": "sha256:c363d12dbfce8d434c2906cff13a335101277da2b619588eaea24043465b6fb1"
+          }
+        ]
+      },
+      {
+        "predicate_id": "verification_coverage",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f"
+          }
+        ]
+      },
+      {
+        "predicate_id": "preview_verified",
+        "applicability": "not_applicable",
+        "status": "unknown",
+        "evidence_refs": []
+      },
+      {
+        "predicate_id": "rollback_target_valid",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-composite-fix-old#F-01",
+            "digest": "sha256:c363d12dbfce8d434c2906cff13a335101277da2b619588eaea24043465b6fb1"
+          }
+        ]
+      },
+      {
+        "predicate_id": "privilege_boundary",
+        "applicability": "not_applicable",
+        "status": "unknown",
+        "evidence_refs": []
       }
     ],
     "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:49e0a45bc6af505cc9d7c5893e1b632184bf0fe102a270b6fc5358d55393a843"
+    "semantic_digest": "sha256:14016907485cf313ba8483579facde4d135e772050ff4f126015c616eb817e6c"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:ad0b03d8a7087c10904be68ff38f9a01ecd0f68aa9133bb0bd739b44d442f0cf",
-        "receipt_semantic_digest": "sha256:49e0a45bc6af505cc9d7c5893e1b632184bf0fe102a270b6fc5358d55393a843",
-        "bundle_digest": "sha256:c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5",
-        "selection_manifest_digest": "sha256:d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5d5",
+        "receipt_digest": "sha256:793e34d17d77689e1fea1705c3e37708415fd0b4424d50cabc7954b00e7aa841",
+        "receipt_semantic_digest": "sha256:14016907485cf313ba8483579facde4d135e772050ff4f126015c616eb817e6c",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
+        "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
       },
       "principal": {
@@ -150,7 +232,7 @@
       },
       "occurred_at": "2026-08-23T21:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:6764d060e9ed4ece898b0ea831be295b92428bf038b4ac1ae80657127dcc86be"
+      "event_id": "sha256:8ea424b9a7c877409d27f775c275c49d7eecd9c46f7129825b9160a96dc6ac48"
     }
   ]
 }

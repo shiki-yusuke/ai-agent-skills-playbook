@@ -36,7 +36,7 @@
           "finding_id": "F-01",
           "category": "correctness",
           "severity": "high",
-          "claim": "abstain check runs after writeEstimateRefs",
+          "claim": "EDITED: abstain check now runs before writeEstimateRefs (claim replaced post-hoc)",
           "locations": [
             {
               "path": "adopt.ts",
@@ -139,7 +139,7 @@
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-stale",
+    "receipt_id": "pr-composite-claimreplaced",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
@@ -219,9 +219,9 @@
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:57979db9c15b9136cf853b28e5f44cae63548ce0bcb4af0750c86c86322c13a9",
+        "receipt_digest": "sha256:9348a95d40d87662a3c50d96fa13851881335d912bf5cc12371bced7d644508f",
         "receipt_semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839",
-        "bundle_digest": "sha256:ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffba",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
       },
@@ -232,7 +232,7 @@
       },
       "occurred_at": "2026-08-23T21:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:4fbeb28fd27767a8303ddd83ea492d8efe8d8a375ccd8761dd68897be836077a"
+      "event_id": "sha256:df11144384bcb4cf174cb6366879f8cf643b168628393f3f883a1d847aa41745"
     }
   ]
 }

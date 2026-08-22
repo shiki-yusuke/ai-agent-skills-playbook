@@ -91,55 +91,10 @@
       "findings": []
     }
   ],
-  "bundles": [
-    {
-      "schema_version": "release-evidence/v0",
-      "release_id": "spec-lane@0.7.0",
-      "source": {
-        "repo": "shiki-yusuke/spec-lane",
-        "commit_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "tree_digest": "cccccccccccccccccccccccccccccccccccccccc",
-        "resolution": "git_tree"
-      },
-      "lane_ref": null,
-      "lane_ref_omitted": {
-        "code": "legacy_release_predates_contract",
-        "note": "composite fixture placeholder"
-      },
-      "review": null,
-      "review_omitted": {
-        "code": "legacy_release_predates_contract",
-        "note": "composite fixture placeholder"
-      },
-      "artifacts": [
-        {
-          "kind": "package",
-          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "artifact_ref": {
-            "registry": "npm",
-            "package": "@shiki-yusuke/spec-lane",
-            "version": "0.7.0",
-            "verifiability": "requires_fetch"
-          }
-        }
-      ],
-      "build": {
-        "recipe_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "toolchain_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-      },
-      "known_deviations": [],
-      "rollback": {
-        "previous_release_id": "spec-lane@0.6.0"
-      },
-      "integrity": {
-        "level": "digest_only",
-        "signature": null
-      }
-    }
-  ],
+  "bundles": [],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-stale",
+    "receipt_id": "pr-composite-nobundle",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
@@ -219,9 +174,9 @@
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:57979db9c15b9136cf853b28e5f44cae63548ce0bcb4af0750c86c86322c13a9",
+        "receipt_digest": "sha256:1ac6d4179e9b416dc1a727b022d5ba354e6811e0dc31572b32bd95aa0c6b9b69",
         "receipt_semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839",
-        "bundle_digest": "sha256:ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffba",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
       },
@@ -232,7 +187,7 @@
       },
       "occurred_at": "2026-08-23T21:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:4fbeb28fd27767a8303ddd83ea492d8efe8d8a375ccd8761dd68897be836077a"
+      "event_id": "sha256:95d42d61c1d85a08cc40f10fc7ef22829e89273b43e4294d35950a1cd0785254"
     }
   ]
 }
