@@ -260,18 +260,18 @@ function checkReleaseCollection({ bundles, events }, problems) {
 function runFixture(entry) {
   const problems = [];
   if (entry.type === "bundle") {
-    problems.push(...checkBundle(read(entry.file)));
+    problems.push(...checkBundle(read(entry.files)));
   } else if (entry.type === "event") {
-    problems.push(...schemaAndScan("release-event.schema.json", read(entry.file)));
+    problems.push(...schemaAndScan("release-event.schema.json", read(entry.files)));
   } else if (entry.type === "event-collection") {
-    const events = read(entry.file);
+    const events = read(entry.files);
     for (const [i, ev] of events.entries()) {
       const reasons = schemaAndScan("release-event.schema.json", ev);
       if (reasons.length > 0) problems.push(`event[${i}] not individually valid: ${reasons.join("; ")}`);
     }
     if (problems.length === 0) checkLedger(events, problems);
   } else if (entry.type === "release-collection") {
-    checkReleaseCollection(read(entry.file), problems);
+    checkReleaseCollection(read(entry.files), problems);
   } else {
     problems.push(`unknown fixture type "${entry.type}"`);
   }
@@ -285,7 +285,7 @@ function main() {
     process.exit(1);
   }
   // manifest completeness: the declared set and the directory contents must match exactly
-  const declared = new Set(manifest.fixtures.map((e) => e.file));
+  const declared = new Set(manifest.fixtures.map((e) => e.files));
   if (declared.size !== manifest.fixtures.length) {
     console.error("expected-results.json lists the same fixture twice -- refusing.");
     process.exit(1);
@@ -308,7 +308,7 @@ function main() {
     }
     const status = ok ? "PASS" : "FAIL";
     if (!ok) failures++;
-    console.log(`[${status}] ${entry.file}  (expected=${entry.expected}, got=${result.category})`);
+    console.log(`[${status}] ${entry.files}  (expected=${entry.expected}, got=${result.category})`);
     if (!ok) for (const r of result.reasons) console.log(`        ${r}`);
   }
   console.log(`\n${manifest.fixtures.length - failures}/${manifest.fixtures.length} fixtures behave as declared.`);

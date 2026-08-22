@@ -4,218 +4,218 @@
  "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. `type` selects the check: \"bundle\" (one Release Evidence Bundle against release-evidence-bundle.schema.json + personal-dimension scan + the bundle-level semantic checks: artifacts/known_deviations sorted+unique, commit_sha/tree_digest same hash width, rollback target != self), \"event\" (one release event against release-event.schema.json + the scan), \"event-collection\" (an array of events checked together: schema per event, then the transition-graph fold per (release_id, bundle_digest) attempt, failure_phase/staging_skipped checks, duplicate event_id, and the dangling-rollback check -- the cross-record rules no single-record validation can express, same convention as release-observation/v0's \"collection\"), \"release-collection\" (`{\"bundles\":[...],\"events\":[...]}`: every bundle individually valid, every event individually valid, every event's bundle_digest resolved against the REAL JCS sha256 of a bundle in the same collection, release_id/bundle cross-check, the event-collection ledger fold, the lane_done_overlay production gate, the review=commented production gate, and bundle.rollback.previous_release_id resolution). PROVENANCE: accept-bundle-spec-lane-0-6-0 carries REAL values measured 2026-08-22 (git commit/tree from the v0.6.0 tag, npm tarball sha256 fetched and hashed live, recipe/toolchain digests hashed from the tag's docs/releasing.md and package.json). accept-bundle-static-site-synthetic and every event/collection fixture are SYNTHETIC shapes -- the static-site values and every digest in the release-collection fixtures are placeholders, to be replaced with real measured ones by the first Pages deploy-adapter exercise, which is also the gate for freezing v1 (re-plan 2026-08-22). Synthetic does not mean untested, though: every release-collection fixture's bundle_digest is the REAL JCS (RFC 8785) sha256 of that fixture's own (synthetic) bundle object, computed the same way verify-fixtures.mjs's checkReleaseCollection recomputes it -- a repeated placeholder string would not resolve (sol must-2), so these fixtures exercise the actual digest-matching code path even though the underlying release never happened.",
  "fixtures": [
   {
-   "file": "accept-bundle-spec-lane-0-6-0.json",
    "type": "bundle",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-bundle-spec-lane-0-6-0.json"
   },
   {
-   "file": "accept-bundle-static-site-synthetic.json",
    "type": "bundle",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-bundle-static-site-synthetic.json"
   },
   {
-   "file": "invalid-bundle-lane-null-without-reason.json",
-   "type": "bundle",
-   "expected": "reject",
-   "reason_code": "missing required property \"lane_ref_omitted\""
-  },
-  {
-   "file": "invalid-bundle-signature-present.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "$.integrity.signature"
+   "reason_code": "missing required property \"lane_ref_omitted\"",
+   "files": "invalid-bundle-lane-null-without-reason.json"
   },
   {
-   "file": "invalid-bundle-static-site-missing-manifest.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "missing required property \"content_manifest_digest\""
+   "reason_code": "$.integrity.signature",
+   "files": "invalid-bundle-signature-present.json"
   },
   {
-   "file": "invalid-bundle-repo-local-path.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "$.source.repo"
+   "reason_code": "missing required property \"content_manifest_digest\"",
+   "files": "invalid-bundle-static-site-missing-manifest.json"
   },
   {
-   "file": "invalid-bundle-lane-present-with-omitted.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "must not validate against the \"not\" schema"
+   "reason_code": "$.source.repo",
+   "files": "invalid-bundle-repo-local-path.json"
   },
   {
-   "file": "invalid-bundle-artifacts-unsorted.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "artifacts_not_sorted"
+   "reason_code": "must not validate against the \"not\" schema",
+   "files": "invalid-bundle-lane-present-with-omitted.json"
   },
   {
-   "file": "invalid-bundle-hash-width-mismatch.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "hash_width_mismatch"
+   "reason_code": "artifacts_not_sorted",
+   "files": "invalid-bundle-artifacts-unsorted.json"
   },
   {
-   "file": "invalid-bundle-package-without-artifact-ref.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "missing required property \"artifact_ref\""
+   "reason_code": "hash_width_mismatch",
+   "files": "invalid-bundle-hash-width-mismatch.json"
   },
   {
-   "file": "invalid-bundle-pypi-without-distribution.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "missing required property \"distribution\""
+   "reason_code": "missing required property \"artifact_ref\"",
+   "files": "invalid-bundle-package-without-artifact-ref.json"
   },
   {
-   "file": "invalid-bundle-npm-registry-metadata.json",
    "type": "bundle",
    "expected": "reject",
-   "reason_code": "not in enum"
+   "reason_code": "missing required property \"distribution\"",
+   "files": "invalid-bundle-pypi-without-distribution.json"
   },
   {
-   "file": "accept-events-happy-path.json",
+   "type": "bundle",
+   "expected": "reject",
+   "reason_code": "not in enum",
+   "files": "invalid-bundle-npm-registry-metadata.json"
+  },
+  {
    "type": "event-collection",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-events-happy-path.json"
   },
   {
-   "file": "accept-events-rollback.json",
    "type": "event-collection",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-events-rollback.json"
   },
   {
-   "file": "accept-events-staging-and-failed.json",
    "type": "event-collection",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-events-staging-and-failed.json"
   },
   {
-   "file": "reject-events-production-before-preview.json",
-   "type": "event-collection",
-   "expected": "reject",
-   "reason_code": "illegal_transition"
-  },
-  {
-   "file": "reject-events-bundle-digest-drift.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "illegal_transition"
+   "reason_code": "illegal_transition",
+   "files": "reject-events-production-before-preview.json"
   },
   {
-   "file": "reject-events-dangling-rollback.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "dangling_rollback_reference"
+   "reason_code": "illegal_transition",
+   "files": "reject-events-bundle-digest-drift.json"
   },
   {
-   "file": "reject-events-no-prepared-first.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "illegal_transition"
+   "reason_code": "dangling_rollback_reference",
+   "files": "reject-events-dangling-rollback.json"
   },
   {
-   "file": "reject-events-duplicate-event-id.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "duplicate_event_id"
+   "reason_code": "illegal_transition",
+   "files": "reject-events-no-prepared-first.json"
   },
   {
-   "file": "reject-events-rollback-to-self.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "rollback_to_self"
+   "reason_code": "duplicate_event_id",
+   "files": "reject-events-duplicate-event-id.json"
   },
   {
-   "file": "reject-events-staging-skip-unrecorded.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "staging_skip_unrecorded"
+   "reason_code": "rollback_to_self",
+   "files": "reject-events-rollback-to-self.json"
   },
   {
-   "file": "reject-events-failure-phase-mismatch.json",
    "type": "event-collection",
    "expected": "reject",
-   "reason_code": "failure_phase_mismatch"
+   "reason_code": "staging_skip_unrecorded",
+   "files": "reject-events-staging-skip-unrecorded.json"
   },
   {
-   "file": "invalid-event-prepared-with-environment.json",
+   "type": "event-collection",
+   "expected": "reject",
+   "reason_code": "failure_phase_mismatch",
+   "files": "reject-events-failure-phase-mismatch.json"
+  },
+  {
    "type": "event",
    "expected": "reject",
-   "reason_code": "$.environment"
+   "reason_code": "$.environment",
+   "files": "invalid-event-prepared-with-environment.json"
   },
   {
-   "file": "invalid-event-failed-without-reason.json",
    "type": "event",
    "expected": "reject",
-   "reason_code": "missing required property \"reason\""
+   "reason_code": "missing required property \"reason\"",
+   "files": "invalid-event-failed-without-reason.json"
   },
   {
-   "file": "invalid-event-personal-dimension.json",
    "type": "event",
    "expected": "reject",
-   "reason_code": "personal_dimension_forbidden_key"
+   "reason_code": "personal_dimension_forbidden_key",
+   "files": "invalid-event-personal-dimension.json"
   },
   {
-   "file": "invalid-event-reason-on-deployed.json",
    "type": "event",
    "expected": "reject",
-   "reason_code": "must not validate against the \"not\" schema"
+   "reason_code": "must not validate against the \"not\" schema",
+   "files": "invalid-event-reason-on-deployed.json"
   },
   {
-   "file": "invalid-event-rollback-id-on-verified.json",
    "type": "event",
    "expected": "reject",
-   "reason_code": "must not validate against the \"not\" schema"
+   "reason_code": "must not validate against the \"not\" schema",
+   "files": "invalid-event-rollback-id-on-verified.json"
   },
   {
-   "file": "invalid-event-offset-timestamp.json",
    "type": "event",
    "expected": "reject",
-   "reason_code": "$.occurred_at"
+   "reason_code": "$.occurred_at",
+   "files": "invalid-event-offset-timestamp.json"
   },
   {
-   "file": "accept-collection-lane-backed-happy.json",
    "type": "release-collection",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-collection-lane-backed-happy.json"
   },
   {
-   "file": "accept-collection-laneless-rebuild.json",
    "type": "release-collection",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-collection-laneless-rebuild.json"
   },
   {
-   "file": "accept-collection-failed-then-rollback.json",
    "type": "release-collection",
-   "expected": "accept"
+   "expected": "accept",
+   "files": "accept-collection-failed-then-rollback.json"
   },
   {
-   "file": "reject-collection-fake-bundle-digest.json",
-   "type": "release-collection",
-   "expected": "reject",
-   "reason_code": "bundle_digest_unresolved"
-  },
-  {
-   "file": "reject-collection-release-id-mismatch.json",
    "type": "release-collection",
    "expected": "reject",
-   "reason_code": "release_id_mismatch"
+   "reason_code": "bundle_digest_unresolved",
+   "files": "reject-collection-fake-bundle-digest.json"
   },
   {
-   "file": "reject-collection-production-without-attestation.json",
    "type": "release-collection",
    "expected": "reject",
-   "reason_code": "production_gate_missing_done_attestation"
+   "reason_code": "release_id_mismatch",
+   "files": "reject-collection-release-id-mismatch.json"
   },
   {
-   "file": "reject-collection-review-commented-to-production.json",
    "type": "release-collection",
    "expected": "reject",
-   "reason_code": "production_gate_review_not_passed"
+   "reason_code": "production_gate_missing_done_attestation",
+   "files": "reject-collection-production-without-attestation.json"
   },
   {
-   "file": "reject-collection-previous-release-unresolved.json",
    "type": "release-collection",
    "expected": "reject",
-   "reason_code": "previous_release_unresolved"
+   "reason_code": "production_gate_review_not_passed",
+   "files": "reject-collection-review-commented-to-production.json"
+  },
+  {
+   "type": "release-collection",
+   "expected": "reject",
+   "reason_code": "previous_release_unresolved",
+   "files": "reject-collection-previous-release-unresolved.json"
   }
  ]
 }
