@@ -1,20 +1,20 @@
 {
   "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-reject-002",
-  "evaluated_at": "2026-08-23T16:20:00Z",
+  "receipt_id": "pr-invalid-014",
+  "evaluated_at": "2026-99-99T00:00:00Z",
   "evaluation_phase": "pre_promotion",
   "subject": {
-    "bundle_digest": "sha256:d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
-    "selection_manifest_digest": "sha256:b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+    "bundle_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "selection_manifest_digest": "sha256:4545454545454545454545454545454545454545454545454545454545454545",
     "target": "production"
   },
-  "policy_digest": "sha256:c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2",
-  "effective_risk": "high",
+  "policy_digest": "sha256:4646464646464646464646464646464646464646464646464646464646464646",
+  "effective_risk": "medium",
   "predicates": [
     {
       "predicate_id": "artifact_identity",
       "applicability": "applicable",
-      "status": "contradicted",
+      "status": "satisfied",
       "evidence_refs": [
         {
           "kind": "release_evidence",
@@ -72,6 +72,6 @@
       "evidence_refs": []
     }
   ],
-  "verdict": "abstained",
-  "semantic_digest": "sha256:70bb1d5a24a9ea41d24024dfc3e2995a9111c4e7b24b8313c113f36df8d3b899"
+  "verdict": "ready_for_approval",
+  "semantic_digest": "sha256:2de3e91aa2629a08c942103d6680c3f22bc82042e1a45e4458b02fe588524f0d"
 }
