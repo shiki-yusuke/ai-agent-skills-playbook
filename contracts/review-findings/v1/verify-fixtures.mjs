@@ -29,6 +29,10 @@ const dedupe = (a) => [...new Set(a)];
 // findings[].evidence_gate.predicate.params are intentionally OPEN dictionaries (arbitrary
 // {code, params} records, same shape contracts/shared/derive-independence.mjs emits) -- a
 // numeric confidence smuggled into one of those bags would not be caught by the schema alone.
+// Broadened (sol architect should-4): matches any key whose lowercased name CONTAINS
+// "confidence" (e.g. "confidenceScore"), not only an exact "confidence" key -- copied
+// identically into promotion-receipt/v0's and release-approval/v0's own verify-fixtures.mjs
+// (contracts/shared cannot be touched, so this lives in all three).
 function scanNumericConfidence(value, pathStr = "") {
   const violations = [];
   if (Array.isArray(value)) {
@@ -38,11 +42,35 @@ function scanNumericConfidence(value, pathStr = "") {
   if (value !== null && typeof value === "object") {
     for (const [key, val] of Object.entries(value)) {
       const here = pathStr ? `${pathStr}.${key}` : key;
-      if (key === "confidence" && typeof val === "number") violations.push(here);
+      if (key.toLowerCase().includes("confidence") && typeof val === "number") violations.push(here);
       violations.push(...scanNumericConfidence(val, here));
     }
   }
   return violations;
+}
+
+function isRealTimestamp(s) {
+  return typeof s === "string" && !Number.isNaN(Date.parse(s));
+}
+
+// R5 (Revision 2, sol architect should-2): locations[].start_line/end_line must be both null or
+// both non-null (never one recorded and the other missing), and when both are recorded,
+// end_line >= start_line -- a schema-level `type: ["integer","null"]` cannot express either
+// cross-field relationship on its own.
+function checkLocationConsistency(record) {
+  const reasons = [];
+  for (const f of record.findings ?? []) {
+    for (const [i, loc] of (f.locations ?? []).entries()) {
+      const bothNull = loc.start_line === null && loc.end_line === null;
+      const bothSet = loc.start_line !== null && loc.end_line !== null;
+      if (!bothNull && !bothSet) {
+        reasons.push(`location_line_partial: finding "${f.finding_id}" locations[${i}] has only one of start_line/end_line recorded`);
+      } else if (bothSet && loc.end_line < loc.start_line) {
+        reasons.push(`location_line_order: finding "${f.finding_id}" locations[${i}] end_line ${loc.end_line} < start_line ${loc.start_line}`);
+      }
+    }
+  }
+  return dedupe(reasons);
 }
 
 export function checkRecord(record) {
@@ -50,12 +78,16 @@ export function checkRecord(record) {
   reasons.push(...validate("review-findings.schema.json", record));
   reasons.push(...scanPersonalDimensions(record).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...scanNumericConfidence(record).map((v) => `numeric_confidence_forbidden_field: ${v}`));
+  if (!isRealTimestamp(record.recorded_at)) {
+    reasons.push(`invalid_calendar_timestamp: record "${record.record_id}" recorded_at "${record.recorded_at}" does not parse to a real date/time`);
+  }
   if (reasons.length > 0) return dedupe(reasons);
 
   const ids = (record.findings ?? []).map((f) => f.finding_id);
   for (const dup of dedupe(ids.filter((id, i) => ids.indexOf(id) !== i))) {
     reasons.push(`duplicate_finding_id: "${dup}" appears more than once in record "${record.record_id}"`);
   }
+  reasons.push(...checkLocationConsistency(record));
   return dedupe(reasons);
 }
 
