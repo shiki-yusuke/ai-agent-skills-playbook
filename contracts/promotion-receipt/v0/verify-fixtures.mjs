@@ -15,6 +15,25 @@
 //   this repo (no open params bag exists in this schema today, but the scan runs regardless so
 //   a future field addition cannot silently reintroduce either).
 //
+//   predicate-set completeness (R21, sol architect must-1): a pre_promotion receipt must carry
+//   all six pre_promotion predicate_ids exactly once (no fewer, no duplicates); a post_deploy
+//   receipt must carry deployed_artifact_readback exactly once. The three always-on
+//   pre_promotion predicates (artifact_identity, review_admissibility, verification_coverage)
+//   and post_deploy's own deployed_artifact_readback must be applicability=applicable -- this
+//   closes the escape hatch ask-2 flagged: marking every predicate not_applicable used to derive
+//   ready_for_approval (deriveVerdict sees zero applicable predicates and defaults favorably).
+//
+//   resolvable evidence kind (R9, sol architect must-2a, structural half): a satisfied or
+//   contradicted predicate must cite at least one evidence_refs entry whose kind is
+//   review_finding or release_evidence -- "other" alone is auxiliary information and can never
+//   by itself back a satisfied/contradicted status. This is the half of R9 checkable without a
+//   ledger: whether the cited evidence ACTUALLY resolves to something real is release-approval/
+//   v0's composite fixture's job (it alone carries the referenced records/bundles).
+//
+//   real-date semantics: the UTC-Z pattern in the schema accepts syntactically well-formed but
+//   calendar-nonsensical strings (e.g. "2026-99-99T00:00:00Z"); Date.parse resolves those to NaN
+//   and this verifier rejects them.
+//
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
 import { readFileSync, readdirSync } from "node:fs";
@@ -31,6 +50,10 @@ const { validate } = createValidator(HERE);
 const read = (f) => JSON.parse(readFileSync(path.join(FIXTURES_DIR, f), "utf-8"));
 const dedupe = (a) => [...new Set(a)];
 
+// Broadened (sol architect should-4): matches any key whose lowercased name CONTAINS
+// "confidence" (e.g. "confidenceScore", "Confidence_Level"), not only an exact "confidence"
+// key -- copied identically into review-findings/v1's and release-approval/v0's own
+// verify-fixtures.mjs (contracts/shared cannot be touched, so this lives in all three).
 export function scanNumericConfidence(value, pathStr = "") {
   const violations = [];
   if (Array.isArray(value)) {
@@ -40,11 +63,65 @@ export function scanNumericConfidence(value, pathStr = "") {
   if (value !== null && typeof value === "object") {
     for (const [key, val] of Object.entries(value)) {
       const here = pathStr ? `${pathStr}.${key}` : key;
-      if (key === "confidence" && typeof val === "number") violations.push(here);
+      if (key.toLowerCase().includes("confidence") && typeof val === "number") violations.push(here);
       violations.push(...scanNumericConfidence(val, here));
     }
   }
   return violations;
+}
+
+// R21: closed predicate_id sets per phase, and which of them may never be not_applicable.
+export const PRE_PROMOTION_PREDICATE_IDS = Object.freeze([
+  "artifact_identity",
+  "review_admissibility",
+  "verification_coverage",
+  "preview_verified",
+  "rollback_target_valid",
+  "privilege_boundary",
+]);
+export const POST_DEPLOY_PREDICATE_IDS = Object.freeze(["deployed_artifact_readback"]);
+export const ALWAYS_APPLICABLE_PREDICATE_IDS = Object.freeze([
+  "artifact_identity",
+  "review_admissibility",
+  "verification_coverage",
+  "deployed_artifact_readback",
+]);
+
+export function checkPredicateCompleteness(receipt) {
+  const reasons = [];
+  const expected = receipt.evaluation_phase === "pre_promotion" ? PRE_PROMOTION_PREDICATE_IDS : POST_DEPLOY_PREDICATE_IDS;
+  const ids = receipt.predicates.map((p) => p.predicate_id);
+  for (const id of expected) {
+    if (!ids.includes(id)) reasons.push(`predicate_missing: receipt "${receipt.receipt_id}" is missing required predicate_id "${id}" for phase "${receipt.evaluation_phase}"`);
+  }
+  for (const dup of dedupe(ids.filter((id, i) => ids.indexOf(id) !== i))) {
+    reasons.push(`predicate_duplicate: predicate_id "${dup}" appears more than once in receipt "${receipt.receipt_id}"`);
+  }
+  for (const p of receipt.predicates) {
+    if (ALWAYS_APPLICABLE_PREDICATE_IDS.includes(p.predicate_id) && p.applicability !== "applicable") {
+      reasons.push(`predicate_must_be_applicable: "${p.predicate_id}" is always-on and cannot be not_applicable (receipt "${receipt.receipt_id}")`);
+    }
+  }
+  return dedupe(reasons);
+}
+
+// R9 structural half: a satisfied/contradicted predicate needs at least one evidence_refs entry
+// of a KIND that can in principle be resolved (review_finding or release_evidence) -- "other" is
+// auxiliary-only. Whether that entry ACTUALLY resolves is release-approval/v0's composite job.
+export function checkResolvableEvidenceKind(receipt) {
+  const reasons = [];
+  for (const p of receipt.predicates) {
+    if (p.status !== "satisfied" && p.status !== "contradicted") continue;
+    const hasResolvableKind = p.evidence_refs.some((r) => r.kind === "review_finding" || r.kind === "release_evidence");
+    if (!hasResolvableKind) {
+      reasons.push(`no_resolvable_evidence_kind: predicate "${p.predicate_id}" is "${p.status}" but cites no review_finding/release_evidence evidence_ref (an "other"-only ref cannot back this status)`);
+    }
+  }
+  return dedupe(reasons);
+}
+
+function isRealTimestamp(s) {
+  return typeof s === "string" && !Number.isNaN(Date.parse(s));
 }
 
 // R12: excludes evaluated_at, receipt_id, semantic_digest from the digested object.
@@ -66,6 +143,14 @@ export function checkReceipt(receipt) {
   reasons.push(...validate("promotion-receipt.schema.json", receipt));
   reasons.push(...scanPersonalDimensions(receipt).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...scanNumericConfidence(receipt).map((v) => `numeric_confidence_forbidden_field: ${v}`));
+  if (reasons.length > 0) return dedupe(reasons);
+
+  if (!isRealTimestamp(receipt.evaluated_at)) {
+    reasons.push(`invalid_calendar_timestamp: receipt "${receipt.receipt_id}" evaluated_at "${receipt.evaluated_at}" does not parse to a real date/time`);
+  }
+
+  reasons.push(...checkPredicateCompleteness(receipt));
+  reasons.push(...checkResolvableEvidenceKind(receipt));
   if (reasons.length > 0) return dedupe(reasons);
 
   const expectedDigest = computeSemanticDigest(receipt);
