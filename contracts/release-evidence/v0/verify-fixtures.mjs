@@ -75,7 +75,12 @@ function checkBundle(bundle) {
 // prior state; its failure_phase must match how far the attempt had gotten.
 const GRAPH = {
   "(none)": { "prepared|null": "prepared" },
-  prepared: { "deployed|preview": "preview_deployed", "failed|preview": "failed" },
+  prepared: {
+    "deployed|preview": "preview_deployed",
+    "deployed|production": "production_deployed", // preview の無い deploy target (要 preview_skipped -- fold で検査)
+    "failed|preview": "failed",
+    "failed|production": "failed",
+  },
   preview_deployed: { "verified|preview": "preview_verified", "failed|preview": "failed" },
   preview_verified: {
     "deployed|staging": "staging_deployed",
@@ -139,16 +144,37 @@ function foldAttempt(rid, digest, evs, problems) {
       }
     }
     if (key === "deployed|production") {
-      const direct = state === "preview_verified";
-      if (direct && ev.staging_skipped !== true) {
-        problems.push(
-          `staging_skip_unrecorded: event "${ev.event_id}" jumps preview_verified -> production without staging_skipped: true (D5: the skip FACT must be recorded on the event)`,
-        );
-      }
-      if (!direct && ev.staging_skipped === true) {
-        problems.push(
-          `staging_skip_misrecorded: event "${ev.event_id}" declares staging_skipped after state "${state}" -- staging was not skipped`,
-        );
+      if (state === "prepared") {
+        // preview 層そのものが無い deploy target (最初の実 adapter 実証が出した現実)。
+        // 事実の記録が無い直行は違法。この jump は staging も定義上スキップするので
+        // staging_skipped の併記は禁止 (1つの flag が全体を語る)。
+        if (ev.preview_skipped !== true) {
+          problems.push(
+            `preview_skip_unrecorded: event "${ev.event_id}" jumps prepared -> production without preview_skipped: true (the skip FACT must be recorded on the event)`,
+          );
+        }
+        if (ev.staging_skipped === true) {
+          problems.push(
+            `staging_skip_misrecorded: event "${ev.event_id}" declares staging_skipped on a prepared -> production jump -- preview_skipped alone tells that story`,
+          );
+        }
+      } else {
+        if (ev.preview_skipped === true) {
+          problems.push(
+            `preview_skip_misrecorded: event "${ev.event_id}" declares preview_skipped after state "${state}" -- preview was not skipped`,
+          );
+        }
+        const direct = state === "preview_verified";
+        if (direct && ev.staging_skipped !== true) {
+          problems.push(
+            `staging_skip_unrecorded: event "${ev.event_id}" jumps preview_verified -> production without staging_skipped: true (D5: the skip FACT must be recorded on the event)`,
+          );
+        }
+        if (!direct && ev.staging_skipped === true) {
+          problems.push(
+            `staging_skip_misrecorded: event "${ev.event_id}" declares staging_skipped after state "${state}" -- staging was not skipped`,
+          );
+        }
       }
       reachedProduction = true;
     }
