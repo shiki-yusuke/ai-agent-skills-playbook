@@ -1,0 +1,54 @@
+schema_version: "1.0"
+intent_id: I-2026-08-23-shared-validator-oneof
+decision: pass
+confidence: high
+per_lens:
+  - lens_id: lifecycle_management
+    result: applicable
+    finding: "凍結済み契約 (release-evidence/v0 は FROZEN) の検証が事後に厳格化される。凍結時に通っていた fixture が通らなくなれば freeze 規律との緊張になるが、期待結果が変わらないこと (R6) を回帰条件にしているため、変わった場合は fixture 側でなく実装の bug として扱う"
+    taxonomy: compatibility_missed
+    evidence: "release-evidence の全40 fixture は凍結時点で oneOf 分岐に正しく一致している想定。R5(e) + R6 が実測で確認する"
+    knowledge_candidates: []
+  - lens_id: error_handling
+    result: applicable
+    finding: "oneOf の失敗時、どの分岐がなぜ落ちたかの詳細を出さない設計 (matched N のみ)。デバッグ性は劣るが、非一致分岐のエラー漏れ防止 (R2) を優先。既存 if/not と同じトレードオフ"
+    taxonomy: observability_gap
+    evidence: "既存 not keyword も同様に詳細を出さない。一貫性を優先"
+    knowledge_candidates: []
+  - lens_id: security
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: performance
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: a11y
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: i18n
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: architecture
+    result: applicable
+    finding: "validator は『この repo の schema が使う subset そのもの』という設計原則 (冒頭コメント) を持つ。oneOf 追加は使用実態 (release-evidence 2箇所) に合致し原則内。anyOf を同時に足さないのはこの原則の適用 (使用ゼロ)"
+    taxonomy: architecture_violation
+    evidence: "schema-validator.mjs:1-10 の設計宣言。grep で anyOf 使用ゼロを確認済み"
+    knowledge_candidates: []
+  - lens_id: test_coverage
+    result: applicable
+    finding: "独立再探索: oneOf 追加で挙動が変わりうるのは oneOf を含む schema だけだが、$ref 経由で release-evidence schema を参照する他契約があれば波及する。grep では release-approval の composite verifier が release-evidence schema を直接 createValidator で読む (F lane で追加した embed 検証)。ここも厳格化の影響先なので R6 の全回帰に含まれることを確認する"
+    taxonomy: test_missing
+    evidence: "release-approval/v0/verify-fixtures.mjs の embed bundle 検証 (F lane commit 1db7a1a)"
+    knowledge_candidates: []
+  - lens_id: documentation
+    result: applicable
+    finding: "冒頭のサポート keyword 一覧が実装と乖離すると『何が検証されるか』の契約が嘘になる (今回の欠陥もこの一覧に oneOf が無いのに schema が使っていたのが根)。R4 で一覧更新を必須化"
+    taxonomy: wrong_assumption
+    evidence: "schema-validator.mjs:1-10"
+    knowledge_candidates: []
+halt_triggers: []
+missing_scenarios: []
+wrong_assumptions: []
+open_questions:
+  - "lane repo 等に vendor 済みの validator copy は commit pin のため本変更後も oneOf 未対応のまま。再 vendor のタイミング (UPSTREAM 手順) は別タスク"
+required_actions:
+  - "R5(e) の実 schema 回帰は release-evidence の fixtures を read-only 参照し、コピーを作らない"
