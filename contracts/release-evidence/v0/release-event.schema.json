@@ -15,21 +15,41 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "const": "release-evidence/v0" },
+    "schema_version": {
+      "const": "release-evidence/v0"
+    },
     "event_id": {
       "type": "string",
       "minLength": 1,
       "description": "Unique within the ledger (collection-checked). Implementations SHOULD derive it deterministically from (release_id, bundle_digest, kind, environment, occurred_at) so a re-emitted event is idempotent rather than duplicated."
     },
-    "release_id": { "type": "string", "minLength": 1 },
+    "release_id": {
+      "type": "string",
+      "minLength": 1
+    },
     "kind": {
-      "enum": ["prepared", "deployed", "verified", "failed", "rolled_back", "attested"],
+      "enum": [
+        "prepared",
+        "deployed",
+        "verified",
+        "failed",
+        "rolled_back",
+        "attested"
+      ],
       "description": "prepared = the evidence bundle was assembled and sealed (no environment yet). deployed/verified = the bundle's artifacts reached / were verified in `environment`. failed = a deploy attempt, a verification, or post-verification operation failed there (failure_phase says which). rolled_back = this attempt was withdrawn in favor of rollback_to_release_id. attested = a later-arriving piece of evidence (e.g. the lane's Phase-5 done overlay, which cannot exist at seal time for a pre-merge preview) was pinned WITHOUT changing the sealed bundle -- the state-machine position is unchanged by an attested event."
     },
     "environment": {
       "oneOf": [
-        { "enum": ["preview", "staging", "production"] },
-        { "type": "null" }
+        {
+          "enum": [
+            "preview",
+            "staging",
+            "production"
+          ]
+        },
+        {
+          "type": "null"
+        }
       ],
       "description": "null exactly when kind is prepared or attested (both are environment-less); every other kind names where it happened. Schema-enforced below."
     },
@@ -39,7 +59,11 @@
       "description": "UTC, literal Z only -- same rule as release-observation/v0's deployed_at, so deriving an observation event never needs timezone normalization (sol should-4)."
     },
     "actor": {
-      "enum": ["human", "ci", "cli"],
+      "enum": [
+        "human",
+        "ci",
+        "cli"
+      ],
       "description": "Who caused the transition. No `agent` member on purpose: v0 has no autonomous deploy path (D5 defers automatic promotion/rollback outright)."
     },
     "bundle_digest": {
@@ -48,7 +72,11 @@
       "description": "sha256 of the JCS (RFC 8785) canonical bytes of this attempt's sealed evidence bundle. Verified against the REAL bundle in release-collection fixtures -- a string that merely repeats across events proves nothing (sol must-2). Every event of one attempt MUST carry the same value; a new bundle is a new attempt starting at prepared."
     },
     "failure_phase": {
-      "enum": ["deploy", "verification", "post_verification"],
+      "enum": [
+        "deploy",
+        "verification",
+        "post_verification"
+      ],
       "description": "failed only (schema-enforced below): deploy = the deploy attempt itself failed (legal directly from a pre-deploy state); verification = the environment's verification failed after a successful deploy; post_verification = a previously verified release was later observed broken (e.g. production incident). Required so release-observation/v0's verification_status can be machine-derived (sol must-6/ask-4)."
     },
     "rollback_to_release_id": {
@@ -67,49 +95,225 @@
     },
     "attestation": {
       "type": "object",
-      "required": ["kind", "digest"],
+      "required": [
+        "kind",
+        "digest"
+      ],
       "additionalProperties": false,
       "properties": {
-        "kind": { "enum": ["lane_done_overlay"] },
-        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-        "ref": { "type": "string", "minLength": 1 }
+        "kind": {
+          "enum": [
+            "lane_done_overlay"
+          ]
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        }
       },
       "description": "attested only (schema-enforced below). The seal-time/later-evidence split sol's must-3 requires: the bundle stays immutable from `prepared` on, and evidence that can only exist later (a merged lane's done overlay) arrives as an attestation pinned to the same bundle_digest. The production gate for a lane-backed bundle is: a lane_done_overlay attestation exists before deployed|production (collection-checked)."
     },
-    "notes": { "type": "string", "minLength": 1 }
+    "notes": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preview_skipped": {
+      "const": true,
+      "description": "deployed|production only, and only on a prepared -> production jump (no preview tier exists for this deploy target -- the case the FIRST real adapter exercise surfaced: a scheduled Pages rebuild has no preview environment at all). Mirrors staging_skipped: the skip is a recorded fact, never an implicit default. Requires preview_skipped_code. Collection-checked both ways: required on the direct jump, forbidden anywhere else. A prepared -> production jump skips staging too by definition, so staging_skipped is forbidden alongside it (one flag tells the whole story)."
+    },
+    "preview_skipped_code": {
+      "enum": [
+        "no_preview_environment_scheduled_rebuild",
+        "other"
+      ],
+      "description": "Closed reason codes for skipping preview, same rationale as the bundle's omission codes: a production gate can allowlist codes, it cannot allowlist prose. Required exactly when preview_skipped is present."
+    }
   },
   "allOf": [
     {
-      "if": { "required": ["kind"], "properties": { "kind": { "enum": ["prepared", "attested"] } } },
-      "then": { "properties": { "environment": { "type": "null" } } },
-      "else": { "properties": { "environment": { "enum": ["preview", "staging", "production"] } } }
-    },
-    {
-      "if": { "required": ["kind"], "properties": { "kind": { "const": "failed" } } },
-      "then": { "required": ["failure_phase", "reason"] },
-      "else": { "not": { "required": ["failure_phase"] } }
-    },
-    {
-      "if": { "required": ["kind"], "properties": { "kind": { "const": "rolled_back" } } },
-      "then": { "required": ["rollback_to_release_id", "reason"] },
-      "else": { "not": { "required": ["rollback_to_release_id"] } }
-    },
-    {
-      "if": { "required": ["kind"], "properties": { "kind": { "const": "attested" } } },
-      "then": { "required": ["attestation"] },
-      "else": { "not": { "required": ["attestation"] } }
+      "if": {
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "prepared",
+              "attested"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "environment": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "environment": {
+            "enum": [
+              "preview",
+              "staging",
+              "production"
+            ]
+          }
+        }
+      }
     },
     {
       "if": {
-        "required": ["kind"],
-        "properties": { "kind": { "enum": ["prepared", "verified", "attested", "rolled_back", "failed"] } }
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "const": "failed"
+          }
+        }
       },
-      "then": { "not": { "required": ["staging_skipped"] } }
+      "then": {
+        "required": [
+          "failure_phase",
+          "reason"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "failure_phase"
+          ]
+        }
+      }
     },
     {
-      "if": { "required": ["kind"], "properties": { "kind": { "enum": ["prepared", "deployed", "verified", "attested"] } } },
-      "then": { "not": { "required": ["reason"] } },
+      "if": {
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "const": "rolled_back"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "rollback_to_release_id",
+          "reason"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "rollback_to_release_id"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "const": "attested"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "attestation"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "attestation"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "prepared",
+              "verified",
+              "attested",
+              "rolled_back",
+              "failed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "staging_skipped"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "enum": [
+              "prepared",
+              "deployed",
+              "verified",
+              "attested"
+            ]
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "reason"
+          ]
+        }
+      },
       "else": {}
+    },
+    {
+      "if": {
+        "required": [
+          "preview_skipped"
+        ]
+      },
+      "then": {
+        "required": [
+          "preview_skipped_code"
+        ],
+        "properties": {
+          "kind": {
+            "const": "deployed"
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "preview_skipped_code"
+          ]
+        }
+      }
     }
   ]
 }

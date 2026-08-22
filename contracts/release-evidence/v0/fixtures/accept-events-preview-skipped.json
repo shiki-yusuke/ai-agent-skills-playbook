@@ -1,0 +1,34 @@
+[
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "dash@2026-08-22#ps01",
+  "release_id": "dash@2026-08-22",
+  "kind": "prepared",
+  "environment": null,
+  "occurred_at": "2026-08-22T03:00:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "dash@2026-08-22#ps02",
+  "release_id": "dash@2026-08-22",
+  "kind": "deployed",
+  "environment": "production",
+  "occurred_at": "2026-08-22T03:05:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "preview_skipped": true,
+  "preview_skipped_code": "no_preview_environment_scheduled_rebuild"
+ },
+ {
+  "schema_version": "release-evidence/v0",
+  "event_id": "dash@2026-08-22#ps03",
+  "release_id": "dash@2026-08-22",
+  "kind": "verified",
+  "environment": "production",
+  "occurred_at": "2026-08-22T03:06:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+ }
+]

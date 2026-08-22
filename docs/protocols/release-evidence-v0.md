@@ -50,8 +50,9 @@ fixture-before-evidence mistake).
 
 ```
 (none) → prepared → preview_deployed → preview_verified
-                                          ├→ staging_deployed → staging_verified ┐
-                                          └──────────────────────────────────────┴→ production_deployed
+             │                            ├→ staging_deployed → staging_verified ┐
+             │ (preview_skipped)          └──────────────────────────────────────┴→ production_deployed
+             └────────────────────────────────────────────────────────────────────→ production_deployed
 production_deployed → production_verified | failed | rolled_back
 production_verified → failed | rolled_back
 failed → rolled_back            (only if this attempt had reached production)
@@ -72,6 +73,14 @@ failed, rolled_back             (otherwise terminal)
 - **Staging is optional topology, but the skip is a recorded fact** (D5): a
   `preview_verified → production` jump requires `staging_skipped: true` on the deployed event,
   and the flag is forbidden when staging was actually used.
+- **Some deploy targets have no preview tier at all** — the FIRST real adapter exercise
+  surfaced this within hours of the draft merging: a scheduled GitHub Pages dashboard rebuild
+  deploys straight to its production URL, with no preview environment in existence. Pretending
+  the CI workspace is a "preview environment" would be a fabricated tier, so the graph instead
+  admits `prepared → production` **only** when the event records `preview_skipped: true` plus a
+  closed `preview_skipped_code` (same design as `staging_skipped`, same rationale as the
+  bundle's omission codes: a gate can allowlist codes, not prose). This jump skips staging by
+  definition, so `staging_skipped` is forbidden alongside it — one flag tells the whole story.
 - **Rollback targets resolve**: `rollback_to_release_id` must name a *different* release that
   reached production *earlier in the same ledger*; a bundle's `rollback.previous_release_id`
   must differ from its own release and resolve within the checked collection.
