@@ -17,7 +17,9 @@
   ],
   "additionalProperties": false,
   "properties": {
-    "schema_version": { "const": "release-evidence/v0" },
+    "schema_version": {
+      "const": "release-evidence/v0"
+    },
     "release_id": {
       "type": "string",
       "minLength": 1,
@@ -25,7 +27,12 @@
     },
     "source": {
       "type": "object",
-      "required": ["repo", "commit_sha", "tree_digest", "resolution"],
+      "required": [
+        "repo",
+        "commit_sha",
+        "tree_digest",
+        "resolution"
+      ],
       "additionalProperties": false,
       "properties": {
         "repo": {
@@ -44,66 +51,143 @@
           "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$",
           "description": "git tree object id of the commit's root tree. The tree, not the commit, is what the production gate compares across a squash merge (D5)."
         },
-        "ref": { "type": "string", "minLength": 1 },
-        "resolution": { "enum": ["git_tree"] }
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolution": {
+          "enum": [
+            "git_tree"
+          ]
+        }
       }
     },
     "lane_ref": {
       "oneOf": [
         {
           "type": "object",
-          "required": ["lane_id", "intent_digest", "spec_digest", "consensus_ack_digest", "verification_digest"],
+          "required": [
+            "lane_id",
+            "intent_digest",
+            "spec_digest",
+            "consensus_ack_digest",
+            "verification_digest"
+          ],
           "additionalProperties": false,
           "properties": {
-            "lane_id": { "type": "string", "minLength": 1 },
-            "intent_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-            "spec_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-            "consensus_ack_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-            "premise_evidence_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-            "verification_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-            "matrix_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+            "lane_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "intent_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "spec_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "consensus_ack_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "premise_evidence_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "verification_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            "matrix_digest": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            }
           },
           "description": "Digest pins of the lane artifacts that existed AT SEAL TIME. Deliberately no done_overlay_digest: the done overlay cannot exist for a pre-merge preview, and adding it later would change the sealed digest -- it arrives as an `attested` event instead (sol must-3). The production gate for a lane-backed bundle is collection-checked: a lane_done_overlay attestation must precede deployed|production."
         },
-        { "type": "null" }
+        {
+          "type": "null"
+        }
       ],
       "description": "NULL -- not omitted -- when no lane produced this release; lane_ref_omitted is then required (and forbidden otherwise)."
     },
     "lane_ref_omitted": {
       "type": "object",
-      "required": ["code", "note"],
+      "required": [
+        "code",
+        "note"
+      ],
       "additionalProperties": false,
       "properties": {
         "code": {
-          "enum": ["no_lane_scheduled_rebuild", "multiple_contributing_lanes", "legacy_release_predates_contract", "other"],
+          "enum": [
+            "no_lane_scheduled_rebuild",
+            "multiple_contributing_lanes",
+            "legacy_release_predates_contract",
+            "other"
+          ],
           "description": "Closed reason codes, not free text alone: a bare string lets any release opt out of evidence by writing a sentence, and collapses 'no lane exists' with 'many lanes contributed' -- a distinction release-observation/v0 already documented as a known limit (sol must-10). A production gate can allowlist codes; it cannot allowlist prose."
         },
-        "note": { "type": "string", "minLength": 1 }
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "review": {
       "oneOf": [
         {
           "type": "object",
-          "required": ["pr", "head_sha", "decision"],
+          "required": [
+            "pr",
+            "head_sha",
+            "decision"
+          ],
           "additionalProperties": false,
           "properties": {
-            "pr": { "type": "integer", "minimum": 1 },
-            "head_sha": { "type": "string", "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$" },
-            "decision": { "enum": ["approved", "commented", "self_merged"] }
+            "pr": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "head_sha": {
+              "type": "string",
+              "pattern": "^([0-9a-f]{40}|[0-9a-f]{64})$"
+            },
+            "decision": {
+              "enum": [
+                "approved",
+                "commented",
+                "self_merged"
+              ]
+            }
           }
         },
-        { "type": "null" }
+        {
+          "type": "null"
+        }
       ],
       "description": "PR provenance for the source that reached the default branch; head_sha comes from the GitHub API envelope, never a marker payload (D11). NULL with review_omitted for releases with no per-release review. D5's caveat stands: approve is provenance, not release-safety evidence -- the machine's verified events are the safety record. The production gate treats decision=commented as not-a-pass (collection-checked)."
     },
     "review_omitted": {
       "type": "object",
-      "required": ["code", "note"],
+      "required": [
+        "code",
+        "note"
+      ],
       "additionalProperties": false,
       "properties": {
-        "code": { "enum": ["scheduled_rebuild_deploys_reviewed_main", "legacy_release_predates_contract", "other"] },
-        "note": { "type": "string", "minLength": 1 }
+        "code": {
+          "enum": [
+            "scheduled_rebuild_deploys_reviewed_main",
+            "legacy_release_predates_contract",
+            "other"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "artifacts": {
@@ -111,10 +195,21 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["kind", "digest"],
+        "required": [
+          "kind",
+          "digest"
+        ],
         "additionalProperties": false,
         "properties": {
-          "kind": { "enum": ["package", "static_site", "container", "binary", "other"] },
+          "kind": {
+            "enum": [
+              "package",
+              "static_site",
+              "container",
+              "binary",
+              "other"
+            ]
+          },
           "digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
@@ -123,54 +218,164 @@
           "content_manifest_digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
-            "description": "static_site only (required there, forbidden elsewhere -- both schema-enforced): digest of the release-manifest.json actually placed into the deployed site and read back after deploy."
+            "description": "static_site only (required there, forbidden elsewhere -- both schema-enforced): sha256 over the BYTES of the release-manifest.json file actually placed into the deployed site and read back after deploy. That file is {schema_version, content} ONLY -- it deliberately does NOT embed bundle_digest, because the bundle embeds THIS digest: a file that also embedded the bundle's digest would make the two mutually referential and neither computable (found by the first real adapter assembly, 2026-08-22). The site<->bundle linkage is re-derived at read-back instead: JCS-sha256 of the file's content map must equal this artifact's `digest`."
           },
           "artifact_ref": {
             "type": "object",
-            "required": ["registry", "package", "version", "verifiability"],
+            "required": [
+              "registry",
+              "package",
+              "version",
+              "verifiability"
+            ],
             "additionalProperties": false,
             "properties": {
-              "registry": { "enum": ["npm", "pypi", "github-pages", "other"] },
-              "package": { "type": "string", "minLength": 1 },
-              "version": { "type": "string", "minLength": 1 },
+              "registry": {
+                "enum": [
+                  "npm",
+                  "pypi",
+                  "github-pages",
+                  "other"
+                ]
+              },
+              "package": {
+                "type": "string",
+                "minLength": 1
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1
+              },
               "distribution": {
                 "type": "string",
                 "minLength": 1,
                 "description": "Required for pypi (schema-enforced): one PyPI release publishes wheel+sdist with different sha256 each -- release-observation/v0 measured this live; without naming the file the digest resolves to nothing."
               },
-              "registry_url": { "type": "string", "minLength": 1 },
+              "registry_url": {
+                "type": "string",
+                "minLength": 1
+              },
               "verifiability": {
-                "enum": ["registry_metadata", "requires_fetch", "unverifiable"],
+                "enum": [
+                  "registry_metadata",
+                  "requires_fetch",
+                  "unverifiable"
+                ],
                 "description": "Measured per registry, not asserted: release-observation/v0 confirmed live that PyPI metadata exposes sha256 (registry_metadata) and npm exposes only sha1/sha512 (requires_fetch). npm + registry_metadata is therefore schema-rejected."
               },
-              "unverifiable_reason": { "type": "string", "minLength": 1 }
+              "unverifiable_reason": {
+                "type": "string",
+                "minLength": 1
+              }
             },
             "allOf": [
               {
-                "if": { "required": ["registry"], "properties": { "registry": { "const": "pypi" } } },
-                "then": { "required": ["distribution"] }
+                "if": {
+                  "required": [
+                    "registry"
+                  ],
+                  "properties": {
+                    "registry": {
+                      "const": "pypi"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "distribution"
+                  ]
+                }
               },
               {
-                "if": { "required": ["registry"], "properties": { "registry": { "const": "npm" } } },
-                "then": { "properties": { "verifiability": { "enum": ["requires_fetch", "unverifiable"] } } }
+                "if": {
+                  "required": [
+                    "registry"
+                  ],
+                  "properties": {
+                    "registry": {
+                      "const": "npm"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "verifiability": {
+                      "enum": [
+                        "requires_fetch",
+                        "unverifiable"
+                      ]
+                    }
+                  }
+                }
               },
               {
-                "if": { "required": ["verifiability"], "properties": { "verifiability": { "const": "unverifiable" } } },
-                "then": { "required": ["unverifiable_reason"] },
-                "else": { "not": { "required": ["unverifiable_reason"] } }
+                "if": {
+                  "required": [
+                    "verifiability"
+                  ],
+                  "properties": {
+                    "verifiability": {
+                      "const": "unverifiable"
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "unverifiable_reason"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "required": [
+                      "unverifiable_reason"
+                    ]
+                  }
+                }
               }
             ]
           }
         },
         "allOf": [
           {
-            "if": { "required": ["kind"], "properties": { "kind": { "const": "static_site" } } },
-            "then": { "required": ["content_manifest_digest"] },
-            "else": { "not": { "required": ["content_manifest_digest"] } }
+            "if": {
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "static_site"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "content_manifest_digest"
+              ]
+            },
+            "else": {
+              "not": {
+                "required": [
+                  "content_manifest_digest"
+                ]
+              }
+            }
           },
           {
-            "if": { "required": ["kind"], "properties": { "kind": { "const": "package" } } },
-            "then": { "required": ["artifact_ref"] }
+            "if": {
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "package"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "artifact_ref"
+              ]
+            }
           }
         ]
       },
@@ -178,27 +383,50 @@
     },
     "build": {
       "type": "object",
-      "required": ["recipe_digest", "toolchain_digest"],
+      "required": [
+        "recipe_digest",
+        "toolchain_digest"
+      ],
       "additionalProperties": false,
       "properties": {
-        "recipe_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-        "recipe_ref": { "type": "string", "minLength": 1 },
-        "toolchain_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
-        "toolchain_ref": { "type": "string", "minLength": 1 }
+        "recipe_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "recipe_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "toolchain_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "toolchain_ref": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "known_deviations": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
       "description": "Deviations KNOWN AT SEAL TIME only (sol must-4): anything discovered later must not edit the sealed bundle -- it belongs in an append-only record pinned to this bundle's digest (v0 defines no such record yet; v1 will, informed by the first real case). Sorted ascending, unique (semantic check)."
     },
     "rollback": {
       "type": "object",
-      "required": ["previous_release_id"],
+      "required": [
+        "previous_release_id"
+      ],
       "additionalProperties": false,
       "properties": {
         "previous_release_id": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "minLength": 1,
           "description": "The release to return to if this one is rolled back; must differ from this bundle's own release_id (semantic check) and, when a ledger is checked alongside, must resolve within it. NULL only for a first-ever release of a target."
         }
@@ -206,24 +434,71 @@
     },
     "integrity": {
       "type": "object",
-      "required": ["level", "signature"],
+      "required": [
+        "level",
+        "signature"
+      ],
       "additionalProperties": false,
       "properties": {
-        "level": { "enum": ["digest_only"] },
-        "signature": { "type": "null" }
+        "level": {
+          "enum": [
+            "digest_only"
+          ]
+        },
+        "signature": {
+          "type": "null"
+        }
       }
     }
   },
   "allOf": [
     {
-      "if": { "required": ["lane_ref"], "properties": { "lane_ref": { "type": "null" } } },
-      "then": { "required": ["lane_ref_omitted"] },
-      "else": { "not": { "required": ["lane_ref_omitted"] } }
+      "if": {
+        "required": [
+          "lane_ref"
+        ],
+        "properties": {
+          "lane_ref": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "lane_ref_omitted"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "lane_ref_omitted"
+          ]
+        }
+      }
     },
     {
-      "if": { "required": ["review"], "properties": { "review": { "type": "null" } } },
-      "then": { "required": ["review_omitted"] },
-      "else": { "not": { "required": ["review_omitted"] } }
+      "if": {
+        "required": [
+          "review"
+        ],
+        "properties": {
+          "review": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "review_omitted"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "review_omitted"
+          ]
+        }
+      }
     }
   ]
 }
