@@ -37,6 +37,33 @@ AIエージェント（Claude / Codex等）を使った開発で再利用して�
 
 各スキルディレクトリの README / SKILL.md を、導入先プロダクトの実際の構成（ディレクトリ構造・依存関係ルール・使用ツール）に合わせて具体化してから使う。テンプレートの `<placeholder>` 部分を実プロジェクトの値に置き換えること。
 
+### Agent Skillとして導入する
+
+`pre-implementation-impact-scan`は、対象projectのrootでCodexまたはClaude Codeへ
+GitHubから導入できます。
+
+```bash
+# Codex
+npx skills add shiki-yusuke/ai-agent-skills-playbook \
+  --agent codex \
+  --skill pre-implementation-impact-scan \
+  --copy --yes
+
+# Claude Code
+npx skills add shiki-yusuke/ai-agent-skills-playbook \
+  --agent claude-code \
+  --skill pre-implementation-impact-scan \
+  --copy --yes
+```
+
+上記は2026-08-23に`skills` CLI 1.5.23の隔離環境で実測済みです。`npx skills`は第三者
+installerで、導入時にはGitHubへ接続し、公式document上は匿名install telemetryが既定で有効です。
+必要なら`DISABLE_TELEMETRY=1`を設定してください。この手順はproject-localへcopyするため、
+対象repositoryごとに実行します。
+
+`spec-based-impact-analysis`は現在`SKILL.md`を持たない手順・template corpusであり、Agent Skill
+としては導入されません。対象projectに合わせて具体化してから利用してください。
+
 ## 収録ドキュメント
 
 | ドキュメント | 一言で言うと |
