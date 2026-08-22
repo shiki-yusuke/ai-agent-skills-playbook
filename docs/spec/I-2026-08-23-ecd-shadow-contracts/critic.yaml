@@ -1,0 +1,63 @@
+schema_version: "1.0"
+intent_id: I-2026-08-23-ecd-shadow-contracts
+decision: pass
+confidence: medium
+per_lens:
+  - lens_id: lifecycle_management
+    result: applicable
+    finding: "3契約は draft_revision であり freeze されない。consumer が draft を凍結契約と誤認して vendor する経路が存在する（release-observation/v0 で freeze tag 未付与の慣例の穴を既に1回踏んでいる）"
+    taxonomy: lifecycle_missed
+    evidence: "正本プラン versioning 規則: freeze 前は draft_revision、v0 を『自由に変更可能』にしない。既存契約の UPSTREAM marker は commit pin なので draft でも技術的には vendor 可能"
+    knowledge_candidates: []
+  - lens_id: error_handling
+    result: applicable
+    finding: "verifier は schema-invalid (invalid-*) と semantic-reject (reject-*) を fixture 命名規約で区別する必要がある。期待結果が fixture 名に宣言されていないと『通ったから正しい』の循環になる"
+    taxonomy: test_missing
+    evidence: "release-evidence/v0 の verify-fixtures.mjs が同じ命名規約 (accept-/invalid-/reject-) を採用済み。同型を踏襲する"
+    knowledge_candidates: []
+  - lens_id: security
+    result: applicable
+    finding: "personal-dimensions scan は key 名ベースであり、claim / notes / evidence_refs 等の自由文 value に人名・email が混入しても機械検出できない。principal_id は pattern で email 形式を拒否できるが、それ以外の value レベル混入は review 規律依存になる"
+    taxonomy: observability_gap
+    evidence: "contracts/shared/personal-dimensions.mjs は forbidden key 11種の走査 (深さ64)。value 走査は存在しない。protocol doc に value レベルの禁止を normative MUST として明記し、fixture には境界例 (principal_id に @ を含む invalid) を置く"
+    knowledge_candidates: []
+  - lens_id: performance
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: a11y
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: i18n
+    result: not_applicable
+    knowledge_candidates: []
+  - lens_id: architecture
+    result: applicable
+    finding: "promotion-receipt が必須参照する selection_manifest_digest の指す selection manifest 自体の契約が存在しない (何を JCS するかが未定義)。v0 draft では opaque digest として扱う caveat を protocol doc に明記しないと、digest の意味が実装ごとに分岐する"
+    taxonomy: missing_state
+    evidence: "正本プラン Round 3 の sidecar 式: bundle digest + review-findings digest(s) + policy digest + selection manifest digest → receipt。前3者は定義済み (release-evidence bundle / 本 lane / policy_digest は opaque で設計上正しい) だが selection manifest だけ未定義"
+    knowledge_candidates: []
+  - lens_id: test_coverage
+    result: applicable
+    finding: "独立再探索の結果: cross-check 表の軸 (5系統 + 禁止事項) は単一契約内の拒否は覆うが、TEST-06/TEST-09 の実体は『findings record + receipt + approval が同一 ledger 内で digest 解決される』cross-contract 挙動であり、単一契約 dir の fixture だけでは検証できない。release-approval の ledger fixture に3契約合成の composite fixture が最低1本必要"
+    taxonomy: test_missing
+    evidence: "release-evidence/v0 が同じ問題を cross-record 検証 (event.bundle_digest = 実 bundle の JCS sha256) で解いた前例あり (sol must-2)。同じ手法を release-approval の verifier に置く"
+    knowledge_candidates: []
+  - lens_id: documentation
+    result: applicable
+    finding: "既存 decision/v1 (設計判断の記録) と promotion-receipt/v0 (述語の機械評価) は命名が隣接し誤用されうる。protocol doc に『decision という語をフィールドに使わない (verdict)』『decision/v1 とは無関係』を明記する必要がある"
+    taxonomy: scope_ambiguity
+    evidence: "正本プラン Round 3 裁定: decision-receipt/v0 を不採用にし promotion-receipt/v0 へ改名した経緯そのもの"
+    knowledge_candidates: []
+halt_triggers: []
+missing_scenarios:
+  - taxonomy: test_missing
+    title: "3契約合成の composite ledger fixture (findings → receipt → approval の digest 解決)"
+    suggested_gherkin: "Given findings record と receipt と approval を含む ledger fixture / When 全 digest 参照が実 JCS sha256 で解決される Then accept / When receipt_digest がどの receipt とも一致しない Then reject"
+wrong_assumptions: []
+open_questions:
+  - "selection_manifest_digest の対象 (selection manifest 契約) を v1 で切るか、release-evidence 側の将来版に含めるか — 本 lane では opaque + caveat で先送り"
+required_actions:
+  - "protocol doc 3本の冒頭に Status: DRAFT (draft_revision 1) — NOT FROZEN を明記"
+  - "promotion-receipt protocol doc に selection_manifest_digest = opaque digest (契約未定義、consumer 定義) の caveat を明記"
+  - "release-approval の fixtures に composite ledger fixture (accept 1 + reject 1 以上) を含める"
+  - "promotion-receipt protocol doc に decision/v1 との区別を明記"
