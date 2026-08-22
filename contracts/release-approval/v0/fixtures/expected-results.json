@@ -6,6 +6,7 @@
     { "type": "composite", "expected": "accept", "files": "accept-composite-happy.json" },
     { "type": "composite", "expected": "accept", "files": "accept-composite-grant-then-revoke.json" },
     { "type": "composite", "expected": "accept", "files": "accept-composite-break-glass-on-non-ready-receipt.json" },
+    { "type": "composite", "expected": "accept", "files": "accept-composite-revoke-subject-key-order.json" },
     { "type": "event", "expected": "accept", "files": "accept-event-approval-granted.json" },
     { "type": "event", "expected": "accept", "files": "accept-event-break-glass.json" },
 
@@ -42,6 +43,9 @@
     { "type": "composite", "expected": "reject", "reason_code": "predicate_evidence_unresolved", "files": "reject-composite-release-evidence-no-bundle.json" },
     { "type": "composite", "expected": "reject", "reason_code": "release_evidence_digest_mismatch", "files": "reject-composite-release-evidence-digest-mismatch.json" },
     { "type": "composite", "expected": "reject", "reason_code": "bypassed_predicate_not_in_receipt", "files": "reject-composite-bypassed-predicate-not-in-receipt.json" },
-    { "type": "composite", "expected": "reject", "reason_code": "approval_before_evaluation", "files": "reject-composite-approval-before-evaluation.json" }
+    { "type": "composite", "expected": "reject", "reason_code": "approval_before_evaluation", "files": "reject-composite-approval-before-evaluation.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "bundles[0] not individually valid", "files": "reject-composite-embedded-bundle-schema-invalid.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "duplicate_embedded_bundle", "files": "reject-composite-embedded-bundle-duplicate-digest.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "bundle_digest_unresolved", "files": "reject-composite-bundle-digest-unresolved.json" }
   ]
 }

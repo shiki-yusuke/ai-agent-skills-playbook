@@ -139,13 +139,13 @@
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-nobundle",
-    "evaluated_at": "2026-08-23T21:00:00Z",
+    "receipt_id": "pr-composite-keyorder",
+    "evaluated_at": "2026-08-23T19:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
       "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
       "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
-      "target": "production"
+      "target": "staging"
     },
     "policy_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
     "effective_risk": "medium",
@@ -157,8 +157,8 @@
         "evidence_refs": [
           {
             "kind": "release_evidence",
-            "ref": "spec-lane@0.6.0",
-            "digest": "sha256:2ed11dd694c45bc4874ae1092a2f7ced4391cb8bd38b26e0093b7269077a38e6"
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f"
           }
         ]
       },
@@ -212,27 +212,46 @@
       }
     ],
     "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:088ec666907f8a4e9f2fe45b6580dc2542348d90ca137678c4eb986e074f03a1"
+    "semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:349e73cbd308772b1f0735051e49f75aa159131e9b97c9a2ed3f0b9e3e46832b",
-        "receipt_semantic_digest": "sha256:088ec666907f8a4e9f2fe45b6580dc2542348d90ca137678c4eb986e074f03a1",
+        "receipt_digest": "sha256:cc86667dba80822a03db8ecd8f1a1019d9311b4aa19767d4accd67452606fae8",
+        "receipt_semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636",
         "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
-        "target": "production"
+        "target": "staging"
       },
       "principal": {
-        "principal_id": "release-captain-04",
+        "principal_id": "release-captain-02",
         "issuer": "github-actions-oidc",
         "role_snapshot": "release-approver"
       },
-      "occurred_at": "2026-08-23T21:10:00Z",
+      "occurred_at": "2026-08-23T19:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:ccae788e53540e4c025a2d8a48ff3be150a32f71f78e529f6f9bfc87d325ef82"
+      "event_id": "sha256:2f4235922620241966933bbeda27901cd5bf8a1193108631a2b1a8232e6d199a"
+    },
+    {
+      "schema_version": "release-approval/v0",
+      "kind": "approval_revoked",
+      "subject": {
+        "target": "staging",
+        "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
+        "receipt_semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636",
+        "receipt_digest": "sha256:cc86667dba80822a03db8ecd8f1a1019d9311b4aa19767d4accd67452606fae8"
+      },
+      "principal": {
+        "principal_id": "release-captain-02",
+        "issuer": "github-actions-oidc",
+        "role_snapshot": "release-approver"
+      },
+      "occurred_at": "2026-08-23T19:30:00Z",
+      "revoked_approval_event_id": "sha256:2f4235922620241966933bbeda27901cd5bf8a1193108631a2b1a8232e6d199a",
+      "event_id": "sha256:46b8520e9c15cc7b14364ea8d24cb2ec15fe4b9d0e1aa6a23eadc67a49fa4efd"
     }
   ]
 }
