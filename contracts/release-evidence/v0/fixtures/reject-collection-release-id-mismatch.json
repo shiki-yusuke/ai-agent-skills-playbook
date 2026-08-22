@@ -1,0 +1,61 @@
+{
+  "bundles": [
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "orbit-api@2026.9.2",
+      "source": {
+        "repo": "shiki-yusuke/orbit-api",
+        "commit_sha": "33bb174baff73b99013f0ebe3fcd01eb118f0f3c",
+        "tree_digest": "db904f08d7557f762453a560b6392ca7dfc12589",
+        "ref": "v2026.9.2",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "review": null,
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:64049d0f3047d8aff2a305f7d37dffdcfe5d43747047794f21f24013937e341e",
+          "artifact_ref": {
+            "registry": "other",
+            "package": "orbit-api",
+            "version": "1.0.0",
+            "verifiability": "registry_metadata"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:de72a1f257138f375edd6590481c5530ff58d940dd0b1229e655056a1b661442",
+        "toolchain_digest": "sha256:8c6f1f1982a3d743ea8554313c693b1b1d0fc238b75d4fef0e4d0d6580668d86"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": null
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      },
+      "lane_ref_omitted": {
+        "code": "no_lane_scheduled_rebuild",
+        "note": "release-collection fixture: synthetic bundle with no contributing lane for this attempt."
+      },
+      "review_omitted": {
+        "code": "scheduled_rebuild_deploys_reviewed_main",
+        "note": "release-collection fixture: synthetic bundle with no per-release review recorded."
+      }
+    }
+  ],
+  "events": [
+    {
+      "schema_version": "release-evidence/v0",
+      "event_id": "orbit-api@2026.9.2-WRONG#01",
+      "release_id": "orbit-api@2026.9.2-WRONG",
+      "kind": "prepared",
+      "environment": null,
+      "occurred_at": "2026-08-23T00:00:00Z",
+      "actor": "cli",
+      "bundle_digest": "sha256:79d1a8f8c1aec5bc449881863aa5e1adc76691f480408ee8bdc4595447e46517"
+    }
+  ]
+}

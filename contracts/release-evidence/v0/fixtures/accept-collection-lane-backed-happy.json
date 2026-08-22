@@ -1,0 +1,118 @@
+{
+ "bundles": [
+  {
+   "schema_version": "release-evidence/v0",
+   "release_id": "orbit-api@2026.8.1",
+   "source": {
+    "repo": "shiki-yusuke/orbit-api",
+    "commit_sha": "18f383f28b9cdf385b9f152250ea62aa1640c39b",
+    "tree_digest": "b582ed8d80765b1c67384a531537edabc7d45ed4",
+    "ref": "v2026.8.1",
+    "resolution": "git_tree"
+   },
+   "lane_ref": {
+    "lane_id": "lane-orbit-api-2026-08-20",
+    "intent_digest": "sha256:b258a51ab894bd1a988c234d9fabe165a49fc3ccb4b4787848e70cc52921b185",
+    "spec_digest": "sha256:69aa89975129d8c7ad892886bcc9193d4c570429a6d5d6e6ce6f9c15d6d4a254",
+    "consensus_ack_digest": "sha256:c985d9cc8598a66adbdbe39ee3e33923a82a5a915aeeb822af3a90b2dea4d373",
+    "verification_digest": "sha256:cf5959135b4e94d73d68f8b0134d38bb218149a18a9975db9966cc0ad0dd3d65"
+   },
+   "review": {
+    "pr": 42,
+    "head_sha": "9dc4248ef1c02e1e8b35983e424d768079ed1a4b",
+    "decision": "approved"
+   },
+   "artifacts": [
+    {
+     "kind": "package",
+     "digest": "sha256:6bef425345ca3ccb9b0468005f3d3b76262223c785940c92201598d8dfd751eb",
+     "artifact_ref": {
+      "registry": "other",
+      "package": "orbit-api",
+      "version": "1.0.0",
+      "verifiability": "registry_metadata"
+     }
+    }
+   ],
+   "build": {
+    "recipe_digest": "sha256:b89ca95cfeaedce771abea3abb26abf423307873c175ba0a0e483e4e053f63b2",
+    "toolchain_digest": "sha256:e49dfae4e75d578214e02f43008316fc7e817f73a1c46532ce198dd0f3c558b3"
+   },
+   "known_deviations": [],
+   "rollback": {
+    "previous_release_id": null
+   },
+   "integrity": {
+    "level": "digest_only",
+    "signature": null
+   }
+  }
+ ],
+ "events": [
+  {
+   "schema_version": "release-evidence/v0",
+   "event_id": "orbit-api@2026.8.1#01",
+   "release_id": "orbit-api@2026.8.1",
+   "kind": "prepared",
+   "environment": null,
+   "occurred_at": "2026-08-20T00:00:00Z",
+   "actor": "cli",
+   "bundle_digest": "sha256:81b447690d65ac0ed2a2917467f26fa1fcf5c02ed9cc6447ef5d9ea65ed17e8b"
+  },
+  {
+   "schema_version": "release-evidence/v0",
+   "event_id": "orbit-api@2026.8.1#02",
+   "release_id": "orbit-api@2026.8.1",
+   "kind": "deployed",
+   "environment": "preview",
+   "occurred_at": "2026-08-20T00:05:00Z",
+   "actor": "ci",
+   "bundle_digest": "sha256:81b447690d65ac0ed2a2917467f26fa1fcf5c02ed9cc6447ef5d9ea65ed17e8b"
+  },
+  {
+   "schema_version": "release-evidence/v0",
+   "event_id": "orbit-api@2026.8.1#03",
+   "release_id": "orbit-api@2026.8.1",
+   "kind": "verified",
+   "environment": "preview",
+   "occurred_at": "2026-08-20T00:10:00Z",
+   "actor": "cli",
+   "bundle_digest": "sha256:81b447690d65ac0ed2a2917467f26fa1fcf5c02ed9cc6447ef5d9ea65ed17e8b"
+  },
+  {
+   "schema_version": "release-evidence/v0",
+   "event_id": "orbit-api@2026.8.1#04",
+   "release_id": "orbit-api@2026.8.1",
+   "kind": "attested",
+   "environment": null,
+   "occurred_at": "2026-08-20T00:12:00Z",
+   "actor": "ci",
+   "bundle_digest": "sha256:81b447690d65ac0ed2a2917467f26fa1fcf5c02ed9cc6447ef5d9ea65ed17e8b",
+   "attestation": {
+    "kind": "lane_done_overlay",
+    "digest": "sha256:946f63d2ed28bc2050fbfe9a05f9632093fa272314eac0b2244286362e419347"
+   }
+  },
+  {
+   "schema_version": "release-evidence/v0",
+   "event_id": "orbit-api@2026.8.1#05",
+   "release_id": "orbit-api@2026.8.1",
+   "kind": "deployed",
+   "environment": "production",
+   "occurred_at": "2026-08-20T00:20:00Z",
+   "actor": "ci",
+   "bundle_digest": "sha256:81b447690d65ac0ed2a2917467f26fa1fcf5c02ed9cc6447ef5d9ea65ed17e8b",
+   "staging_skipped": true
+  },
+  {
+   "schema_version": "release-evidence/v0",
+   "event_id": "orbit-api@2026.8.1#06",
+   "release_id": "orbit-api@2026.8.1",
+   "kind": "verified",
+   "environment": "production",
+   "occurred_at": "2026-08-20T00:25:00Z",
+   "actor": "cli",
+   "bundle_digest": "sha256:81b447690d65ac0ed2a2917467f26fa1fcf5c02ed9cc6447ef5d9ea65ed17e8b"
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "release-evidence/v0",
+  "event_id": "demo@6.0.0#01",
+  "release_id": "demo@6.0.0",
+  "kind": "deployed",
+  "environment": "preview",
+  "occurred_at": "2026-08-24T00:00:00Z",
+  "actor": "ci",
+  "bundle_digest": "sha256:3725363fbe5356b73fccae632b09a70d4f6bad5e3aad5cfc8750fe657754f250",
+  "reason": "this field is forbidden on a deployed event"
+}

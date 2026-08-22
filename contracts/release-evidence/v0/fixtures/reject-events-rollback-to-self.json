@@ -1,0 +1,55 @@
+[
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@3.0.0#01",
+    "release_id": "demo@3.0.0",
+    "kind": "prepared",
+    "environment": null,
+    "occurred_at": "2026-08-23T00:00:00Z",
+    "actor": "cli",
+    "bundle_digest": "sha256:9a4acd940cc7387ebc26fa27f5e5f5ee474905b88cc72183c512d642c15cb966"
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@3.0.0#02",
+    "release_id": "demo@3.0.0",
+    "kind": "deployed",
+    "environment": "preview",
+    "occurred_at": "2026-08-23T00:05:00Z",
+    "actor": "ci",
+    "bundle_digest": "sha256:9a4acd940cc7387ebc26fa27f5e5f5ee474905b88cc72183c512d642c15cb966"
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@3.0.0#03",
+    "release_id": "demo@3.0.0",
+    "kind": "verified",
+    "environment": "preview",
+    "occurred_at": "2026-08-23T00:10:00Z",
+    "actor": "cli",
+    "bundle_digest": "sha256:9a4acd940cc7387ebc26fa27f5e5f5ee474905b88cc72183c512d642c15cb966"
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@3.0.0#04",
+    "release_id": "demo@3.0.0",
+    "kind": "deployed",
+    "environment": "production",
+    "occurred_at": "2026-08-23T00:20:00Z",
+    "actor": "ci",
+    "bundle_digest": "sha256:9a4acd940cc7387ebc26fa27f5e5f5ee474905b88cc72183c512d642c15cb966",
+    "staging_skipped": true
+  },
+  {
+    "schema_version": "release-evidence/v0",
+    "event_id": "demo@3.0.0#05",
+    "release_id": "demo@3.0.0",
+    "kind": "rolled_back",
+    "environment": "production",
+    "occurred_at": "2026-08-23T00:30:00Z",
+    "actor": "human",
+    "bundle_digest": "sha256:9a4acd940cc7387ebc26fa27f5e5f5ee474905b88cc72183c512d642c15cb966",
+    "rollback_to_release_id": "demo@3.0.0",
+    "reason": "rolling back to itself -- invalid on purpose"
+  }
+]

@@ -68,6 +68,7 @@
   "occurred_at": "2026-08-24T00:35:00Z",
   "actor": "cli",
   "bundle_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "failure_phase": "verification",
   "reason": "production verification: smoke request returned 500"
  }
 ]

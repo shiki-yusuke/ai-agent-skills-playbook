@@ -37,7 +37,8 @@
   "environment": "production",
   "occurred_at": "2026-08-22T00:20:00Z",
   "actor": "ci",
-  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "staging_skipped": true
  },
  {
   "schema_version": "release-evidence/v0",
@@ -48,6 +49,7 @@
   "occurred_at": "2026-08-22T01:00:00Z",
   "actor": "human",
   "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "rollback_to_release_id": "ghost@0.0.1"
+  "rollback_to_release_id": "ghost@0.0.1",
+  "reason": "regression suspected, rolling back to a release that was never actually deployed in this ledger"
  }
 ]

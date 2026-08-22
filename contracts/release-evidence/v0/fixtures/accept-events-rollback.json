@@ -37,7 +37,8 @@
   "environment": "production",
   "occurred_at": "2026-08-22T00:20:00Z",
   "actor": "ci",
-  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  "bundle_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "staging_skipped": true
  },
  {
   "schema_version": "release-evidence/v0",
@@ -87,7 +88,8 @@
   "environment": "production",
   "occurred_at": "2026-08-23T00:20:00Z",
   "actor": "ci",
-  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "staging_skipped": true
  },
  {
   "schema_version": "release-evidence/v0",
@@ -99,6 +101,6 @@
   "actor": "human",
   "bundle_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "rollback_to_release_id": "demo@1.0.0",
-  "notes": "regression observed in production"
+  "reason": "regression observed in production"
  }
 ]
