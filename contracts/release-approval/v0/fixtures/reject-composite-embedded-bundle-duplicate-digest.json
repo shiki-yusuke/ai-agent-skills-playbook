@@ -135,11 +135,55 @@
         "level": "digest_only",
         "signature": null
       }
+    },
+    {
+      "schema_version": "release-evidence/v0",
+      "release_id": "spec-lane@0.7.0",
+      "source": {
+        "repo": "shiki-yusuke/spec-lane",
+        "commit_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "tree_digest": "cccccccccccccccccccccccccccccccccccccccc",
+        "resolution": "git_tree"
+      },
+      "lane_ref": null,
+      "lane_ref_omitted": {
+        "code": "legacy_release_predates_contract",
+        "note": "composite fixture placeholder"
+      },
+      "review": null,
+      "review_omitted": {
+        "code": "legacy_release_predates_contract",
+        "note": "composite fixture placeholder"
+      },
+      "artifacts": [
+        {
+          "kind": "package",
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "artifact_ref": {
+            "registry": "npm",
+            "package": "@shiki-yusuke/spec-lane",
+            "version": "0.7.0",
+            "verifiability": "requires_fetch"
+          }
+        }
+      ],
+      "build": {
+        "recipe_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "toolchain_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "known_deviations": [],
+      "rollback": {
+        "previous_release_id": "spec-lane@0.6.0"
+      },
+      "integrity": {
+        "level": "digest_only",
+        "signature": null
+      }
     }
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-nobundle",
+    "receipt_id": "pr-composite-dupbundle",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
@@ -157,8 +201,8 @@
         "evidence_refs": [
           {
             "kind": "release_evidence",
-            "ref": "spec-lane@0.6.0",
-            "digest": "sha256:2ed11dd694c45bc4874ae1092a2f7ced4391cb8bd38b26e0093b7269077a38e6"
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f"
           }
         ]
       },
@@ -212,15 +256,15 @@
       }
     ],
     "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:088ec666907f8a4e9f2fe45b6580dc2542348d90ca137678c4eb986e074f03a1"
+    "semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:349e73cbd308772b1f0735051e49f75aa159131e9b97c9a2ed3f0b9e3e46832b",
-        "receipt_semantic_digest": "sha256:088ec666907f8a4e9f2fe45b6580dc2542348d90ca137678c4eb986e074f03a1",
+        "receipt_digest": "sha256:dcb22f5892d3e2c86e73c9fcead940708b48e4580eef30422a686654b03b654f",
+        "receipt_semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839",
         "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
@@ -232,7 +276,7 @@
       },
       "occurred_at": "2026-08-23T21:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:ccae788e53540e4c025a2d8a48ff3be150a32f71f78e529f6f9bfc87d325ef82"
+      "event_id": "sha256:a58188cb0404524919f70b392691a138188e99ffa2ffcd3f4d6dd6898b2a9a7c"
     }
   ]
 }

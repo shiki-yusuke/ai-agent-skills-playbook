@@ -101,7 +101,7 @@
               "properties": {
                 "kind": {
                   "enum": ["review_finding", "release_evidence", "other"],
-                  "description": "review_finding: ref is \"<review-findings record_id>#<finding_id>\", digest MUST equal that record's subject.digest exactly (TEST-09 -- a finding recorded against a stale digest cannot back a predicate about the current subject). release_evidence: ref is a release_id, digest is the release-evidence/v0 bundle_digest. other: opaque, this contract's verifier does not resolve it."
+                  "description": "review_finding: ref is \"<review-findings record_id>#<finding_id>\" (an actual finding in that record) or \"<record_id>#scope\" (only valid when that record's outcome is none_observed_in_recorded_scope); digest MUST equal the WHOLE record's JCS (RFC 8785) sha256 -- its record_digest, NOT subject.digest (R23 -- editing a finding's claim/severity/outcome changes record_digest even when subject.digest, bound to the scanned tree, stays the same; a finding recorded against a stale record_digest cannot back a predicate about the current content, TEST-12). release_evidence: ref is a release_id, digest is the release-evidence/v0 bundle's own JCS sha256 (resolved by digest against embedded bundles in release-approval/v0's composite fixture, not by release_id alone -- one release_id can have multiple attempts at different digests). other: opaque, this contract's verifier does not resolve it."
                 },
                 "ref": { "type": "string", "minLength": 1 },
                 "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }

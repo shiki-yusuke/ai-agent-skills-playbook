@@ -139,11 +139,11 @@
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-nobundle",
+    "receipt_id": "pr-composite-bdunresolved",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
-      "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
+      "bundle_digest": "sha256:dead00dead00dead00dead00dead00dead00dead00dead00dead00dead00dead",
       "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
       "target": "production"
     },
@@ -157,8 +157,8 @@
         "evidence_refs": [
           {
             "kind": "release_evidence",
-            "ref": "spec-lane@0.6.0",
-            "digest": "sha256:2ed11dd694c45bc4874ae1092a2f7ced4391cb8bd38b26e0093b7269077a38e6"
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f"
           }
         ]
       },
@@ -212,16 +212,16 @@
       }
     ],
     "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:088ec666907f8a4e9f2fe45b6580dc2542348d90ca137678c4eb986e074f03a1"
+    "semantic_digest": "sha256:70d28d13211fd20c48fc3f5b51f578a6da87a2130801105bd4f64bb64da319e3"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:349e73cbd308772b1f0735051e49f75aa159131e9b97c9a2ed3f0b9e3e46832b",
-        "receipt_semantic_digest": "sha256:088ec666907f8a4e9f2fe45b6580dc2542348d90ca137678c4eb986e074f03a1",
-        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
+        "receipt_digest": "sha256:bc701f1a7cc0de87981a2e09126ed36f47fbae75c120a3eada153cf82d9732b4",
+        "receipt_semantic_digest": "sha256:70d28d13211fd20c48fc3f5b51f578a6da87a2130801105bd4f64bb64da319e3",
+        "bundle_digest": "sha256:dead00dead00dead00dead00dead00dead00dead00dead00dead00dead00dead",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
       },
@@ -232,7 +232,7 @@
       },
       "occurred_at": "2026-08-23T21:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:ccae788e53540e4c025a2d8a48ff3be150a32f71f78e529f6f9bfc87d325ef82"
+      "event_id": "sha256:f5b6dc384983a6bf6a5565ef1eb6b40d6426b8ab34dcbfef643cbe8044faafd5"
     }
   ]
 }

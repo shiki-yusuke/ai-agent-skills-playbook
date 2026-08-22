@@ -114,27 +114,46 @@ events]}`. `verify-fixtures.mjs`'s composite check:
 1. Re-validates every embedded record and the receipt using **their own contracts' checkers**
    (imported directly from `review-findings/v1` and `promotion-receipt/v0`'s own
    `verify-fixtures.mjs` — never reimplemented here, so the three verifiers can never silently
-   drift apart on what "valid" means), then checks every `approval_events[]` entry for duplicate
-   `event_id`.
-2. Recomputes the receipt's REAL JCS sha256 and requires every approval event's
+   drift apart on what "valid" means).
+2. Validates every embedded `bundles[]` entry against **`release-evidence/v0`'s own schema**
+   (read-only reference — `contracts/release-evidence/**` is never modified by this contract) plus
+   the personal-dimension scan, then indexes valid bundles **by their own JCS digest**, not by
+   `release_id`: `release-evidence/v0`'s own fold unit is `(release_id, bundle_digest)`, so one
+   release can legitimately have several embedded attempts at different digests side by side.
+   **Two embedded bundles sharing the same digest are a duplicate embed and rejected** (sol
+   architect review round 2, blocker-1) — an arbitrary object can no longer be embedded and
+   treated as real evidence merely because some digest can be computed from it; the bundle has to
+   actually BE a valid release-evidence/v0 bundle, and each attempt is embedded once. A bundle's
+   own SEMANTIC MUSTs (artifacts sorted+unique, hash-width match, etc.) remain
+   `release-evidence/v0`'s own verifier's responsibility — not re-run here.
+3. Requires the receipt's own `subject.bundle_digest` to resolve to one of those embedded bundles
+   (sol architect review round 2, blocker-2) — mutual agreement between `receipt.subject` and
+   `approval.subject` alone (checked next) is internal consistency, not evidence resolution; an
+   unresolvable `bundle_digest` means the whole approval chain is anchored to nothing real, and is
+   rejected before any of the finer-grained checks below even run. Then checks every
+   `approval_events[]` entry for duplicate `event_id`.
+4. Recomputes the receipt's REAL JCS sha256 and requires every approval event's
    `subject.receipt_digest` to resolve to it. A digest that merely repeats a string proves
    nothing — the same discipline `release-evidence/v0` already applies to `bundle_digest`
    (sol must-2 there).
-3. Requires `receipt_semantic_digest` / `bundle_digest` / `selection_manifest_digest` / `target`
+5. Requires `receipt_semantic_digest` / `bundle_digest` / `selection_manifest_digest` / `target`
    to match the embedded receipt's **current** values exactly. Any drift is a **stale approval
    binding** — for example, the bundle was replaced by a new attempt after this approval's
    receipt was evaluated, and the approval no longer describes anything real. The same pass also
    checks the approval-precedes-evaluation and approval_granted-requires-ready-receipt rules
    above, and — for `break_glass_approve` — that every `bypassed_predicate_ids` entry actually
    names a predicate the receipt evaluated.
-4. For `approval_revoked` events: `revoked_approval_event_id` must resolve, **within the same
+6. For `approval_revoked` events: `revoked_approval_event_id` must resolve, **within the same
    ledger**, to an `approval_granted` or `break_glass_approve` event (dangling and wrong-kind
-   targets are both rejected); the revoke's `subject` must exactly match the target event's
-   `subject`; and the revoke's `occurred_at` must be strictly after the target's own
+   targets are both rejected); the revoke's `subject` must be **semantically** equal to the target
+   event's `subject` — compared via `canonicalize()` (RFC 8785 JCS), not raw `JSON.stringify()`,
+   so two subjects that agree on every field but were written with keys in a different order
+   compare equal (a real `JSON.stringify`-based false-reject this contract's own review round 2
+   caught and fixed); and the revoke's `occurred_at` must be strictly after the target's own
    `occurred_at` (R19 extension). A revoke that predates what it claims to revoke, or that
    silently changes which artifact/receipt/target it's talking about mid-revocation, is
    structurally impossible to express in a passing fixture.
-5. For every `satisfied`/`contradicted` predicate in the receipt, resolves each
+7. For every `satisfied`/`contradicted` predicate in the receipt, resolves each
    `evidence_refs[]` entry of a resolvable kind and requires **at least one to actually
    resolve**:
    - `review_finding`: the anchor (`<record_id>#<finding_id>` or `<record_id>#scope`) must
@@ -146,16 +165,19 @@ events]}`. `verify-fixtures.mjs`'s composite check:
      scanned tree) does not, which is exactly the "a fix produces a new digest, and the old
      finding does not follow it forward" rule `review-findings/v1` states in prose, made
      mechanical here (R23).
-   - `release_evidence`: resolves against an embedded bundle by `release_id`, with the same
-     real-JCS-digest discipline. **A bundle that is not embedded in this fixture is not itself an
-     error** — the reference simply doesn't count as resolved. A predicate backed *only* by such
-     an unembedded reference is rejected as unresolved (must-2c): "unresolved" never silently
-     becomes "trust it anyway."
+   - `release_evidence`: resolves against an embedded bundle **by digest** (step 2 above), with a
+     `release_id` cross-check — a ref whose digest resolves to an embedded bundle carrying a
+     *different* `release_id` is rejected as `release_evidence_ref_release_id_mismatch`. **A
+     bundle that is not embedded in this fixture is not itself an error** — the reference simply
+     doesn't count as resolved (a friendlier `release_evidence_digest_mismatch` diagnostic is
+     still given when *some* embedded bundle shares the ref's `release_id` at a different digest).
+     A predicate backed *only* by such an unresolved reference is rejected as unresolved
+     (must-2c): "unresolved" never silently becomes "trust it anyway."
    - `other` references never count toward resolution and are never themselves flagged;
      `promotion-receipt/v0`'s own verifier already requires a resolvable-kind reference to exist
      structurally, so an `other`-only predicate fails there first.
 
-Only the composite fixture type can exercise checks 2–5, because they are inherently
+Only the composite fixture type can exercise checks 2–7, because they are inherently
 cross-contract: a bare receipt or a bare event, checked alone, has nothing real to resolve
 against.
 
@@ -171,10 +193,12 @@ against.
 - **No automatic promotion.** This ledger only records human (or authorized emergency) approval
   events; the actual promotion side effect and its own `promotion_result_recorded` event are
   outside this contract's scope.
-- **No schema validation of embedded `bundles[]` against `release-evidence/v0`'s own schema.**
-  The composite check only recomputes each embedded bundle's real JCS digest for
-  `release_evidence` evidence resolution; a bundle's own structural validity is
-  `release-evidence/v0`'s verifier's job, not re-run here.
+- **No re-run of `release-evidence/v0`'s own SEMANTIC checks on embedded `bundles[]`.** Each
+  embedded bundle IS validated against that contract's schema plus the personal-dimension scan
+  (see step 2 above), but bundle-level semantic MUSTs (`artifacts[]` sorted+unique,
+  `commit_sha`/`tree_digest` hash-width agreement, `rollback` target resolution, etc.) are that
+  contract's own verifier's job — a composite fixture proves digest resolution, not full bundle
+  conformance.
 
 ## Verification
 

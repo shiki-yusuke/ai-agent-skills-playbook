@@ -41,11 +41,26 @@
 //                      must equal the referenced record's ACTUAL, WHOLE-RECORD JCS sha256 (R23 --
 //                      not the record's subject.digest; editing claim/severity/outcome changes
 //                      this digest, TEST-12); a release_evidence ref resolves against an embedded
-//                      bundle by release_id, with the same real-JCS-digest discipline, and is
+//                      bundle by BUNDLE DIGEST, with the same real-JCS-digest discipline, and is
 //                      simply uncounted (not itself an error) when no matching bundle is embedded
 //                      -- a predicate backed ONLY by such a ref is unresolved, not silently passed
 //                      (must-2c). Every satisfied/contradicted predicate needs at least one
 //                      evidence_ref that ACTUALLY resolves this way, or it is rejected.
+//
+//   round-2 fixes (sol architect review, blockers + a regression):
+//     - each embedded `bundles[]` entry is validated against release-evidence/v0's OWN schema
+//       (read-only reference; that contract is never modified here) plus the personal-dimension
+//       scan -- an arbitrary object can no longer be embedded and treated as real evidence merely
+//       because SOME digest can be computed from it. Bundles are indexed by their OWN JCS digest
+//       (not release_id), since one release_id can legitimately have multiple attempts at
+//       different digests (release-evidence/v0's own fold unit); two bundles sharing the same
+//       digest are a duplicate embed and rejected.
+//     - the receipt's OWN `subject.bundle_digest` must resolve to a REAL embedded bundle --
+//       mutual agreement between receipt.subject and approval.subject alone is not evidence
+//       resolution, only internal consistency.
+//     - revocation's subject-equality check compares `canonicalize()` output, not
+//       `JSON.stringify()`, so two subjects that agree on every field but differ only in key
+//       order compare equal (a real regression the JSON.stringify version had).
 //
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
@@ -61,6 +76,12 @@ import { checkReceipt } from "../../promotion-receipt/v0/verify-fixtures.mjs";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
 const { validate } = createValidator(HERE);
+// sol architect review round 2, blocker-1: embedded bundles[] are release-evidence/v0's own
+// artifact type -- validated against ITS schema (read-only reference; contracts/release-evidence
+// is never modified). Bundle-level SEMANTIC MUSTs (artifacts sorted+unique, hash-width match,
+// etc.) remain that contract's verifier's own responsibility -- see docs/protocols/
+// release-approval-v0.md's "What v0 deliberately leaves out".
+const { validate: validateReleaseEvidence } = createValidator(path.join(HERE, "../../release-evidence/v0"));
 
 const read = (f) => JSON.parse(readFileSync(path.join(FIXTURES_DIR, f), "utf-8"));
 const dedupe = (a) => [...new Set(a)];
@@ -166,20 +187,41 @@ function resolveReviewFindingRef(ref, findingsById) {
   return { resolved: true, reasons };
 }
 
-// must-2c: resolves one release_evidence evidence_ref against embedded bundles, if any. Absence
-// of a matching embedded bundle is NOT itself an error -- the ref is simply uncounted.
-function resolveReleaseEvidenceRef(ref, bundlesByReleaseId) {
+// sol architect review round 2, blocker-1: an embedded release-evidence/v0 bundle is validated
+// against ITS OWN schema + the personal-dimension scan -- a composite can no longer embed an
+// arbitrary object and have its JCS digest treated as evidence.
+function checkEmbeddedBundle(bundle) {
   const reasons = [];
-  const bundle = bundlesByReleaseId.get(ref.ref);
-  if (!bundle) return { resolved: false, reasons };
-  const bundleDigest = jcsDigestOf(bundle);
-  if (bundleDigest !== ref.digest) {
-    reasons.push(
-      `release_evidence_digest_mismatch: release_evidence "${ref.ref}" digest ${ref.digest.slice(0, 18)}... does not match the embedded bundle's actual JCS sha256 ${bundleDigest.slice(0, 18)}...`,
-    );
-    return { resolved: false, reasons };
+  reasons.push(...validateReleaseEvidence("release-evidence-bundle.schema.json", bundle));
+  reasons.push(...scanPersonalDimensions(bundle).map((v) => `personal_dimension_forbidden_key: ${v}`));
+  return dedupe(reasons);
+}
+
+// must-2c: resolves one release_evidence evidence_ref against embedded bundles, if any. Indexed
+// by BUNDLE DIGEST (sol architect review round 2, blocker-1), not release_id: a release can
+// legitimately have multiple attempts (release-evidence/v0's own unit is (release_id,
+// bundle_digest)), so several bundles sharing one release_id but carrying different digests are
+// all valid to embed side by side; two embedded bundles sharing the SAME digest are a duplicate
+// (checked where bundlesByDigest is built). Absence of any embedded bundle matching a ref's
+// digest is NOT itself an error -- the ref is simply uncounted -- but a release_id match at a
+// DIFFERENT digest is a concrete mismatch, surfaced as such for a clearer diagnostic.
+function resolveReleaseEvidenceRef(ref, bundlesByDigest, validBundles) {
+  const reasons = [];
+  const bundle = bundlesByDigest.get(ref.digest);
+  if (bundle) {
+    if (bundle.release_id !== ref.ref) {
+      reasons.push(`release_evidence_ref_release_id_mismatch: ref names release_id "${ref.ref}" but the embedded bundle at digest ${ref.digest.slice(0, 18)}... has release_id "${bundle.release_id}"`);
+      return { resolved: false, reasons };
+    }
+    return { resolved: true, reasons };
   }
-  return { resolved: true, reasons };
+  const candidate = validBundles.find((b) => b.release_id === ref.ref);
+  if (candidate) {
+    reasons.push(
+      `release_evidence_digest_mismatch: release_evidence "${ref.ref}" digest ${ref.digest.slice(0, 18)}... does not match any embedded bundle's actual JCS sha256 for this release_id (e.g. ${jcsDigestOf(candidate).slice(0, 18)}...)`,
+    );
+  }
+  return { resolved: false, reasons };
 }
 
 function checkComposite({ findings, bundles, receipt, approval_events }, problems) {
@@ -193,8 +235,22 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
     }
   }
 
-  const bundlesByReleaseId = new Map();
-  for (const b of bundles ?? []) bundlesByReleaseId.set(b.release_id, b);
+  const bundlesByDigest = new Map();
+  const validBundles = [];
+  for (const [i, b] of (bundles ?? []).entries()) {
+    const reasons = checkEmbeddedBundle(b);
+    if (reasons.length > 0) {
+      problems.push(`bundles[${i}] not individually valid: ${reasons.join("; ")}`);
+      continue;
+    }
+    const digest = jcsDigestOf(b);
+    if (bundlesByDigest.has(digest)) {
+      problems.push(`duplicate_embedded_bundle: bundles[${i}] (release_id "${b.release_id}") has the same JCS digest as an earlier embedded bundle -- embed each attempt once`);
+      continue;
+    }
+    bundlesByDigest.set(digest, b);
+    validBundles.push(b);
+  }
 
   const receiptReasons = checkReceipt(receipt);
   if (receiptReasons.length > 0) {
@@ -207,6 +263,14 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
     if (reasons.length > 0) eventProblems.push(`approval_events[${i}] not individually valid: ${reasons.join("; ")}`);
   }
   problems.push(...eventProblems);
+  if (problems.length > 0) return;
+
+  // sol architect review round 2, blocker-2: mutual consistency between receipt.subject and
+  // approval.subject (checked below) is not, by itself, evidence resolution -- the receipt's own
+  // bundle_digest must resolve to a REAL embedded bundle, or the whole chain is unanchored.
+  if (!bundlesByDigest.has(receipt.subject.bundle_digest)) {
+    problems.push(`bundle_digest_unresolved: receipt's subject.bundle_digest ${receipt.subject.bundle_digest.slice(0, 18)}... does not resolve to any embedded bundle in this composite`);
+  }
   if (problems.length > 0) return;
 
   checkLedger(approval_events, problems);
@@ -266,7 +330,11 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
       } else if (target.kind !== "approval_granted" && target.kind !== "break_glass_approve") {
         problems.push(`revoke_target_wrong_kind: event "${ev.event_id}" revokes "${target.event_id}", whose kind is "${target.kind}" (must be approval_granted or break_glass_approve)`);
       } else {
-        if (JSON.stringify(ev.subject) !== JSON.stringify(target.subject)) {
+        // canonicalize (not JSON.stringify) -- two subjects that agree on every field but were
+        // serialized with keys in a different order must compare EQUAL (sol architect review
+        // round 2, regression fix): JSON.stringify is order-sensitive and would wrongly reject a
+        // legitimate revoke over nothing but key ordering.
+        if (canonicalize(ev.subject) !== canonicalize(target.subject)) {
           problems.push(`revoke_subject_mismatch: event "${ev.event_id}" subject does not match the subject of the event it revokes ("${target.event_id}")`);
         }
         if (!(isRealTimestamp(ev.occurred_at) && isRealTimestamp(target.occurred_at) && Date.parse(ev.occurred_at) > Date.parse(target.occurred_at))) {
@@ -289,7 +357,7 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
         problems.push(...reasons);
         if (resolved) resolvedAny = true;
       } else if (ref.kind === "release_evidence") {
-        const { resolved, reasons } = resolveReleaseEvidenceRef(ref, bundlesByReleaseId);
+        const { resolved, reasons } = resolveReleaseEvidenceRef(ref, bundlesByDigest, validBundles);
         problems.push(...reasons);
         if (resolved) resolvedAny = true;
       }
