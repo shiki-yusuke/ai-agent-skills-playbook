@@ -1,12 +1,22 @@
 # release-evidence/v0 — DRAFT
 
-> **Status: DRAFT, deliberately unfrozen.** v1 freezes only after the first deploy adapter has
-> been exercised against a real deployment (the Pages adapter against the agent-metrics
-> dashboard, per the 2026-08-22 re-plan). Freezing an implementation-shaped contract before any
-> implementation has consumed it is the premise_evidence mistake this repo's own history warns
-> about. This draft has had one architect review round (sol, 2026-08-22: 11 must / 4 should /
-> 4 ask, all reflected below); it has had zero implementations consume it, which is exactly why
-> it is not v1.
+> **Status: FROZEN at v0 (2026-08-22).** The freeze gate — a real deploy adapter exercised
+> against a real deployment — has been met: the GitHub Pages adapter shipped the agent-metrics
+> dashboard's production deploy (workflow run 32572501427), the live site's
+> `release-manifest.json` content digest was independently recomputed and matched the sealed
+> bundle's artifact digest, and the resulting ledger (`prepared → deployed|production
+> (preview_skipped) → verified|production`) plus the verbatim bundle now live in this repo's
+> fixtures and in agent-metrics-harvester's `metrics-data` branch. Lineage: one architect
+> review round (sol: 11 must / 4 should / 4 ask, all reflected), then two contract defects
+> found and fixed BY the exercise itself before freezing — the missing no-preview-tier topology
+> (`preview_skipped`) and the bundle↔manifest digest circularity. Freezing before the exercise
+> would have shipped both.
+>
+> **Version naming**: this contract freezes as `release-evidence/v0`, following
+> `release-observation/v0`'s precedent (a contract freezes at the version it was born at).
+> The platform design calls the state machine "deployment state machine v1" — that names the
+> DESIGN's revision (D5), not this schema's directory. From here on the usual rule applies:
+> no change of any kind within v0; extensions are v1 work.
 
 Normative protocol for D5's **deployment state machine v1**: the Release Evidence Bundle sealed
 before any deploy, and the append-only event ledger that carries one bundle's digest through
