@@ -139,7 +139,7 @@
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-stale",
+    "receipt_id": "pr-composite-nonready",
     "evaluated_at": "2026-08-23T21:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
@@ -177,14 +177,8 @@
       {
         "predicate_id": "verification_coverage",
         "applicability": "applicable",
-        "status": "satisfied",
-        "evidence_refs": [
-          {
-            "kind": "release_evidence",
-            "ref": "spec-lane@0.7.0",
-            "digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f"
-          }
-        ]
+        "status": "unknown",
+        "evidence_refs": []
       },
       {
         "predicate_id": "preview_verified",
@@ -211,17 +205,17 @@
         "evidence_refs": []
       }
     ],
-    "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839"
+    "verdict": "abstained",
+    "semantic_digest": "sha256:d2870c5b4080649a68585c2e9833eecf16eea067dd39d1e2762b97abfaede4e4"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:57979db9c15b9136cf853b28e5f44cae63548ce0bcb4af0750c86c86322c13a9",
-        "receipt_semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839",
-        "bundle_digest": "sha256:ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffba",
+        "receipt_digest": "sha256:5146c756f0233262ac1a5180a2183b696eda2ad4f756ae5cac6a63eea34e4638",
+        "receipt_semantic_digest": "sha256:d2870c5b4080649a68585c2e9833eecf16eea067dd39d1e2762b97abfaede4e4",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
       },
@@ -232,7 +226,7 @@
       },
       "occurred_at": "2026-08-23T21:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:4fbeb28fd27767a8303ddd83ea492d8efe8d8a375ccd8761dd68897be836077a"
+      "event_id": "sha256:cc50b8c5f9d05e787d0a271ea87a410779c7ca4697db5b8618295353662828c7"
     }
   ]
 }

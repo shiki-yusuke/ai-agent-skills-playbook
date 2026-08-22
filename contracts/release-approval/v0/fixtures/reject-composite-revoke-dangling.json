@@ -139,13 +139,13 @@
   ],
   "receipt": {
     "schema_version": "promotion-receipt/v0",
-    "receipt_id": "pr-composite-stale",
-    "evaluated_at": "2026-08-23T21:00:00Z",
+    "receipt_id": "pr-composite-revoke-dangling",
+    "evaluated_at": "2026-08-23T19:00:00Z",
     "evaluation_phase": "pre_promotion",
     "subject": {
       "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
       "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
-      "target": "production"
+      "target": "staging"
     },
     "policy_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
     "effective_risk": "medium",
@@ -212,27 +212,46 @@
       }
     ],
     "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839"
+    "semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636"
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:57979db9c15b9136cf853b28e5f44cae63548ce0bcb4af0750c86c86322c13a9",
-        "receipt_semantic_digest": "sha256:bc6a03c7f6959df911d287045929670e5705a89b74509cf74a14803428fd1839",
-        "bundle_digest": "sha256:ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffbad0ffba",
+        "receipt_digest": "sha256:b19b4b6b6ab5f2c551eb890f174e4696f49dec7c1e8eebd77329bc8b61631fe2",
+        "receipt_semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
-        "target": "production"
+        "target": "staging"
       },
       "principal": {
         "principal_id": "release-captain-04",
         "issuer": "github-actions-oidc",
         "role_snapshot": "release-approver"
       },
-      "occurred_at": "2026-08-23T21:10:00Z",
+      "occurred_at": "2026-08-23T19:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:4fbeb28fd27767a8303ddd83ea492d8efe8d8a375ccd8761dd68897be836077a"
+      "event_id": "sha256:a1985d61d2b2f306b018eb6036dd933132db9677d38aa53eef283aeae810b390"
+    },
+    {
+      "schema_version": "release-approval/v0",
+      "kind": "approval_revoked",
+      "subject": {
+        "receipt_digest": "sha256:b19b4b6b6ab5f2c551eb890f174e4696f49dec7c1e8eebd77329bc8b61631fe2",
+        "receipt_semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636",
+        "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
+        "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "target": "staging"
+      },
+      "principal": {
+        "principal_id": "release-captain-04",
+        "issuer": "github-actions-oidc",
+        "role_snapshot": "release-approver"
+      },
+      "occurred_at": "2026-08-23T19:30:00Z",
+      "revoked_approval_event_id": "sha256:dead00dead00dead00dead00dead00dead00dead00dead00dead00dead00dead",
+      "event_id": "sha256:54fc2cc1b0ed7f009fd617b9a9ef3b4d17386e4ec63991f352b91df3da8c274e"
     }
   ]
 }

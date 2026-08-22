@@ -84,6 +84,7 @@
     "bypassed_predicate_ids": {
       "type": "array",
       "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "enum": [
           "artifact_identity",
@@ -95,7 +96,7 @@
           "deployed_artifact_readback"
         ]
       },
-      "description": "break_glass_approve only (schema-enforced below): a non-empty subset of promotion-receipt/v0's own predicate_id closed set -- the exact predicates this emergency approval bypasses. Never human_release_approval (not a member of that set at all)."
+      "description": "break_glass_approve only (schema-enforced below): a non-empty, duplicate-free subset of promotion-receipt/v0's own predicate_id closed set -- the exact predicates this emergency approval bypasses. Never human_release_approval (not a member of that set at all). A composite ledger fixture additionally requires every id here to actually appear among the referenced receipt's own predicates[] -- bypassing a predicate the receipt never evaluated is meaningless (checked by verify-fixtures.mjs, not expressible in this single-event schema)."
     },
     "incident_ref": {
       "type": "string",
