@@ -205,6 +205,13 @@ function resolveReviewFindingRef(ref, findingsById) {
 // text (its `lane_ref` oneOf is around line 66; `review`'s is around line 139). If that schema's
 // oneOf shapes ever change, these must be updated to match -- they are NOT re-derived
 // automatically from the schema file.
+//
+// round-4 fix (sol architect review, blocker): every string-typed field below is checked with an
+// explicit `typeof v === "string"` BEFORE the regex test, never `pattern.test(v)` alone --
+// RegExp.prototype.test coerces its argument via ToString, so a single-element array like
+// `["sha256:aa...aa"]` stringifies to exactly that inner string (Array.prototype.toString joins
+// with "," and a lone element has no comma to show) and would otherwise pass a digest/head_sha
+// pattern check despite not actually being a string in the JSON.
 const LANE_REF_DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
 const LANE_REF_REQUIRED = ["lane_id", "intent_digest", "spec_digest", "consensus_ack_digest", "verification_digest"];
 const LANE_REF_OPTIONAL = ["premise_evidence_digest", "matrix_digest"];
@@ -217,7 +224,7 @@ function laneRefMatchesUnion(value) {
   if (!LANE_REF_REQUIRED.every((k) => k in value)) return false;
   if (typeof value.lane_id !== "string" || value.lane_id.length < 1) return false;
   for (const k of [...LANE_REF_REQUIRED.slice(1), ...LANE_REF_OPTIONAL]) {
-    if (k in value && !LANE_REF_DIGEST_PATTERN.test(value[k])) return false;
+    if (k in value && (typeof value[k] !== "string" || !LANE_REF_DIGEST_PATTERN.test(value[k]))) return false;
   }
   return true; // oneOf branch 1: the lane_ref object shape
 }
@@ -232,8 +239,8 @@ function reviewMatchesUnion(value) {
   if (!Object.keys(value).every((k) => REVIEW_REQUIRED.includes(k))) return false;
   if (!REVIEW_REQUIRED.every((k) => k in value)) return false;
   if (!(Number.isInteger(value.pr) && value.pr >= 1)) return false;
-  if (!REVIEW_HEAD_SHA_PATTERN.test(value.head_sha)) return false;
-  if (!REVIEW_DECISION_ENUM.includes(value.decision)) return false;
+  if (typeof value.head_sha !== "string" || !REVIEW_HEAD_SHA_PATTERN.test(value.head_sha)) return false;
+  if (typeof value.decision !== "string" || !REVIEW_DECISION_ENUM.includes(value.decision)) return false;
   return true; // oneOf branch 1: the review object shape
 }
 
