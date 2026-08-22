@@ -141,7 +141,13 @@ POSIX-separated (`/`), NFC-normalized, contain no `.` or `..` segments and no le
 and **exclude `release-manifest.json` itself** (it cannot contain its own digest). The
 artifact `digest` is sha256 over the manifest object's JCS bytes; `content_manifest_digest` is
 sha256 over the bytes of the `release-manifest.json` file actually placed into the site and
-read back after deploy. Symlinks are not followed; a site that needs them fails preparation.
+read back after deploy. That file is `{schema_version, content}` **only** — it deliberately
+does **not** embed `bundle_digest`: the bundle embeds the file's digest, so a file that also
+embedded the bundle's digest would make the two mutually referential and neither computable
+(found by the first real adapter assembly, 2026-08-22 — the second contract defect the
+freeze-after-exercise rule caught within a day). The site↔bundle linkage is re-derived at
+read-back instead: JCS-sha256 of the file's `content` map must equal the artifact's `digest`,
+which the sealed bundle carries and the ledger's `bundle_digest` pins. Symlinks are not followed; a site that needs them fails preparation.
 This section is normative for every implementation and every adapter; the first Pages adapter
 exercise replaces the synthetic fixture values with measured ones.
 
