@@ -56,6 +56,7 @@ missing_scenarios:
 wrong_assumptions: []
 open_questions:
   - "selection_manifest_digest の対象 (selection manifest 契約) を v1 で切るか、release-evidence 側の将来版に含めるか — 本 lane では opaque + caveat で先送り"
+  - "contracts/shared/schema-validator.mjs が oneOf を評価しない (sol 3巡目で発見)。release-evidence-bundle.schema.json の lane_ref/review が影響。本 lane では release-approval verifier 内の補完チェックで対処するが、shared validator への oneOf 対応は別タスク (全契約横断の潜在問題)"
 required_actions:
   - "protocol doc 3本の冒頭に Status: DRAFT (draft_revision 1) — NOT FROZEN を明記"
   - "promotion-receipt protocol doc に selection_manifest_digest = opaque digest (契約未定義、consumer 定義) の caveat を明記"
