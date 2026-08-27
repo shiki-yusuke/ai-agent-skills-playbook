@@ -6,7 +6,10 @@ test_matrix:
     test_file: contracts/review-findings/v1/verify-fixtures.mjs
     test_name: fixtures 25/25 (accept/invalid/reject)
     status: added
-    note: outcome 3値の相互制約、assessor 制約、locations 整合、実在日時、個人次元/confidence scan
+    note: "outcome 3値の相互制約、assessor 制約、locations 整合、実在日時、個人次元/confidence
+      scan。【訂正 2026-08-27】実件数は 23/23（verify-fixtures.mjs 実行で確認、terra が
+      release-evidence-shadow 実装レビュー中に発見）。25 は記録時の誤記で、原文は履歴保全のため
+      残す。digest 束縛 ack は記録当時の内容に対するもの"
   - ears_rule: Rule R8-R13, R21 (promotion-receipt/v0 schema + verdict 導出 + 述語完全性 +
       semantic_digest)
     test_type: unit
