@@ -81,6 +81,18 @@
 //     UPSTREAM markers) also do not get this fix until they are re-vendored, which this
 //     supplement is unaffected by either way.
 //
+//   promotion-receipt/v0 draft_revision 2 (B1 independence): every composite also carries
+//     `context: {expected_promotion_id}` and `session_ledger` (object | null), and the composite
+//     re-runs promotion-receipt/v0's evaluateReceipt() over {context, receipt, findings,
+//     session_ledger} -- the raw checkReceipt() above is kept as the receipt-only pre-check, but
+//     a composite can no longer be accepted without the independence evaluation (there is no
+//     path to acceptance that skips it). The ledger comes from inlineStubResolver (fixture-only;
+//     a production consumer injects the wrapper-store resolver instead). Duplicate record_id in
+//     findings is rejected before the record map is built (otherwise a reference would resolve
+//     by input order). break_glass_approve's bypassed_predicate_ids must equal the evaluation's
+//     blockers EXACTLY as a set (no subset, no superset), may never name a not_applicable
+//     predicate, and a break-glass against a receipt with no blockers is rejected outright.
+//
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
 import { readFileSync, readdirSync } from "node:fs";
@@ -91,6 +103,7 @@ import { scanPersonalDimensions } from "../../shared/personal-dimensions.mjs";
 import { canonicalize, sha256hex } from "../../shared/jcs.mjs";
 import { checkRecord } from "../../review-findings/v1/verify-fixtures.mjs";
 import { checkReceipt } from "../../promotion-receipt/v0/verify-fixtures.mjs";
+import { evaluateReceipt, inlineStubResolver, loadFrozenPolicy } from "../../promotion-receipt/v0/evaluate.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES_DIR = path.join(HERE, "fixtures");
@@ -108,6 +121,18 @@ const dedupe = (a) => [...new Set(a)];
 // Broadened (sol architect should-4): matches any key whose lowercased name CONTAINS
 // "confidence", not only an exact "confidence" key -- copied identically into review-findings/v1's
 // and promotion-receipt/v0's own verify-fixtures.mjs (contracts/shared cannot be touched).
+// reason_code matching: a machine code (snake_case) must match the reason's leading code exactly
+// (`<code>:` or the whole reason), so `promotion_id_mismatch` cannot be satisfied by
+// `context_promotion_id_mismatch`; free-text reason codes (legacy, e.g. "not in enum") stay substrings.
+function reasonMatches(reason, code) {
+  if (/^[a-z][a-z0-9_]*$/.test(code)) {
+    // whole-token match: the code may be nested (`outer_code: inner_code: ...`) but may not be a
+    // suffix of a longer identifier (`context_promotion_id_mismatch` must not satisfy `promotion_id_mismatch`)
+    return reason === code || new RegExp(`(^|[^a-z0-9_])${code}(:|$)`).test(reason);
+  }
+  return reason.includes(code);
+}
+
 function scanNumericConfidence(value, pathStr = "") {
   const violations = [];
   if (Array.isArray(value)) {
@@ -124,8 +149,27 @@ function scanNumericConfidence(value, pathStr = "") {
   return violations;
 }
 
-function isRealTimestamp(s) {
-  return typeof s === "string" && !Number.isNaN(Date.parse(s));
+// Real-calendar UTC timestamp check. Date.parse alone is not enough: V8 rolls day overflow within
+// 1..31 into the next month ("2026-02-29T00:00:00Z" and "2026-04-31T00:00:00Z" both parse), so the
+// string is split into its fields and the fields Date.UTC() normalizes them to must equal the
+// input. Leap seconds (":60") and years 0000-0099 (Date.UTC maps them to 19xx) are rejected.
+// Duplicated identically in review-findings/v1, promotion-receipt/v0 and release-approval/v0's
+// verify-fixtures.mjs (contracts/shared cannot be touched) -- keep the three bodies identical; the
+// promotion-receipt/v0 copy is exported because evaluate.mjs uses it for ledger started_at.
+function isRealUtcTimestamp(s) {
+  if (typeof s !== "string") return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/.exec(s);
+  if (!m) return false;
+  const [y, mo, d, h, mi, sec] = m.slice(1, 7).map(Number);
+  const t = new Date(Date.UTC(y, mo - 1, d, h, mi, sec));
+  return (
+    t.getUTCFullYear() === y &&
+    t.getUTCMonth() === mo - 1 &&
+    t.getUTCDate() === d &&
+    t.getUTCHours() === h &&
+    t.getUTCMinutes() === mi &&
+    t.getUTCSeconds() === sec
+  );
 }
 
 // R18: event_id = sha256(JCS(event without event_id)).
@@ -145,13 +189,13 @@ function checkEventSchemaAndId(event) {
   reasons.push(...scanNumericConfidence(event).map((v) => `numeric_confidence_forbidden_field: ${v}`));
   if (reasons.length > 0) return dedupe(reasons);
 
-  if (!isRealTimestamp(event.occurred_at)) {
-    reasons.push(`invalid_calendar_timestamp: event "${event.event_id}" occurred_at "${event.occurred_at}" does not parse to a real date/time`);
+  if (!isRealUtcTimestamp(event.occurred_at)) {
+    reasons.push(`invalid_calendar_timestamp: event "${event.event_id}" occurred_at "${event.occurred_at}" is not a real calendar date/time`);
   }
   if (event.expires_at !== undefined) {
-    if (!isRealTimestamp(event.expires_at)) {
-      reasons.push(`invalid_calendar_timestamp: event "${event.event_id}" expires_at "${event.expires_at}" does not parse to a real date/time`);
-    } else if (isRealTimestamp(event.occurred_at) && Date.parse(event.expires_at) <= Date.parse(event.occurred_at)) {
+    if (!isRealUtcTimestamp(event.expires_at)) {
+      reasons.push(`invalid_calendar_timestamp: event "${event.event_id}" expires_at "${event.expires_at}" is not a real calendar date/time`);
+    } else if (isRealUtcTimestamp(event.occurred_at) && Date.parse(event.expires_at) <= Date.parse(event.occurred_at)) {
       reasons.push(`expiry_not_after_occurrence: event "${event.event_id}" expires_at (${event.expires_at}) is not strictly after occurred_at (${event.occurred_at})`);
     }
   }
@@ -304,9 +348,45 @@ function resolveReleaseEvidenceRef(ref, bundlesByDigest, validBundles) {
   return { resolved: false, reasons };
 }
 
-function checkComposite({ findings, bundles, receipt, approval_events }, problems) {
+// The composite is a closed object: exactly these six keys, each with its JSON type, checked
+// before anything else reads it. An extra key is rejected, never silently ignored.
+const COMPOSITE_KEYS = ["context", "findings", "bundles", "receipt", "session_ledger", "approval_events"];
+const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+function checkCompositeShape(composite) {
+  if (!isPlainObject(composite)) return [`composite_shape: a composite must be an object {${COMPOSITE_KEYS.join(", ")}}`];
+  const reasons = [];
+  for (const k of Object.keys(composite)) {
+    if (!COMPOSITE_KEYS.includes(k)) reasons.push(`composite_unexpected_field: "${k}" is not one of {${COMPOSITE_KEYS.join(", ")}}`);
+  }
+  for (const k of COMPOSITE_KEYS) if (!(k in composite)) reasons.push(`composite_shape: missing key "${k}"`);
+  for (const k of ["findings", "bundles", "approval_events"]) {
+    if (k in composite && !Array.isArray(composite[k])) reasons.push(`composite_shape: ${k} must be an array`);
+  }
+  for (const k of ["context", "receipt"]) {
+    if (k in composite && !isPlainObject(composite[k])) reasons.push(`composite_shape: ${k} must be an object`);
+  }
+  if ("session_ledger" in composite && composite.session_ledger !== null && !isPlainObject(composite.session_ledger)) {
+    reasons.push("composite_shape: session_ledger must be an object or null");
+  }
+  return reasons;
+}
+
+// expectedPromotionId is the CALLER's expected id (the manifest row's expected_promotion_id in
+// fixtures); without one, the composite's own context.expected_promotion_id stands in for it, so
+// evaluateReceipt's context_promotion_id_mismatch check is only meaningful when a caller supplies it.
+function checkComposite(composite, problems, { expectedPromotionId } = {}) {
+  problems.push(...checkCompositeShape(composite));
+  if (problems.length > 0) return;
+  const { context, findings, bundles, receipt, session_ledger, approval_events } = composite;
+  const recordIds = findings.map((r) => r?.record_id);
+  for (const dup of dedupe(recordIds.filter((id, i) => recordIds.indexOf(id) !== i))) {
+    problems.push(`duplicate_record_id: record_id "${dup}" appears more than once in findings (references would depend on input order)`);
+  }
+  if (problems.length > 0) return;
+
   const findingsById = new Map();
-  for (const [i, record] of (findings ?? []).entries()) {
+  for (const [i, record] of findings.entries()) {
     const reasons = checkRecord(record);
     if (reasons.length > 0) {
       problems.push(`findings[${i}] not individually valid: ${reasons.join("; ")}`);
@@ -317,7 +397,7 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
 
   const bundlesByDigest = new Map();
   const validBundles = [];
-  for (const [i, b] of (bundles ?? []).entries()) {
+  for (const [i, b] of bundles.entries()) {
     const reasons = checkEmbeddedBundle(b);
     if (reasons.length > 0) {
       problems.push(`bundles[${i}] not individually valid: ${reasons.join("; ")}`);
@@ -338,7 +418,7 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
   }
 
   const eventProblems = [];
-  for (const [i, ev] of (approval_events ?? []).entries()) {
+  for (const [i, ev] of approval_events.entries()) {
     const reasons = checkEventSchemaAndId(ev);
     if (reasons.length > 0) eventProblems.push(`approval_events[${i}] not individually valid: ${reasons.join("; ")}`);
   }
@@ -382,7 +462,7 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
     }
 
     // should-1: the approval cannot predate the evaluation it approves.
-    if (isRealTimestamp(ev.occurred_at) && isRealTimestamp(receipt.evaluated_at) && Date.parse(ev.occurred_at) <= Date.parse(receipt.evaluated_at)) {
+    if (isRealUtcTimestamp(ev.occurred_at) && isRealUtcTimestamp(receipt.evaluated_at) && Date.parse(ev.occurred_at) <= Date.parse(receipt.evaluated_at)) {
       problems.push(`approval_before_evaluation: event "${ev.event_id}" occurred_at (${ev.occurred_at}) is not after the receipt's evaluated_at (${receipt.evaluated_at})`);
     }
 
@@ -417,7 +497,7 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
         if (canonicalize(ev.subject) !== canonicalize(target.subject)) {
           problems.push(`revoke_subject_mismatch: event "${ev.event_id}" subject does not match the subject of the event it revokes ("${target.event_id}")`);
         }
-        if (!(isRealTimestamp(ev.occurred_at) && isRealTimestamp(target.occurred_at) && Date.parse(ev.occurred_at) > Date.parse(target.occurred_at))) {
+        if (!(isRealUtcTimestamp(ev.occurred_at) && isRealUtcTimestamp(target.occurred_at) && Date.parse(ev.occurred_at) > Date.parse(target.occurred_at))) {
           problems.push(`revoke_before_grant: event "${ev.event_id}" occurred_at (${ev.occurred_at}) is not strictly after the revoked event's occurred_at (${target.occurred_at})`);
         }
       }
@@ -447,6 +527,39 @@ function checkComposite({ findings, bundles, receipt, approval_events }, problem
       problems.push(`predicate_evidence_unresolved: predicate "${p.predicate_id}" (status=${p.status}) has no evidence_ref that actually resolves to real content in this ledger`);
     }
   }
+  if (problems.length > 0) return;
+
+  // promotion-receipt/v0 draft_revision 2: the full independence evaluation, same function the
+  // promotion-receipt contract's own verifier runs.
+  const envelope = { context, receipt, findings, session_ledger };
+  const evaluation = evaluateReceipt(envelope, {
+    expectedPromotionId: expectedPromotionId ?? context.expected_promotion_id,
+    resolveLedger: inlineStubResolver(envelope),
+    policy: loadFrozenPolicy(),
+  });
+  if (!evaluation.ok) {
+    problems.push(...evaluation.reasons.map((r) => `receipt_evaluation_failed: ${r}`));
+    return;
+  }
+
+  const blockers = new Set(evaluation.blockers);
+  const notApplicable = new Set(receipt.predicates.filter((p) => p.applicability === "not_applicable").map((p) => p.predicate_id));
+  for (const ev of approval_events) {
+    if (ev.kind !== "break_glass_approve") continue;
+    if (blockers.size === 0) {
+      problems.push(`break_glass_without_blockers: event "${ev.event_id}" is break_glass_approve, but the receipt has no blocking predicate (use approval_granted)`);
+      continue;
+    }
+    const bypassed = new Set(ev.bypassed_predicate_ids);
+    for (const id of bypassed) {
+      if (notApplicable.has(id)) problems.push(`break_glass_bypasses_not_applicable: event "${ev.event_id}" bypasses "${id}", which is not_applicable in the receipt`);
+    }
+    const missing = [...blockers].filter((id) => !bypassed.has(id));
+    const extra = [...bypassed].filter((id) => !blockers.has(id));
+    if (missing.length > 0 || extra.length > 0) {
+      problems.push(`break_glass_bypassed_blockers_mismatch: event "${ev.event_id}" bypassed_predicate_ids must equal the receipt's blockers [${[...blockers]}] exactly (missing [${missing}], extra [${extra}])`);
+    }
+  }
 }
 
 function runFixture(entry) {
@@ -455,7 +568,7 @@ function runFixture(entry) {
   if (entry.type === "event") {
     problems.push(...checkEventSchemaAndId(data));
   } else if (entry.type === "composite") {
-    checkComposite(data, problems);
+    checkComposite(data, problems, { expectedPromotionId: entry.expected_promotion_id });
   } else {
     problems.push(`unknown fixture type "${entry.type}"`);
   }
@@ -487,7 +600,7 @@ function main() {
     const result = runFixture(entry);
     let ok = result.category === entry.expected;
     if (ok && entry.expected === "reject" && entry.reason_code) {
-      ok = result.reasons.some((r) => r.includes(entry.reason_code));
+      ok = result.reasons.some((r) => reasonMatches(r, entry.reason_code));
     }
     const status = ok ? "PASS" : "FAIL";
     if (!ok) failures++;

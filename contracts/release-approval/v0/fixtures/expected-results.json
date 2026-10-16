@@ -1,7 +1,7 @@
 {
   "protocol_version": "release-approval/v0",
   "fixture_format_version": "2",
-  "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. `type` selects the check: \"event\" (one event against release-approval-event.schema.json + the scans + event_id recomputation (R18) + real-calendar-date/expiry-ordering checks), \"composite\" ({findings:[...review-findings records], bundles:[...optional embedded release-evidence/v0 bundles], receipt:{...one promotion-receipt}, approval_events:[...release-approval events]} -- the ONLY fixture type in this contract since must-3 retired the standalone \"ledger\" type; every R19-scoped conformance ledger is composite). The composite check re-validates every embedded record/receipt with its own contract's checker, recomputes the receipt's REAL JCS sha256 for receipt_digest resolution (TEST-06), checks exact subject binding (TEST-05), enforces approval_granted-requires-ready-receipt (R22/TEST-11), resolves review_finding refs by anchor + whole-record digest (R23/TEST-09/TEST-12) and release_evidence refs against embedded bundles (must-2c), and validates revocation resolution/subject-match/ordering (R19 extension/TEST-13).",
+  "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. `type` selects the check: \"event\" (one event against release-approval-event.schema.json + the scans + event_id recomputation (R18) + real-calendar-date/expiry-ordering checks), \"composite\" ({findings:[...review-findings records], bundles:[...optional embedded release-evidence/v0 bundles], receipt:{...one promotion-receipt}, approval_events:[...release-approval events]} -- the ONLY fixture type in this contract since must-3 retired the standalone \"ledger\" type; every R19-scoped conformance ledger is composite). The composite check re-validates every embedded record/receipt with its own contract's checker, recomputes the receipt's REAL JCS sha256 for receipt_digest resolution (TEST-06), checks exact subject binding (TEST-05), enforces approval_granted-requires-ready-receipt (R22/TEST-11), resolves review_finding refs by anchor + whole-record digest (R23/TEST-09/TEST-12) and release_evidence refs against embedded bundles (must-2c), and validates revocation resolution/subject-match/ordering (R19 extension/TEST-13). promotion-receipt/v0 draft_revision 2: every composite also carries context.expected_promotion_id and session_ledger, and re-runs promotion-receipt/v0's evaluateReceipt() over {context, receipt, findings, session_ledger}; break_glass_approve's bypassed_predicate_ids must equal that evaluation's blockers exactly. A composite is a closed object: exactly {context, findings, bundles, receipt, session_ledger, approval_events} with findings/bundles/approval_events arrays, context/receipt objects and session_ledger an object or null; any other key is composite_unexpected_field. A composite row may carry `expected_promotion_id` (the caller-supplied expected id passed to evaluateReceipt; default = the composite's own context.expected_promotion_id). Real-date checks reconstruct the UTC fields with Date.UTC (2026-02-29 / 2026-04-31 are rejected).",
   "fixtures": [
     { "type": "composite", "expected": "accept", "files": "accept-composite-happy.json" },
     { "type": "composite", "expected": "accept", "files": "accept-composite-grant-then-revoke.json" },
@@ -9,7 +9,7 @@
     { "type": "composite", "expected": "accept", "files": "accept-composite-revoke-subject-key-order.json" },
     { "type": "event", "expected": "accept", "files": "accept-event-approval-granted.json" },
     { "type": "event", "expected": "accept", "files": "accept-event-break-glass.json" },
-
+    { "type": "composite", "expected": "accept", "files": "accept-composite-break-glass-exact-multi-blockers.json" },
     { "type": "event", "expected": "reject", "reason_code": "missing required property \"expires_at\"", "files": "invalid-approval-granted-missing-expires.json" },
     { "type": "event", "expected": "reject", "reason_code": "missing required property \"expires_at\"", "files": "invalid-break-glass-missing-expires.json" },
     { "type": "event", "expected": "reject", "reason_code": "missing required property \"incident_ref\"", "files": "invalid-break-glass-missing-incident-ref.json" },
@@ -22,11 +22,10 @@
     { "type": "event", "expected": "reject", "reason_code": "$.occurred_at", "files": "invalid-offset-timestamp.json" },
     { "type": "event", "expected": "reject", "reason_code": "additional property \"confidence\"", "files": "invalid-additional-property-confidence.json" },
     { "type": "event", "expected": "reject", "reason_code": "invalid_calendar_timestamp", "files": "invalid-occurred-at-not-real-date.json" },
+    { "type": "event", "expected": "reject", "reason_code": "invalid_calendar_timestamp", "files": "invalid-occurred-at-feb-29-non-leap.json" },
     { "type": "event", "expected": "reject", "reason_code": "invalid_calendar_timestamp", "files": "invalid-expires-at-not-real-date.json" },
     { "type": "event", "expected": "reject", "reason_code": "expiry_not_after_occurrence", "files": "invalid-expiry-not-after-occurrence.json" },
-
     { "type": "event", "expected": "reject", "reason_code": "event_id_mismatch", "files": "reject-event-id-tampered.json" },
-
     { "type": "composite", "expected": "reject", "reason_code": "stale_approval_binding", "files": "reject-composite-stale-bundle-digest.json" },
     { "type": "composite", "expected": "reject", "reason_code": "receipt_digest_unresolved", "files": "reject-composite-fake-receipt-digest.json" },
     { "type": "composite", "expected": "reject", "reason_code": "evidence_ref_digest_mismatch", "files": "reject-composite-evidence-ref-wrong-digest.json" },
@@ -50,6 +49,15 @@
     { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: lane_ref", "files": "reject-composite-embedded-bundle-lane-ref-union-violation.json" },
     { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: review", "files": "reject-composite-embedded-bundle-review-union-violation.json" },
     { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: lane_ref", "files": "reject-composite-embedded-bundle-lane-ref-array-type.json" },
-    { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: review", "files": "reject-composite-embedded-bundle-review-array-type.json" }
+    { "type": "composite", "expected": "reject", "reason_code": "embedded_bundle_union_shape: review", "files": "reject-composite-embedded-bundle-review-array-type.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "break_glass_bypassed_blockers_mismatch", "files": "reject-composite-break-glass-bypassed-subset.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "break_glass_bypassed_blockers_mismatch", "files": "reject-composite-break-glass-bypassed-superset.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "break_glass_bypasses_not_applicable", "files": "reject-composite-break-glass-bypasses-not-applicable.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "break_glass_without_blockers", "files": "reject-composite-break-glass-without-blockers.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "duplicate_record_id", "files": "reject-composite-duplicate-record-id.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "independence_check_mismatch", "files": "reject-composite-independence-forged-satisfied.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "promotion_id_mismatch", "files": "reject-composite-other-promotion.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "composite_unexpected_field", "files": "reject-composite-unexpected-field.json" },
+    { "type": "composite", "expected": "reject", "reason_code": "context_promotion_id_mismatch", "files": "reject-composite-context-promotion-id-mismatch.json", "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } }
   ]
 }

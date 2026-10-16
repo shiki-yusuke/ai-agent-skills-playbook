@@ -1,72 +1,157 @@
 {
-  "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-2026-08-23-003",
-  "evaluated_at": "2026-08-23T13:20:00Z",
-  "evaluation_phase": "pre_promotion",
-  "subject": {
-    "bundle_digest": "sha256:aaaa222222222222222222222222222222222222222222222222222222222222",
-    "selection_manifest_digest": "sha256:bbbb222222222222222222222222222222222222222222222222222222222222",
-    "target": "staging"
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-2026-08-23-003",
+    "evaluated_at": "2026-08-23T13:20:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa222222222222222222222222222222222222222222222222222222222222",
+      "selection_manifest_digest": "sha256:bbbb222222222222222222222222222222222222222222222222222222222222",
+      "target": "staging"
+    },
+    "policy_digest": "sha256:cccc222222222222222222222222222222222222222222222222222222222222",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:610756f9d4355f307aa435f72b5de77aa68260fdc3401166c9f2d962e96db804",
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:394528481764ffad917bed533ab6d316ecb4b89e57e42bf4892072b7167e79b2",
+    "predicates": [
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "agent-cost@0.1.0",
+            "digest": "sha256:dddd222222222222222222222222222222222222222222222222222222222222"
+          }
+        ]
+      },
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-2026-08-23-002#F-01",
+            "digest": "sha256:98c905803cb1fe9b1de70da634893cefe09d42de98e8b953f1479934a7117607",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": { "code": "different_provider", "attestation": "orchestrator_observed" },
+              "check": "satisfied"
+            }
+          }
+        ]
+      },
+      {
+        "predicate_id": "verification_coverage",
+        "applicability": "applicable",
+        "status": "unknown",
+        "evidence_refs": [],
+        "notes": "staging verification event has not yet arrived in the ledger at evaluation time"
+      },
+      { "predicate_id": "preview_verified", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      {
+        "predicate_id": "rollback_target_valid",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "agent-cost@0.0.9",
+            "digest": "sha256:eeee222222222222222222222222222222222222222222222222222222222222"
+          }
+        ]
+      },
+      { "predicate_id": "privilege_boundary", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "abstained"
   },
-  "policy_digest": "sha256:cccc222222222222222222222222222222222222222222222222222222222222",
-  "effective_risk": "medium",
-  "semantic_digest": "sha256:7f9ad12196bf132654a13aeb4df20d817174e4e1aa28d7e6fc8a4e221caa511b",
-  "predicates": [
+  "findings": [
     {
-      "predicate_id": "artifact_identity",
-      "applicability": "applicable",
-      "status": "satisfied",
-      "evidence_refs": [
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-2026-08-23-002",
+      "recorded_at": "2026-08-23T10:15:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/agent-cost",
+        "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "scan_scope": {
+        "paths": ["**/*"],
+        "commit_range": {
+          "base": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "head": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        },
+        "lenses": ["type_safety", "test_quality", "documentation"]
+      },
+      "assessor": {
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
+        "independence": {
+          "code": "different_provider",
+          "params": {
+            "attestation": "orchestrator_observed",
+            "session_ref": {
+              "session_id": "review-session-b1-02",
+              "started_at": "2026-08-23T12:02:00Z",
+              "args_digest": "sha256:6f09335368e36e54029a56126fb236f91897302ca44885ea1f1bfbc9a4b6121e"
+            }
+          }
+        }
+      },
+      "outcome": "findings_observed",
+      "abstention": null,
+      "findings": [
         {
-          "kind": "release_evidence",
-          "ref": "agent-cost@0.1.0",
-          "digest": "sha256:dddd222222222222222222222222222222222222222222222222222222222222"
+          "finding_id": "F-01",
+          "category": "type_safety",
+          "severity": "medium",
+          "claim": "measure() return type widens to any after the JSON.parse in report.py's cross-language shim.",
+          "locations": [{ "path": "src/agent_cost/report.py", "start_line": 120, "end_line": 133 }],
+          "suggested_fix": null,
+          "evidence_gate": {
+            "oracle_kind": "evigate",
+            "oracle_ref": "evigate://agent-cost/report-return-type",
+            "predicate": { "code": "type_check_fails_on_head", "params": {} },
+            "required_verdict": "proven"
+          }
+        },
+        {
+          "finding_id": "F-02",
+          "category": "documentation",
+          "severity": "low",
+          "claim": "docs/releasing.md still references the pre-v0.2.0 measure --format flag name.",
+          "locations": [{ "path": "docs/releasing.md", "start_line": null, "end_line": null }],
+          "suggested_fix": "Update to --format json.",
+          "evidence_gate": {
+            "oracle_kind": "external_outcome",
+            "oracle_ref": "https://github.com/shiki-yusuke/agent-cost/blob/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/docs/releasing.md",
+            "predicate": { "code": "stale_reference_confirmed", "params": {} },
+            "required_verdict": "proven"
+          }
         }
       ]
-    },
-    {
-      "predicate_id": "review_admissibility",
-      "applicability": "applicable",
-      "status": "satisfied",
-      "evidence_refs": [
-        {
-          "kind": "review_finding",
-          "ref": "rf-2026-08-23-002#F-01",
-          "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
-        }
-      ]
-    },
-    {
-      "predicate_id": "verification_coverage",
-      "applicability": "applicable",
-      "status": "unknown",
-      "evidence_refs": [],
-      "notes": "staging verification event has not yet arrived in the ledger at evaluation time"
-    },
-    {
-      "predicate_id": "preview_verified",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    },
-    {
-      "predicate_id": "rollback_target_valid",
-      "applicability": "applicable",
-      "status": "satisfied",
-      "evidence_refs": [
-        {
-          "kind": "release_evidence",
-          "ref": "agent-cost@0.0.9",
-          "digest": "sha256:eeee222222222222222222222222222222222222222222222222222222222222"
-        }
-      ]
-    },
-    {
-      "predicate_id": "privilege_boundary",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
     }
   ],
-  "verdict": "abstained"
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": [
+      {
+        "session_id": "review-session-b1-02",
+        "started_at": "2026-08-23T12:02:00Z",
+        "args_digest": "sha256:6f09335368e36e54029a56126fb236f91897302ca44885ea1f1bfbc9a4b6121e",
+        "independence_code": "different_provider",
+        "review_record_digest": "sha256:98c905803cb1fe9b1de70da634893cefe09d42de98e8b953f1479934a7117607"
+      }
+    ]
+  }
 }

@@ -1,53 +1,35 @@
 {
-  "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-invalid-011",
-  "evaluated_at": "2026-08-23T17:00:00Z",
-  "evaluation_phase": "pre_promotion",
-  "subject": {
-    "bundle_digest": "sha256:3939393939393939393939393939393939393939393939393939393939393939",
-    "selection_manifest_digest": "sha256:3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a",
-    "target": "production"
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-invalid-011",
+    "evaluated_at": "2026-08-23T17:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:3939393939393939393939393939393939393939393939393939393939393939",
+      "selection_manifest_digest": "sha256:3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a",
+      "target": "production"
+    },
+    "policy_digest": "sha256:3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:e4687c1e065f2267c97614586d8393e822e76be545d719b05ebe146b4dc5eae8",
+    "effective_risk": "medium",
+    "predicates": [
+      { "predicate_id": "artifact_identity", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      { "predicate_id": "review_admissibility", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      { "predicate_id": "verification_coverage", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      { "predicate_id": "preview_verified", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      { "predicate_id": "rollback_target_valid", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      { "predicate_id": "privilege_boundary", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "ready_for_approval",
+    "semantic_digest": "sha256:6a78c3b6ec96bf0770473917ea7031fa3f7fe4b5c383f1d9788fe8edf16b239f"
   },
-  "policy_digest": "sha256:3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b",
-  "effective_risk": "medium",
-  "predicates": [
-    {
-      "predicate_id": "artifact_identity",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    },
-    {
-      "predicate_id": "review_admissibility",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    },
-    {
-      "predicate_id": "verification_coverage",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    },
-    {
-      "predicate_id": "preview_verified",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    },
-    {
-      "predicate_id": "rollback_target_valid",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    },
-    {
-      "predicate_id": "privilege_boundary",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    }
-  ],
-  "verdict": "ready_for_approval",
-  "semantic_digest": "sha256:e1b74a2cedefc1eaea6dfd38de9908913839837cc838d44dcee94d52490a6cab"
+  "findings": [],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": []
+  }
 }

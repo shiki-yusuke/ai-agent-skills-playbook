@@ -1,6 +1,10 @@
 # release-approval/v0
 
-> **Status: DRAFT (draft_revision 1) — NOT FROZEN.** Part of the Evidence-Closed Delivery
+> **Status: DRAFT — NOT FROZEN.** Two revisions are tracked separately: the **schema revision**
+> (`release-approval-event.schema.json`, the event shape — **draft_revision 1**, unchanged) and
+> the **conformance-profile revision** (what the composite verifier accepts — **draft_revision
+> 2**, following promotion-receipt/v0 draft_revision 2; see
+> [`CHANGELOG.md`](../../contracts/release-approval/v0/CHANGELOG.md)). Part of the Evidence-Closed Delivery
 > Shadow Evidence Contracts (Milestone F). No reference implementer exists yet. Freezing
 > follows this repo's freeze-after-exercise discipline — not before a real approval (shadow
 > or live) exercises this contract against a real deploy adapter, same bar `release-evidence/v0`
@@ -40,6 +44,15 @@ in `bypassed_predicate_ids` must actually appear among the referenced receipt's 
 schema): bypassing a predicate the receipt never evaluated is meaningless, and this also catches
 a phase mismatch — `deployed_artifact_readback` is a valid closed-set member, but it can never
 appear in a `pre_promotion` receipt's predicates, so bypassing it against one is rejected.
+
+**Since promotion-receipt/v0 draft_revision 2, `bypassed_predicate_ids` must equal the receipt's
+blockers exactly, as a set** — the blockers being what `evaluateReceipt()` derives (applicable
+predicates whose status is `contradicted`/`unknown` or that carry an `unsatisfied`/`unknown`
+independence check; see [promotion-receipt/v0](promotion-receipt-v0.md#independence-evaluation-draft_revision-2)).
+Bypassing fewer (a subset) leaves a blocker silently unacknowledged; bypassing more (a superset)
+claims to override something that was not blocking. Naming a `not_applicable` predicate is
+rejected (`break_glass_bypasses_not_applicable`), and a break-glass against a receipt with **no**
+blockers is rejected with its own code (`break_glass_without_blockers`) — use `approval_granted`.
 
 **Artifact binding, target, and expiry are not exempted for break-glass** — the schema makes
 this structurally impossible, not merely discouraged: `expires_at` is required exactly as for
@@ -94,7 +107,7 @@ payload or not, fails conformance here.
 
 `occurred_at`/`expires_at`'s UTC-`Z` pattern accepts strings that are syntactically well-formed
 but calendar-nonsensical (e.g. `"2026-99-99T00:00:00Z"`). `verify-fixtures.mjs` additionally
-requires both to `Date.parse` to a real date/time when present, and requires `expires_at` to be
+requires both to be a real calendar date/time when present (a value the pattern accepts is split into its year/month/day/hour/minute/second fields and must survive a `Date.UTC` round trip unchanged — so `"2026-99-99T00:00:00Z"`, and also `"2026-02-29T00:00:00Z"` / `"2026-04-31T00:00:00Z"` (which `Date.parse` silently rolls into the next month), are rejected), and requires `expires_at` to be
 **strictly after** `occurred_at` whenever both appear on the same event. The composite check
 adds one more ordering rule no single event can express on its own: an approval event's
 `occurred_at` must be strictly after the referenced receipt's own `evaluated_at` — an approval
@@ -107,9 +120,13 @@ digests are just strings until checked against the receipt and bundle they claim
 An earlier revision of this contract also had a standalone `"ledger"` fixture type (an array of
 events with no receipt or findings attached); a sol architect review retired it (must-3): every
 R19-scoped conformance ledger is now a **`composite`** fixture,
-`{findings: [...review-findings/v1 records], bundles: [...optional embedded release-evidence/v0
-bundles], receipt: {...one promotion-receipt/v0}, approval_events: [...release-approval/v0
-events]}`. `verify-fixtures.mjs`'s composite check:
+`{context: {expected_promotion_id}, findings: [...review-findings/v1 records], bundles:
+[...optional embedded release-evidence/v0 bundles], receipt: {...one promotion-receipt/v0},
+session_ledger: {...orchestrator session ledger} | null, approval_events: [...release-approval/v0
+events]}` — a **closed** object: exactly these six keys, `findings`/`bundles`/`approval_events`
+arrays, `context`/`receipt` objects, `session_ledger` an object or `null`, checked before
+anything else; any other key is rejected (`composite_unexpected_field`). `verify-fixtures.mjs`'s
+composite check:
 
 1. Re-validates every embedded record and the receipt using **their own contracts' checkers**
    (imported directly from `review-findings/v1` and `promotion-receipt/v0`'s own
@@ -183,8 +200,22 @@ events]}`. `verify-fixtures.mjs`'s composite check:
    - `other` references never count toward resolution and are never themselves flagged;
      `promotion-receipt/v0`'s own verifier already requires a resolvable-kind reference to exist
      structurally, so an `other`-only predicate fails there first.
+8. **(promotion-receipt/v0 draft_revision 2)** Re-runs promotion-receipt/v0's
+   `evaluateReceipt()` over `{context, receipt, findings, session_ledger}` — the composite now
+   also carries `context: {expected_promotion_id}` and `session_ledger` (object or `null`) — with
+   `inlineStubResolver` (fixture-only; a production consumer injects the wrapper-store resolver,
+   see promotion-receipt/v0 "Trust boundary"). `expectedPromotionId` is the caller's (a fixture
+   row's `expected_promotion_id`); only when no caller value is given does the composite's own
+   `context.expected_promotion_id` stand in, so `context_promotion_id_mismatch` fires whenever a
+   caller supplies a different id. The raw `checkReceipt()` of step 1 stays as a
+   receipt-only pre-check; there is no path to an accepted composite that skips this
+   evaluation. Any evaluation failure is reported as `receipt_evaluation_failed: <reason>`.
+   `findings[]` with a repeated `record_id` are rejected before any record map is built (a
+   reference would otherwise resolve by input order). Then every `break_glass_approve`'s
+   `bypassed_predicate_ids` is compared with the evaluation's blockers as described in
+   "`break_glass_approve`" above.
 
-Only the composite fixture type can exercise checks 2–7, because they are inherently
+Only the composite fixture type can exercise checks 2–8, because they are inherently
 cross-contract: a bare receipt or a bare event, checked alone, has nothing real to resolve
 against.
 

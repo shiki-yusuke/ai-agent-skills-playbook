@@ -1,25 +1,41 @@
 {
-  "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-invalid-002",
-  "evaluated_at": "2026-08-23T15:10:00Z",
-  "evaluation_phase": "pre_promotion",
-  "subject": {
-    "bundle_digest": "sha256:aaaa555555555555555555555555555555555555555555555555555555555555",
-    "selection_manifest_digest": "sha256:bbbb555555555555555555555555555555555555555555555555555555555555",
-    "target": "production"
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-invalid-002",
+    "evaluated_at": "2026-08-23T15:10:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa555555555555555555555555555555555555555555555555555555555555",
+      "selection_manifest_digest": "sha256:bbbb555555555555555555555555555555555555555555555555555555555555",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc555555555555555555555555555555555555555555555555555555555555",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:e4687c1e065f2267c97614586d8393e822e76be545d719b05ebe146b4dc5eae8",
+    "effective_risk": "low",
+    "semantic_digest": "sha256:d79a38bc1601333f890ba5dd967cdf9abf9e9da10b094ef96dbe8bc3084509d9",
+    "predicates": [
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd555555555555555555555555555555555555555555555555555555555555"
+          }
+        ]
+      }
+    ],
+    "verdict": "eligible"
   },
-  "policy_digest": "sha256:cccc555555555555555555555555555555555555555555555555555555555555",
-  "effective_risk": "low",
-  "semantic_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "predicates": [
-    {
-      "predicate_id": "artifact_identity",
-      "applicability": "applicable",
-      "status": "satisfied",
-      "evidence_refs": [
-        { "kind": "release_evidence", "ref": "spec-lane@0.7.0", "digest": "sha256:dddd555555555555555555555555555555555555555555555555555555555555" }
-      ]
-    }
-  ],
-  "verdict": "eligible"
+  "findings": [],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": []
+  }
 }

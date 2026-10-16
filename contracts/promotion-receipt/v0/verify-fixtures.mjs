@@ -2,10 +2,19 @@
 // Verifies contracts/promotion-receipt/v0/fixtures/* against promotion-receipt.schema.json plus
 // the semantic MUSTs the schema alone cannot express (docs/protocols/promotion-receipt-v0.md):
 //
-//   verdict derivation (R10): applicable contradicted (>=1) -> ineligible; else applicable
-//   unknown (>=1) -> abstained; else (all applicable satisfied) -> ready_for_approval. A
-//   declared verdict that does not match this derivation is rejected regardless of what the
-//   fixture claims.
+//   draft_revision 2: every receipt fixture is an evaluation ENVELOPE {context:
+//   {expected_promotion_id}, receipt, findings, session_ledger}, checked by evaluateReceipt() in
+//   ./evaluate.mjs (independence evaluation against the frozen policy + session ledger; the
+//   ledger comes from inlineStubResolver, the fixture-only resolver). `type: "policy"` fixtures
+//   are candidate independence policies checked by checkPolicy(); the frozen
+//   policy/independence-policy.json itself must pass checkPolicy() or this script fails.
+//   checkReceipt() below stays the receipt-only checker evaluateReceipt() calls first.
+//
+//   verdict derivation (R10 + draft_revision 2): applicable contradicted (>=1) or any declared
+//   independence check unsatisfied -> ineligible; else applicable unknown (>=1) or any declared
+//   independence check unknown -> abstained; else ready_for_approval. A declared verdict that
+//   does not match this derivation is rejected regardless of what the fixture claims.
+//   evidence_refs identity: the same {kind, ref, digest} may appear at most once per predicate.
 //
 //   semantic_digest recomputation (R12): sha256 of the JCS canonical bytes of the receipt with
 //   evaluated_at, receipt_id, and semantic_digest itself removed. A mismatch is rejected -- this
@@ -31,8 +40,16 @@
 //   v0's composite fixture's job (it alone carries the referenced records/bundles).
 //
 //   real-date semantics: the UTC-Z pattern in the schema accepts syntactically well-formed but
-//   calendar-nonsensical strings (e.g. "2026-99-99T00:00:00Z"); Date.parse resolves those to NaN
-//   and this verifier rejects them.
+//   calendar-nonsensical strings (e.g. "2026-99-99T00:00:00Z", or "2026-02-29T00:00:00Z" /
+//   "2026-04-31T00:00:00Z", which Date.parse silently rolls into the next month);
+//   isRealUtcTimestamp() rejects every one of them.
+//
+//   fixture_format_version 2 manifest rows (`type: "envelope"`) may also carry:
+//     expected_promotion_id -- the caller-supplied expected id (default: the fixture's own
+//       context.expected_promotion_id); lets a fixture's context disagree with the caller.
+//     resolver -- "inline" (default: inlineStubResolver), "throw" (a resolver that throws), or
+//       "other_ledger" (returns the fixture's top-level session_ledger_from_resolver, which is
+//       stripped from the envelope before evaluation).
 //
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
@@ -120,8 +137,27 @@ export function checkResolvableEvidenceKind(receipt) {
   return dedupe(reasons);
 }
 
-function isRealTimestamp(s) {
-  return typeof s === "string" && !Number.isNaN(Date.parse(s));
+// Real-calendar UTC timestamp check. Date.parse alone is not enough: V8 rolls day overflow within
+// 1..31 into the next month ("2026-02-29T00:00:00Z" and "2026-04-31T00:00:00Z" both parse), so the
+// string is split into its fields and the fields Date.UTC() normalizes them to must equal the
+// input. Leap seconds (":60") and years 0000-0099 (Date.UTC maps them to 19xx) are rejected.
+// Duplicated identically in review-findings/v1, promotion-receipt/v0 and release-approval/v0's
+// verify-fixtures.mjs (contracts/shared cannot be touched) -- keep the three bodies identical; the
+// promotion-receipt/v0 copy is exported because evaluate.mjs uses it for ledger started_at.
+export function isRealUtcTimestamp(s) {
+  if (typeof s !== "string") return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/.exec(s);
+  if (!m) return false;
+  const [y, mo, d, h, mi, sec] = m.slice(1, 7).map(Number);
+  const t = new Date(Date.UTC(y, mo - 1, d, h, mi, sec));
+  return (
+    t.getUTCFullYear() === y &&
+    t.getUTCMonth() === mo - 1 &&
+    t.getUTCDate() === d &&
+    t.getUTCHours() === h &&
+    t.getUTCMinutes() === mi &&
+    t.getUTCSeconds() === sec
+  );
 }
 
 // R12: excludes evaluated_at, receipt_id, semantic_digest from the digested object.
@@ -130,12 +166,29 @@ export function computeSemanticDigest(receipt) {
   return `sha256:${sha256hex(canonicalize(rest))}`;
 }
 
-// R10: the verdict a receipt's own predicate vector implies.
+// R10 + draft_revision 2: the verdict a receipt's own predicate vector and its (declared)
+// independence checks imply. Independence is a separate vector: it never rewrites a predicate's
+// status, it only joins the aggregation (unsatisfied wins over unknown wins over satisfied).
+// evaluate.mjs re-derives every check before trusting this aggregation.
 export function deriveVerdict(predicates) {
   const applicable = predicates.filter((p) => p.applicability === "applicable");
-  if (applicable.some((p) => p.status === "contradicted")) return "ineligible";
-  if (applicable.some((p) => p.status === "unknown")) return "abstained";
+  const checks = applicable.flatMap((p) => p.evidence_refs.filter((r) => r.independence).map((r) => r.independence.check));
+  if (applicable.some((p) => p.status === "contradicted") || checks.includes("unsatisfied")) return "ineligible";
+  if (applicable.some((p) => p.status === "unknown") || checks.includes("unknown")) return "abstained";
   return "ready_for_approval";
+}
+
+// draft_revision 2: an evidence_ref's identity within a predicate is {kind, ref, digest}; a
+// repeat would make "predicate_id x evidence_ref" checks ambiguous.
+export function checkEvidenceRefIdentity(receipt) {
+  const reasons = [];
+  for (const p of receipt.predicates) {
+    const keys = p.evidence_refs.map((r) => canonicalize({ kind: r.kind, ref: r.ref, digest: r.digest }));
+    if (keys.some((k, i) => keys.indexOf(k) !== i)) {
+      reasons.push(`evidence_ref_duplicate: predicate "${p.predicate_id}" cites the same {kind, ref, digest} more than once`);
+    }
+  }
+  return reasons;
 }
 
 export function checkReceipt(receipt) {
@@ -145,12 +198,13 @@ export function checkReceipt(receipt) {
   reasons.push(...scanNumericConfidence(receipt).map((v) => `numeric_confidence_forbidden_field: ${v}`));
   if (reasons.length > 0) return dedupe(reasons);
 
-  if (!isRealTimestamp(receipt.evaluated_at)) {
-    reasons.push(`invalid_calendar_timestamp: receipt "${receipt.receipt_id}" evaluated_at "${receipt.evaluated_at}" does not parse to a real date/time`);
+  if (!isRealUtcTimestamp(receipt.evaluated_at)) {
+    reasons.push(`invalid_calendar_timestamp: receipt "${receipt.receipt_id}" evaluated_at "${receipt.evaluated_at}" is not a real calendar date/time`);
   }
 
   reasons.push(...checkPredicateCompleteness(receipt));
   reasons.push(...checkResolvableEvidenceKind(receipt));
+  reasons.push(...checkEvidenceRefIdentity(receipt));
   if (reasons.length > 0) return dedupe(reasons);
 
   const expectedDigest = computeSemanticDigest(receipt);
@@ -170,12 +224,65 @@ export function checkReceipt(receipt) {
   return dedupe(reasons);
 }
 
-function runFixture(entry) {
-  const problems = checkReceipt(read(entry.files));
+// reason_code matching: a machine code (snake_case) must match the reason's leading code exactly
+// (`<code>:` or the whole reason), so `promotion_id_mismatch` cannot be satisfied by
+// `context_promotion_id_mismatch`; free-text reason codes (legacy, e.g. "not in enum") stay substrings.
+function reasonMatches(reason, code) {
+  if (/^[a-z][a-z0-9_]*$/.test(code)) {
+    // whole-token match: the code may be nested (`outer_code: inner_code: ...`) but may not be a
+    // suffix of a longer identifier (`context_promotion_id_mismatch` must not satisfy `promotion_id_mismatch`)
+    return reason === code || new RegExp(`(^|[^a-z0-9_])${code}(:|$)`).test(reason);
+  }
+  return reason.includes(code);
+}
+
+function fixtureResolver(entry, data, envelope, inlineStubResolver) {
+  switch (entry.resolver ?? "inline") {
+    case "inline":
+      return inlineStubResolver(envelope);
+    case "throw":
+      return () => {
+        throw new Error("fixture resolver: ledger store unreachable");
+      };
+    case "other_ledger":
+      return () => data.session_ledger_from_resolver;
+    default:
+      return null;
+  }
+}
+
+function runFixture(entry, { evaluateReceipt, inlineStubResolver, checkPolicy, frozenPolicy }) {
+  const data = read(entry.files);
+  let problems;
+  if (entry.type === "policy") {
+    problems = checkPolicy(data);
+  } else if (entry.type === "envelope") {
+    const envelope = { ...data };
+    if (entry.resolver === "other_ledger") delete envelope.session_ledger_from_resolver;
+    const resolveLedger = fixtureResolver(entry, data, envelope, inlineStubResolver);
+    problems = resolveLedger
+      ? evaluateReceipt(envelope, {
+          expectedPromotionId: "expected_promotion_id" in entry ? entry.expected_promotion_id : data?.context?.expected_promotion_id,
+          resolveLedger,
+          policy: frozenPolicy,
+        }).reasons
+      : [`unknown fixture resolver "${entry.resolver}"`];
+  } else {
+    problems = [`unknown fixture type "${entry.type}"`];
+  }
   return { category: problems.length ? "reject" : "accept", reasons: problems };
 }
 
-function main() {
+async function main() {
+  // Dynamic import: evaluate.mjs imports checkReceipt/deriveVerdict from this module.
+  const evaluator = await import("./evaluate.mjs");
+  const frozenPolicy = evaluator.loadFrozenPolicy();
+  const policyProblems = evaluator.checkPolicy(frozenPolicy);
+  if (policyProblems.length > 0) {
+    console.error(`frozen policy/independence-policy.json is invalid:\n  ${policyProblems.join("\n  ")}`);
+    process.exit(1);
+  }
+
   const manifest = read("expected-results.json");
   if (!Array.isArray(manifest.fixtures) || manifest.fixtures.length === 0) {
     console.error("expected-results.json declares zero fixtures -- refusing to report success.");
@@ -196,11 +303,12 @@ function main() {
 
   let failures = 0;
   console.log(`promotion-receipt:v0 fixture verification (${manifest.fixtures.length} fixtures)\n`);
+  console.log(`[PASS] policy/independence-policy.json  (frozen policy, ${evaluator.computePolicyDigest(frozenPolicy)})`);
   for (const entry of manifest.fixtures) {
-    const result = runFixture(entry);
+    const result = runFixture(entry, { ...evaluator, frozenPolicy });
     let ok = result.category === entry.expected;
     if (ok && entry.expected === "reject" && entry.reason_code) {
-      ok = result.reasons.some((r) => r.includes(entry.reason_code));
+      ok = result.reasons.some((r) => reasonMatches(r, entry.reason_code));
     }
     const status = ok ? "PASS" : "FAIL";
     if (!ok) failures++;

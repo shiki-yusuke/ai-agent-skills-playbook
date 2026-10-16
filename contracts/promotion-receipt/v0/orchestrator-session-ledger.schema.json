@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "orchestrator-session-ledger/0",
+  "description": "DRAFT (promotion-receipt/v0 draft_revision 2). NOT a separate contract directory: the shape a wrapper-written session ledger takes when promotion-receipt/v0's evaluateReceipt() consumes it. One ledger per promotion_id (the storage unit). Each entry records that the orchestrator wrapper itself launched a review session (session_id, started_at, args_digest) and that the session produced exactly the review-findings/v1 record whose WHOLE-record JCS sha256 is review_record_digest, carrying independence_code. What this proves is technical execution separation ONLY -- never human or organizational independence. Semantic MUSTs enforced by checkSessionLedger() in evaluate.mjs: started_at is a real UTC date; review_record_digest is unique within the ledger (one record has at most one entry); one session_id never appears with two different (started_at, args_digest) pairs; entries are sorted strictly ascending by review_record_digest (so the ledger's JCS digest is a canonical representation -- entry order carries no meaning beyond that). An unsupported ledger_version fails the const below and is rejected, never treated as 'ledger unavailable'.",
+  "type": "object",
+  "required": ["ledger_version", "promotion_id", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "ledger_version": { "const": "orchestrator-session-ledger/0" },
+    "promotion_id": { "$ref": "promotion-receipt.schema.json#/$defs/promotionId" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["session_id", "started_at", "args_digest", "independence_code", "review_record_digest"],
+        "additionalProperties": false,
+        "properties": {
+          "session_id": { "type": "string", "minLength": 1 },
+          "started_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$" },
+          "args_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+          "independence_code": { "type": "string", "minLength": 1 },
+          "review_record_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "description": "JCS (RFC 8785) sha256 of the WHOLE review-findings/v1 record this session produced -- the same record_digest promotion-receipt evidence_refs[].digest binds."
+          }
+        }
+      }
+    }
+  }
+}

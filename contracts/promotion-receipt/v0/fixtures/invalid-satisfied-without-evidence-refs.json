@@ -1,23 +1,28 @@
 {
-  "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-invalid-005",
-  "evaluated_at": "2026-08-23T15:40:00Z",
-  "evaluation_phase": "pre_promotion",
-  "subject": {
-    "bundle_digest": "sha256:aaaa888888888888888888888888888888888888888888888888888888888888",
-    "selection_manifest_digest": "sha256:bbbb888888888888888888888888888888888888888888888888888888888888",
-    "target": "production"
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-invalid-005",
+    "evaluated_at": "2026-08-23T15:40:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa888888888888888888888888888888888888888888888888888888888888",
+      "selection_manifest_digest": "sha256:bbbb888888888888888888888888888888888888888888888888888888888888",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc888888888888888888888888888888888888888888888888888888888888",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:e4687c1e065f2267c97614586d8393e822e76be545d719b05ebe146b4dc5eae8",
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:3dc09fcaf2ed83634cac003cd0bc1902a52f9cbaef9836a9a5a608a6a61bd8c3",
+    "predicates": [{ "predicate_id": "artifact_identity", "applicability": "applicable", "status": "satisfied", "evidence_refs": [] }],
+    "verdict": "ready_for_approval"
   },
-  "policy_digest": "sha256:cccc888888888888888888888888888888888888888888888888888888888888",
-  "effective_risk": "medium",
-  "semantic_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "predicates": [
-    {
-      "predicate_id": "artifact_identity",
-      "applicability": "applicable",
-      "status": "satisfied",
-      "evidence_refs": []
-    }
-  ],
-  "verdict": "ready_for_approval"
+  "findings": [],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": []
+  }
 }

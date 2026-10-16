@@ -1,13 +1,13 @@
 {
   "protocol_version": "review-findings/v1",
   "fixture_format_version": "1",
-  "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. Every fixture is one record, checked against review-findings.schema.json plus the semantic MUSTs the schema alone cannot express: finding_id uniqueness within the record, the numeric-confidence scan over the open {code,params} bags, and the personal-dimension scan. All digests here are syntactically valid but NOT recomputed by this verifier (review-findings/v1 has no bundle-style artifact to recompute a digest from -- unlike promotion-receipt/v0's semantic_digest or release-approval/v0's event_id, which ARE recomputed).",
+  "description": "Machine-readable expected outcome for every fixture in this directory; verify-fixtures.mjs fails (non-zero exit) on any mismatch. Every fixture is one record, checked against review-findings.schema.json plus the semantic MUSTs the schema alone cannot express: finding_id uniqueness within the record, the numeric-confidence scan over the open {code,params} bags, and the personal-dimension scan. draft_revision 2: assessor.independence.params.attestation is required (enum orchestrator_observed|self_reported|unknown); params.session_ref is required exactly when attestation=orchestrator_observed and forbidden otherwise, and its started_at must be a real date. Real-date checks reconstruct the UTC fields with Date.UTC (so 2026-02-29 and 2026-04-31, which Date.parse silently rolls over, are rejected). All digests here are syntactically valid but NOT recomputed by this verifier (review-findings/v1 has no bundle-style artifact to recompute a digest from -- unlike promotion-receipt/v0's semantic_digest or release-approval/v0's event_id, which ARE recomputed).",
   "fixtures": [
     { "files": "accept-findings-observed-human.json", "expected": "accept" },
     { "files": "accept-findings-observed-model-multi.json", "expected": "accept" },
     { "files": "accept-none-observed.json", "expected": "accept" },
     { "files": "accept-abstained.json", "expected": "accept" },
-
+    { "files": "accept-independence-self-reported-no-session-ref.json", "expected": "accept" },
     { "files": "invalid-none-observed-empty-paths.json", "expected": "reject", "reason_code": "array length 0 < minItems 1" },
     { "files": "invalid-none-observed-empty-lenses.json", "expected": "reject", "reason_code": "array length 0 < minItems 1" },
     { "files": "invalid-findings-observed-empty-findings.json", "expected": "reject", "reason_code": "array length 0 < minItems 1" },
@@ -24,9 +24,16 @@
     { "files": "invalid-recorded-at-not-real-date.json", "expected": "reject", "reason_code": "invalid_calendar_timestamp" },
     { "files": "invalid-location-line-partial.json", "expected": "reject", "reason_code": "location_line_partial" },
     { "files": "invalid-location-line-order.json", "expected": "reject", "reason_code": "location_line_order" },
-
     { "files": "reject-duplicate-finding-id.json", "expected": "reject", "reason_code": "duplicate_finding_id" },
     { "files": "reject-numeric-confidence-in-params.json", "expected": "reject", "reason_code": "numeric_confidence_forbidden_field" },
-    { "files": "reject-personal-dimension-in-params.json", "expected": "reject", "reason_code": "personal_dimension_forbidden_key" }
+    { "files": "reject-personal-dimension-in-params.json", "expected": "reject", "reason_code": "personal_dimension_forbidden_key" },
+    { "files": "invalid-independence-attestation-missing.json", "expected": "reject", "reason_code": "$.assessor.independence.params: missing required property \"attestation\"" },
+    { "files": "invalid-independence-orchestrator-observed-without-session-ref.json", "expected": "reject", "reason_code": "missing required property \"session_ref\"" },
+    { "files": "invalid-independence-attestation-numeric.json", "expected": "reject", "reason_code": "$.assessor.independence.params.attestation" },
+    { "files": "invalid-independence-session-ref-with-self-reported.json", "expected": "reject", "reason_code": "must not validate against the \"not\" schema" },
+    { "files": "invalid-independence-session-ref-args-digest-pattern.json", "expected": "reject", "reason_code": "$.assessor.independence.params.session_ref.args_digest" },
+    { "files": "invalid-independence-session-ref-started-at-not-real-date.json", "expected": "reject", "reason_code": "invalid_calendar_timestamp" },
+    { "files": "invalid-recorded-at-feb-29-non-leap.json", "expected": "reject", "reason_code": "invalid_calendar_timestamp" },
+    { "files": "invalid-independence-session-ref-started-at-apr-31.json", "expected": "reject", "reason_code": "invalid_calendar_timestamp" }
   ]
 }

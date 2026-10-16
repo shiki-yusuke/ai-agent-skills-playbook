@@ -1,4 +1,10 @@
 {
+  "context": {
+    "expected_promotion_id": {
+      "run_id": "gh-run-20260823-1001",
+      "run_attempt": 1
+    }
+  },
   "findings": [
     {
       "schema_version": "review-findings/v1",
@@ -26,7 +32,9 @@
         "model_cohort": null,
         "independence": {
           "code": "human_third_party",
-          "params": {}
+          "params": {
+            "attestation": "unknown"
+          }
         }
       },
       "outcome": "findings_observed",
@@ -79,11 +87,18 @@
         ]
       },
       "assessor": {
-        "kind": "human",
-        "model_cohort": null,
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
         "independence": {
-          "code": "human_third_party",
-          "params": {}
+          "code": "different_provider",
+          "params": {
+            "attestation": "orchestrator_observed",
+            "session_ref": {
+              "session_id": "review-session-b1-03",
+              "started_at": "2026-08-23T12:03:00Z",
+              "args_digest": "sha256:84c13142a0b3c37c83c337cca02ca2f71968cf1dd9fba39b0ee7fbfe06cd121f"
+            }
+          }
         }
       },
       "outcome": "none_observed_in_recorded_scope",
@@ -148,6 +163,12 @@
       "target": "staging"
     },
     "policy_digest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": {
+      "run_id": "gh-run-20260823-1001",
+      "run_attempt": 1
+    },
+    "session_ledger_digest": "sha256:d0b108f2c0b3eb9301695026ad583500dbcd8ba2a2f116568e051ad40fc96b3c",
     "effective_risk": "medium",
     "predicates": [
       {
@@ -170,7 +191,28 @@
           {
             "kind": "review_finding",
             "ref": "rf-composite-fix-new#scope",
-            "digest": "sha256:9b73552bb18e05b92f92e9b8c39867950f78ff8b07506bd6f796c794d1cff00e"
+            "digest": "sha256:4845780c512e613a454a70b44dba9a3b6408bd61c463a19bf64cea6593cdeff1",
+            "independence": {
+              "required": [
+                {
+                  "code": "different_provider",
+                  "attestation": "orchestrator_observed"
+                },
+                {
+                  "code": "same_provider_different_family",
+                  "attestation": "orchestrator_observed"
+                },
+                {
+                  "code": "different_session_ref",
+                  "attestation": "orchestrator_observed"
+                }
+              ],
+              "observed": {
+                "code": "different_provider",
+                "attestation": "orchestrator_observed"
+              },
+              "check": "satisfied"
+            }
           }
         ]
       },
@@ -200,7 +242,7 @@
           {
             "kind": "review_finding",
             "ref": "rf-composite-fix-old#F-01",
-            "digest": "sha256:c363d12dbfce8d434c2906cff13a335101277da2b619588eaea24043465b6fb1"
+            "digest": "sha256:4142fc4099c302f150b10c52a742e5d82376b0b324802c763f00f0eef53573d8"
           }
         ]
       },
@@ -212,15 +254,31 @@
       }
     ],
     "verdict": "ready_for_approval",
-    "semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636"
+    "semantic_digest": "sha256:1edb46f9e8b86b23a04e0fc88a0328c8f9c55e7aa19eda59b0377c4d3827206f"
+  },
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": {
+      "run_id": "gh-run-20260823-1001",
+      "run_attempt": 1
+    },
+    "entries": [
+      {
+        "session_id": "review-session-b1-03",
+        "started_at": "2026-08-23T12:03:00Z",
+        "args_digest": "sha256:84c13142a0b3c37c83c337cca02ca2f71968cf1dd9fba39b0ee7fbfe06cd121f",
+        "independence_code": "different_provider",
+        "review_record_digest": "sha256:4845780c512e613a454a70b44dba9a3b6408bd61c463a19bf64cea6593cdeff1"
+      }
+    ]
   },
   "approval_events": [
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_granted",
       "subject": {
-        "receipt_digest": "sha256:75844652d21a69927ab43d15e59af70371e5d982e759637441e539c107642314",
-        "receipt_semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636",
+        "receipt_digest": "sha256:5c13fef8027e555a1310ff2863b0ee1bc67470f94f44862deea301d1063b4ac6",
+        "receipt_semantic_digest": "sha256:1edb46f9e8b86b23a04e0fc88a0328c8f9c55e7aa19eda59b0377c4d3827206f",
         "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "staging"
@@ -232,14 +290,14 @@
       },
       "occurred_at": "2026-08-23T19:10:00Z",
       "expires_at": "2026-08-24T21:10:00Z",
-      "event_id": "sha256:082b1dc497c9f9d7c6d9a5510f93f40236133e40ece53e9af13be58e054f15ec"
+      "event_id": "sha256:9b70876c3c986ee52083c1ed4c38f0f8322a17afa51e82e386dbe4bb07d7d267"
     },
     {
       "schema_version": "release-approval/v0",
       "kind": "approval_revoked",
       "subject": {
-        "receipt_digest": "sha256:75844652d21a69927ab43d15e59af70371e5d982e759637441e539c107642314",
-        "receipt_semantic_digest": "sha256:ce301876830bffd6b75b4c3e9dc73d348332f16aeb277566d8164bd44821d636",
+        "receipt_digest": "sha256:5c13fef8027e555a1310ff2863b0ee1bc67470f94f44862deea301d1063b4ac6",
+        "receipt_semantic_digest": "sha256:1edb46f9e8b86b23a04e0fc88a0328c8f9c55e7aa19eda59b0377c4d3827206f",
         "bundle_digest": "sha256:b7f0be414a5c004eef01975ccc3e2ccdc3bff47c064796543c9b2a82e19a198f",
         "selection_manifest_digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
         "target": "production"
@@ -250,8 +308,8 @@
         "role_snapshot": "release-approver"
       },
       "occurred_at": "2026-08-23T19:30:00Z",
-      "revoked_approval_event_id": "sha256:082b1dc497c9f9d7c6d9a5510f93f40236133e40ece53e9af13be58e054f15ec",
-      "event_id": "sha256:9d39a97c748bff7e8d6a6c0aa6ad3a3348c7332de670bbcdd3ffb43ef1d66f64"
+      "revoked_approval_event_id": "sha256:9b70876c3c986ee52083c1ed4c38f0f8322a17afa51e82e386dbe4bb07d7d267",
+      "event_id": "sha256:ce9fba653daad3edc9b4b2f80702f1bf72b565cc0fe310507484bbb1070a0562"
     }
   ]
 }
