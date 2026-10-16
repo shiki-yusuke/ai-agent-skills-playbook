@@ -69,6 +69,7 @@ installerで、導入時にはGitHubへ接続し、公式document上は匿名ins
 | ドキュメント | 一言で言うと |
 |---|---|
 | [`docs/ai-metrics-platform-template.md`](docs/ai-metrics-platform-template.md) | AI支援開発の効果計測基盤（5テーブルスキーマ + PRコメントマーカー収集 + Goodhart回避ガードレール）の参照設計テンプレート |
+| [`docs/prior-art.md`](docs/prior-art.md) | Evidence-Closed Delivery の設計について「何を・いつ公開したか」と比較した先行研究を、人間承認制の claim register（`docs/claims/register.json`）から生成した一覧。「初」「独立に収束」は主張しない |
 | [`docs/protocols/agent-metrics-v1.md`](docs/protocols/agent-metrics-v1.md) | 上記テンプレートの「PRコメントマーカー収集」パターンを具体化した、機械検証可能な normative protocol（次節参照） |
 
 ## Public interoperability protocols
