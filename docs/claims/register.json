@@ -1,0 +1,183 @@
+{
+  "register_version": "1",
+  "updated_at": "2026-10-16",
+  "policy": {
+    "approval": "Only a human may add, change, or approve an entry (review_status: approved, human_reviewer set). Automation is limited to schema validation and to generating docs/prior-art.md. An entry with review_status pending is not citable outside this repository.",
+    "temporal_relation": "relation records a content relation only (anticipates / partial_overlap / adjacent / unresolved). Whether a source is earlier or later than a claim element is derived by the generator from the source's published date and the element's date_basis.date, and is never written by hand. A later source that fully describes an element is still recorded as anticipates when the element is not implemented here.",
+    "comprehensive_search": "last_comprehensive_search_at is set only when a human re-ran a documented search protocol for that element. last_candidate_triage_at moves whenever a candidate source was triaged against the element. No element may be described as first, novel, or independently converged unless last_comprehensive_search_at is set, the patent family is resolved, and the entry is approved."
+  },
+  "sources": [
+    { "id": "agile-v-2026", "kind": "paper", "title": "Agile V: A Compliance-Ready Framework for AI-Augmented Engineering -- From Concept to Audit-Ready Delivery", "authors": ["Christopher Koch", "Joshua Andreas Wellbrock"], "identifier": "arXiv:2602.20684", "published": "2026-02-24", "date_basis": "publication", "url": "https://arxiv.org/abs/2602.20684", "retrieved_at": "2026-10-16", "note": "Audit trail generated per task cycle, human-approval checkpoints. No cryptographic binding of evidence to artifacts described." },
+    { "id": "attesting-llm-pipelines-2026", "kind": "paper", "title": "Attesting LLM Pipelines: Enforcing Verifiable Training and Release Claims", "authors": ["Zhuoran Tan", "Jeremy Singer", "Christos Anagnostopoulos"], "identifier": "arXiv:2603.28988", "published": "2026-03-30", "date_basis": "publication", "url": "https://arxiv.org/abs/2603.28988", "retrieved_at": "2026-10-16", "note": "Attestation-aware promotion gate (allow / quarantine / block). Names the lack of cryptographic binding between claims and artifacts as the core gap; the binding itself is not implemented." },
+    { "id": "agentic-agile-v-2026", "kind": "paper", "title": "Agentic Agile-V: From Vibe Coding to Verified Engineering in Software and Hardware Development", "authors": ["Christopher Koch"], "identifier": "arXiv:2605.20456", "published": "2026-05-19", "date_basis": "publication", "url": "https://arxiv.org/abs/2605.20456", "retrieved_at": "2026-10-16", "note": "SCOPE-V loop, conversation-to-contract gate, evidence-bundle acceptance model. No digest binding described in the abstract." },
+    { "id": "meta-engineering-harness-2026", "kind": "paper", "title": "Meta-Engineering Harnesses for AI-Native Software Production: A Contract-Driven Adversarial Verification Architecture with Early Deployment Report", "authors": ["Satadru Sengupta", "Tamunokorite Briggs", "Ivan Myshakivskyi"], "identifier": "arXiv:2605.25665", "published": "2026-05-25", "date_basis": "publication", "url": "https://arxiv.org/abs/2605.25665", "retrieved_at": "2026-10-16", "note": "Contract-driven, independent adversarial verification; four-way failure arbiter; outer-loop calibration; 17 features in production use." },
+    { "id": "novafabric-2026", "kind": "paper", "title": "NovaFabric: Tamper-Evident, Replayable Evidence for Autonomous AI Agent Runs", "authors": ["Mohsen Seyedkazemi Ardebili"], "identifier": "arXiv:2609.12582", "published": "2026-09-11", "date_basis": "publication", "url": "https://arxiv.org/abs/2609.12582", "retrieved_at": "2026-10-16", "note": "Tamper-evident, replayable evidence; proposal and approval linked by canonical digest; approver key distinct from proposer key." },
+    { "id": "zerogate-2026", "kind": "paper", "title": "ZeroGate: Trust-Preserving Fast Paths for Governed AI Agent Runtimes", "authors": ["Zexun Wang"], "identifier": "arXiv:2609.25443", "published": "2026-09-21", "date_basis": "publication", "url": "https://arxiv.org/abs/2609.25443", "retrieved_at": "2026-10-16", "note": "Separates the admission receipt (approval record) from effect evidence (after the fact); observes that matching two old hashes does not answer whether the approval's premise still holds." },
+    { "id": "assurance-spine-2026", "kind": "paper", "title": "From Agent Output to Authorized Transition (Agile-V Assurance Spine)", "authors": ["Christopher Koch"], "identifier": "arXiv:2609.28216", "published": "2026-09-23", "date_basis": "publication", "url": "https://arxiv.org/abs/2609.28216", "retrieved_at": "2026-10-16", "note": "Evidence bound to an authoritative source profile, exact artifact, and frozen policy baseline; freshness against declared dependencies; independence levels I0-I4 and authority matched to risk; gate verdicts recorded as receipts that carry approval references; approvals scoped and time-limited; re-check at merge / deploy / flash / release effect boundaries with single-use approval consumption. Cites only sources up to 2026-07; does not cite this repository." },
+    { "id": "permit-before-commit-patents", "kind": "patent_family", "title": "USPTO patent family: permit-before-commit at effect boundaries (not retrieved)", "identifier": "", "published": null, "date_basis": "unresolved", "url": "https://ppubs.uspto.gov/pubwebapp/", "retrieved_at": "2026-10-16", "note": "Existence reported during the 2026-10-16 research pass but no publication or priority date was retrieved and no claim-element mapping was done. Recorded as unresolved so it is not silently dropped. A legal prior-art search was not performed because this register does not assert novelty, priority, or freedom to operate." }
+  ],
+  "claim_elements": [
+    {
+      "id": "CE-01",
+      "claim": "evidence-closed-release",
+      "statement": "On 2026-08-22 this repository published the schema, fixtures, and verifier for three contracts (review-findings/v1, promotion-receipt/v0, release-approval/v0) in PR #17; the diff identifies the functional units.",
+      "not_claimed": "That the contract set was the first of its kind, that it was converged on independently of any paper, or that it formed an integrated release gate at that date.",
+      "status": "scoped-supported",
+      "date_basis": { "kind": "public_implementation", "date": "2026-08-22" },
+      "evidence_location": [
+        "GitHub PR shiki-yusuke/ai-agent-skills-playbook#17 metadata: created 2026-08-22T20:01:03Z, merged 2026-08-22T20:04:04Z (GitHub API; the merge commit id predates a later history rewrite and is not used as evidence)",
+        "contracts/review-findings/v1, contracts/promotion-receipt/v0, contracts/release-approval/v0 (current tree)"
+      ],
+      "prior_art": [
+        { "source": "attesting-llm-pipelines-2026", "relation": "partial_overlap", "note": "Promotion gate with attestation inputs; the binding this repository's contracts express as exact digests is named there as a gap, not implemented." },
+        { "source": "assurance-spine-2026", "relation": "partial_overlap", "note": "Receipt / approval / effect-boundary structure of the same shape with different authority placement (see CE-03)." },
+        { "source": "agile-v-2026", "relation": "adjacent", "note": "Audit-trail framework without digest-bound receipts." },
+        { "source": "agentic-agile-v-2026", "relation": "adjacent", "note": "Evidence-bundle acceptance model at the process level." },
+        { "source": "meta-engineering-harness-2026", "relation": "adjacent", "note": "Contract-driven verification of implementation, not of release promotion." },
+        { "source": "novafabric-2026", "relation": "adjacent", "note": "Evidence of agent runs rather than release contracts." },
+        { "source": "zerogate-2026", "relation": "adjacent", "note": "Runtime admission rather than release contracts." },
+        { "source": "permit-before-commit-patents", "relation": "unresolved", "note": "Not retrieved." }
+      ],
+      "confidence": "medium",
+      "human_reviewer": null,
+      "review_status": "pending",
+      "unresolved": [
+        "The three timestamps are all GitHub metadata in one trust domain; they are not three independent third-party timestamps.",
+        "Rewritten git history (filter-repo) is excluded as evidence; only platform metadata counts."
+      ],
+      "last_candidate_triage_at": "2026-10-16",
+      "last_comprehensive_search_at": null
+    },
+    {
+      "id": "CE-02",
+      "claim": "evidence-closed-release",
+      "statement": "On the same day (2026-08-22) this repository published the release-evidence/v0 implementation, with a sealed bundle digest and production read-back, and a GitHub Pages adapter demonstration (workflow run 32572501427, head SHA recorded in the run).",
+      "not_claimed": "That read-back at an effect boundary originated here, or that the implementation reaches more than SLSA Build Level 2 equivalence.",
+      "status": "scoped-supported",
+      "date_basis": { "kind": "public_implementation", "date": "2026-08-22" },
+      "evidence_location": [
+        "GitHub repository shiki-yusuke/release-evidence: createdAt 2026-08-22T10:42:32Z, public (a lower bound on the publication time only)",
+        "GitHub Actions run 32572501427 (agent-metrics-harvester, Pages adapter): createdAt 2026-08-22T12:15:28Z, conclusion success",
+        "contracts/release-evidence/v0 (current tree)"
+      ],
+      "prior_art": [
+        { "source": "attesting-llm-pipelines-2026", "relation": "partial_overlap", "note": "Names claim-to-artifact binding as the gap that a sealed bundle digest addresses." },
+        { "source": "zerogate-2026", "relation": "partial_overlap", "note": "Admission record separated from effect evidence, as release-evidence separates the sealed bundle from the production read-back." },
+        { "source": "assurance-spine-2026", "relation": "partial_overlap", "note": "Re-check of the exact artifact at the effect boundary." },
+        { "source": "novafabric-2026", "relation": "partial_overlap", "note": "Tamper-evident evidence with canonical digests, for agent runs rather than releases." },
+        { "source": "agile-v-2026", "relation": "adjacent", "note": "Audit trail without artifact digests." },
+        { "source": "agentic-agile-v-2026", "relation": "adjacent", "note": "Evidence bundles at the process level." },
+        { "source": "meta-engineering-harness-2026", "relation": "adjacent", "note": "Verification architecture, not release evidence." },
+        { "source": "permit-before-commit-patents", "relation": "unresolved", "note": "Not retrieved." }
+      ],
+      "confidence": "medium",
+      "human_reviewer": null,
+      "review_status": "pending",
+      "unresolved": [
+        "Repository createdAt proves only that the repository existed; the public visibility date is not separately recorded by GitHub."
+      ],
+      "last_candidate_triage_at": "2026-10-16",
+      "last_comprehensive_search_at": null
+    },
+    {
+      "id": "CE-03",
+      "claim": "authority-placement",
+      "statement": "promotion-receipt/v0 carries no reference to a human approval and its predicates cannot depend on one; release-approval/v0 is the only authority for a release. This is a design difference from designs whose receipt carries approval references and whose eligibility includes an authority-valid term.",
+      "not_claimed": "That this placement is superior, or that it is unique to this repository.",
+      "status": "scoped-supported",
+      "date_basis": { "kind": "public_implementation", "date": "2026-08-22" },
+      "evidence_location": [
+        "contracts/promotion-receipt/v0/promotion-receipt.schema.json (no approval field; additionalProperties false)",
+        "docs/evidence-closed-delivery-frozen-decisions.md, Authority DAG section"
+      ],
+      "prior_art": [
+        { "source": "assurance-spine-2026", "relation": "partial_overlap", "note": "Same receipt / approval pair with the opposite placement: the receipt references approvals and eligibility includes an authority-valid term." },
+        { "source": "novafabric-2026", "relation": "partial_overlap", "note": "Links proposal and approval by canonical digest; the approval is part of the evidence chain rather than a separate authority." },
+        { "source": "zerogate-2026", "relation": "adjacent", "note": "Admission receipt is itself the approval record." },
+        { "source": "attesting-llm-pipelines-2026", "relation": "adjacent", "note": "Gate verdict without a separate human-approval contract." },
+        { "source": "permit-before-commit-patents", "relation": "unresolved", "note": "Not retrieved." }
+      ],
+      "confidence": "medium",
+      "human_reviewer": null,
+      "review_status": "pending",
+      "unresolved": [],
+      "last_candidate_triage_at": "2026-10-16",
+      "last_comprehensive_search_at": null
+    },
+    {
+      "id": "CE-04",
+      "claim": "receipt-llm-calls-zero",
+      "statement": "Every predicate in promotion-receipt/v0 is evaluated with zero LLM calls (frozen operational limit: receipt LLM 0); AI output enters only as review-findings/v1 records that the receipt evaluates deterministically.",
+      "not_claimed": "Novelty. Deterministic policy evaluation is common practice; this is recorded as a design property of this repository only.",
+      "status": "scoped-supported",
+      "date_basis": { "kind": "public_implementation", "date": "2026-08-23" },
+      "evidence_location": [
+        "docs/evidence-closed-delivery-frozen-decisions.md, Operational limits and degradation order (receipt LLM 0)",
+        "contracts/promotion-receipt/v0/verify-fixtures.mjs"
+      ],
+      "prior_art": [
+        { "source": "meta-engineering-harness-2026", "relation": "partial_overlap", "note": "Contract-driven verification separates generation from deterministic checking." },
+        { "source": "assurance-spine-2026", "relation": "adjacent", "note": "States that a second AI call does not raise independence level; does not fix the receipt's LLM call count." }
+      ],
+      "confidence": "high",
+      "human_reviewer": null,
+      "review_status": "pending",
+      "unresolved": [],
+      "last_candidate_triage_at": "2026-10-16",
+      "last_comprehensive_search_at": null
+    },
+    {
+      "id": "CE-05",
+      "claim": "null-not-zero-baseline",
+      "statement": "The D13 baseline (frozen 2026-08-23) records unmeasured quantities as null, never as zero, and every KPI denominator excludes null rows.",
+      "not_claimed": "Novelty. Not treating missing data as zero is ordinary measurement discipline; it is registered because the design depends on it, not because it is new.",
+      "status": "scoped-supported",
+      "date_basis": { "kind": "public_implementation", "date": "2026-08-23" },
+      "evidence_location": [
+        "docs/evidence-closed-delivery-frozen-decisions.md, D13 baseline (null-not-zero)"
+      ],
+      "prior_art": [],
+      "confidence": "high",
+      "human_reviewer": null,
+      "review_status": "pending",
+      "unresolved": [
+        "No literature comparison was attempted for this element; prior_art is intentionally empty rather than filled with adjacent citations."
+      ],
+      "last_candidate_triage_at": "2026-10-16",
+      "last_comprehensive_search_at": null
+    },
+    {
+      "id": "CE-06",
+      "claim": "gaps-self-reported",
+      "statement": "As of the 2026-10-16 baseline commit this repository has NOT implemented single-use approval consumption at the effect boundary, has NOT defined a risk-linked required-independence policy (review-findings/v1 records independence as {code, params} but no policy consumes it), and has NOT defined dependency freshness.",
+      "not_claimed": "Possession of any of these three elements.",
+      "status": "unsubstantiated",
+      "date_basis": { "kind": "unresolved", "date": null },
+      "evidence_location": [
+        "contracts/release-approval/v0 (idempotent duplicate ingest only; no consumption state)",
+        "contracts/review-findings/v1/review-findings.schema.json (assessor.independence {code, params})"
+      ],
+      "prior_art": [
+        { "source": "assurance-spine-2026", "relation": "anticipates", "note": "Describes single-use consumption, I0-I4 independence matched to risk, and freshness against declared dependencies." },
+        { "source": "novafabric-2026", "relation": "partial_overlap", "note": "Approver key distinct from proposer key as an independence mechanism." },
+        { "source": "zerogate-2026", "relation": "partial_overlap", "note": "Stale-premise observation motivates freshness checks." }
+      ],
+      "confidence": "high",
+      "human_reviewer": null,
+      "review_status": "pending",
+      "unresolved": [
+        "Design for single-use consumption (linearization point on the authorized git ref, promotion_id = run_id + run_attempt, effect_send CAS) is agreed in the 2026-10-16 brush-up record but not implemented."
+      ],
+      "last_candidate_triage_at": "2026-10-16",
+      "last_comprehensive_search_at": null
+    }
+  ],
+  "withdrawn_claims": [
+    {
+      "claim": "Evidence-Closed Release (sealed bundle digest + human approval as a separate authority + effect-boundary read-back) is the first such design (internal candidate claim 2, 2026-08).",
+      "withdrawn_at": "2026-10-16",
+      "reason": "Three papers published before 2026-08-22 (agile-v-2026, attesting-llm-pipelines-2026, agentic-agile-v-2026) already describe the surrounding structure, and one of them names the exact binding gap. The only statements that survive are the dated public-record statements CE-01 and CE-02. Two further internal candidate claims were never researched and are not registered.",
+      "replaced_by": ["CE-01", "CE-02"]
+    }
+  ]
+}

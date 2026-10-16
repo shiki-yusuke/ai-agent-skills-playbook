@@ -32,3 +32,5 @@ jobs:
           exit "$status"
       - name: Repo-wide structural checks (discovery-count floor, orphan fixtures, schema structural check)
         run: node contracts/shared/repo-checks.mjs
+      - name: Claim register (schema + semantic rules) and generated prior-art view up to date
+        run: node docs/claims/verify-register.mjs

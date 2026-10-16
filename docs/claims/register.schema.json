@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/docs/claims/register.schema.json",
+  "title": "claim-evidence register",
+  "description": "Canonical, human-approved register of falsifiable claim elements about this repository's Evidence-Closed Delivery design, each bound to its evidence and to the prior art it was compared against. docs/prior-art.md is generated from this file by verify-register.mjs and is never edited by hand. Relations are content relations only; earlier/later is derived from dates by the generator, never recorded by hand. Confidence is a qualitative label (no numeric confidence anywhere, same rule as review-findings/v1).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["register_version", "updated_at", "policy", "sources", "claim_elements", "withdrawn_claims"],
+  "properties": {
+    "register_version": { "type": "string", "const": "1" },
+    "updated_at": { "$ref": "#/$defs/date" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approval", "temporal_relation", "comprehensive_search"],
+      "properties": {
+        "approval": { "type": "string", "minLength": 1 },
+        "temporal_relation": { "type": "string", "minLength": 1 },
+        "comprehensive_search": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "kind", "title", "identifier", "published", "url", "date_basis", "retrieved_at", "note"],
+        "properties": {
+          "id": { "$ref": "#/$defs/slug" },
+          "kind": { "type": "string", "enum": ["paper", "patent_family", "standard", "report"] },
+          "title": { "type": "string", "minLength": 1 },
+          "authors": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "identifier": { "type": "string" },
+          "published": { "oneOf": [ { "$ref": "#/$defs/date" }, { "type": "null" } ] },
+          "date_basis": { "type": "string", "enum": ["publication", "priority", "public_implementation", "unresolved"] },
+          "url": { "type": "string", "pattern": "^https://" },
+          "retrieved_at": { "$ref": "#/$defs/date" },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "claim_elements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "claim", "statement", "status", "date_basis", "evidence_location", "prior_art", "confidence", "human_reviewer", "review_status", "unresolved", "last_candidate_triage_at", "last_comprehensive_search_at"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^CE-[0-9]{2}$" },
+          "claim": { "$ref": "#/$defs/slug" },
+          "statement": { "type": "string", "minLength": 1 },
+          "not_claimed": { "type": "string" },
+          "status": { "type": "string", "enum": ["unsubstantiated", "withdrawn", "scoped-supported"] },
+          "date_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "date"],
+            "properties": {
+              "kind": { "type": "string", "enum": ["publication", "priority", "public_implementation", "unresolved"] },
+              "date": { "oneOf": [ { "$ref": "#/$defs/date" }, { "type": "null" } ] }
+            }
+          },
+          "evidence_location": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "prior_art": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["source", "relation", "note"],
+              "properties": {
+                "source": { "$ref": "#/$defs/slug" },
+                "relation": { "type": "string", "enum": ["anticipates", "partial_overlap", "adjacent", "unresolved"] },
+                "note": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+          "human_reviewer": { "oneOf": [ { "type": "string", "minLength": 1 }, { "type": "null" } ] },
+          "review_status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+          "unresolved": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "last_candidate_triage_at": { "oneOf": [ { "$ref": "#/$defs/date" }, { "type": "null" } ] },
+          "last_comprehensive_search_at": { "oneOf": [ { "$ref": "#/$defs/date" }, { "type": "null" } ] }
+        }
+      }
+    },
+    "withdrawn_claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "withdrawn_at", "reason", "replaced_by"],
+        "properties": {
+          "claim": { "type": "string", "minLength": 1 },
+          "withdrawn_at": { "$ref": "#/$defs/date" },
+          "reason": { "type": "string", "minLength": 1 },
+          "replaced_by": { "type": "array", "items": { "type": "string", "pattern": "^CE-[0-9]{2}$" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "slug": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" }
+  }
+}
