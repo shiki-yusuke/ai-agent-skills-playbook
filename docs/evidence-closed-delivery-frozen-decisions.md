@@ -216,6 +216,60 @@ milestone's added behavior, not a partial throttle):
 5. Narrow Milestone F to critical-severity findings only; if still over budget, remove F
    entirely.
 
+## Addendum 2026-10-16 — verification-loop stop rule (how "review generation ≤ 1" is applied)
+
+Source: 意図駆動開発基盤ブラッシュアップ 合意文書 (2026-10-16, §B2; Codex `sol` 6 rounds +
+`gpt-6.1-sol` adversarial cross-check, user-approved). This addendum does not change any number
+above; it fixes how the "Review generation: ≤ 1 per release" limit is applied to the
+review→fix→re-review loop, so the loop cannot be re-run until it happens to report nothing.
+
+- **"Two consecutive zero-finding reviews" is not a gate.** A clean review is an observation
+  about one digest under one recorded scope, not evidence that the change is complete; repeating
+  reviews until one is clean optimises for the reviewer's silence (Goodhart). It is never used as
+  a stop condition, a KPI, or an unlock input.
+- **At most one review generated per release; normal approval needs that one review bound to
+  the final digest.** The review that counts is the one whose `review-findings/v1` record is bound to the bundle digest that is actually
+  being promoted and to the exact frozen independence policy of `promotion-receipt/v0` (B1). Its
+  required independence strength is whatever that policy demands for the effective risk; this
+  document does not rank reviewers.
+- **Stop condition** (all of the following, on that same digest):
+  1. every in-scope blocker finding is resolved — fixed, or dispositioned with an evidence
+     reference; never "will fix later";
+  2. the machine verifications the receipt predicates require have passed;
+  3. areas the review did cover without findings are recorded as
+     `none_observed_in_recorded_scope` together with the recorded scope, so that "no findings
+     here" never reads as "no findings anywhere"; areas outside that scope stay unknown;
+  4. when the one review has been spent for this release and a further review would be needed,
+     the receipt verdict is `abstained` and the decision escalates to a human — a second review
+     is never run silently.
+- **A change after the counted review means a new digest and a held release — not a reset.**
+  The limit is per release, and the budget is not restored by re-labelling the candidate (new
+  candidate ID with the same content, or new content under the old ID) or by producing a new
+  digest. The new digest has no counted review bound to it, so its receipt verdict is
+  `abstained` and a human decides: hold, revise the limit by addendum here, or proceed under the
+  release-approval break-glass path with the reason recorded. A review record whose subject
+  digest differs from the candidate's digest is not evidence for that candidate.
+- **Adding reviewers is a revision of this document.** A second reviewer per release (human or
+  model) is only admissible after the "Review generation" limit above is explicitly revised by
+  addendum here; a lane-local or project-local override is not a valid path.
+
+Enforcement status at this addendum: the three contracts record scope (`none_observed_in_recorded_scope`),
+the receipt verdict (`abstained`), and digest bindings, but **none of them records the review
+count per release, the candidate ID, or blocker dispositions**, and the receipt does not yet
+check that a review record's subject digest equals the candidate's. Until a contract revision
+adds those, conditions 1 and 4, the per-release count, **and the subject-digest check** are
+applied by the orchestrating lane and recorded in prose, with this document as the reference. The
+lane treats a review record whose subject digest is not the candidate's digest as review
+admissibility `unknown`, which yields verdict `abstained` — never `ready_for_approval` — and
+hands the decision to a human exactly as in the bullet above.
+
+Relation to Milestone I: I's gated review→fix→re-review loop and its convergence KPI consume
+reviews, and this addendum does not settle how that loop fits inside "≤ 1 per release". That is
+an open item to be resolved by addendum **before** any Milestone I category is unlocked; until
+then the limit above applies to I as written. This addendum also does not decide which reviewer
+is independent enough (B1), how rework caused by the review is classified (B3), or any stability
+KPI (B4).
+
 ## External evidence — sources, dates, and where they do and do not apply
 
 | Source | Date | What it supports | Scope limit |
