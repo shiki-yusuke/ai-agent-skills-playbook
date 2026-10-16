@@ -224,8 +224,58 @@ milestone's added behavior, not a partial throttle):
 | DORA, *State of AI-assisted Software Development 2025* | published 2026-02 | AI is an amplifier: without an observability foundation, throughput gains trade against delivery stability | Supports requiring `release-evidence/v0`-style observation as a precondition for any Delivery-OS-style automation; not a source for any numeric threshold in this document. |
 | Black Hat USA, harness-vs-CI-secrets disclosure | 2026-08-05 (public), CSA research note 2026-08-08 | An unauthenticated GitHub issue reached CI runner secrets for Claude Code / Gemini CLI / Codex; root cause was agent-harness permission design, not the model | Directly informs the `privilege_boundary` checklist above (event-body isolation, no untrusted-trigger path to secrets). Not evidence about model behavior or review quality. |
 | GitHub artifact attestations / SLSA | current standard as of 2026-08-23 | Widely deployed tooling reaches SLSA v1.0 Build Level 2; Level 3 requires a reusable workflow, Level 4 is not realistic for this scale | Sets the realistic ceiling for "immutable release candidate" claims — the release-evidence approach (digest + read-back) is scoped to L2-equivalent, not higher. |
+| Agile V (arXiv 2602.20684, Koch & Wellbrock) | published 2026-02-24 | Compliance-ready framework for AI-augmented engineering: audit trail generated per task cycle, human-approval checkpoints | Prior art for the surrounding structure of Evidence-Closed Release (CE-01 / CE-02 in `docs/claims/register.json`). Describes no cryptographic binding of evidence to artifacts; supports no number in this document. |
+| Attesting LLM Pipelines (arXiv 2603.28988, Tan, Singer & Anagnostopoulos) | published 2026-03-30 | Attestation-aware promotion gate (allow / quarantine / block); names the lack of cryptographic binding between claims and artifacts as the core gap | Prior art that states the gap `release-evidence/v0`'s sealed bundle digest addresses; the binding itself is not implemented there. Supports no number in this document. |
+| Agentic Agile-V (arXiv 2605.20456, Koch) | published 2026-05-19 | SCOPE-V loop, conversation-to-contract gate, evidence-bundle acceptance model | Prior art at the process level; no digest binding in the abstract. Supports no number in this document. |
+| Meta-Engineering Harnesses for AI-Native Software Production … with Early Deployment Report (arXiv 2605.25665, Sengupta, Briggs & Myshakivskyi) | published 2026-05-25 | Contract-driven, independent adversarial verification; four-way failure arbiter; 17 features in production | Prior art for separating generation from deterministic checking (CE-04). Not a source for review-acceptance or KPI numbers here. |
+| NovaFabric (arXiv 2609.12582, Seyedkazemi Ardebili) | published 2026-09-11 | Tamper-evident, replayable evidence for agent runs; proposal and approval linked by canonical digest; approver key distinct from proposer key | Later than this repository's 2026-08-22 publication; compared, not relied on. Its approver-key separation is one reading of the independence policy this repository has not defined (CE-06). |
+| ZeroGate (arXiv 2609.25443, Wang) | published 2026-09-21 | Admission receipt separated from effect evidence; matching two old hashes does not show the approval's premise still holds | Later than 2026-08-22; compared, not relied on. Motivates the freshness check this repository has not defined (CE-06). |
+| Agile-V Assurance Spine / From Agent Output to Authorized Transition (arXiv 2609.28216, Koch) | published 2026-09-23 | Evidence bound to source profile, exact artifact, and frozen policy baseline; independence levels I0–I4 and authority matched to risk; receipts carrying approval references; scoped, time-limited, single-use approvals re-checked at effect boundaries | Later than 2026-08-22 and cites only sources up to 2026-07; compared, not relied on. Closest published design: same receipt / approval / effect-boundary shape with the opposite authority placement (its receipt references approvals; `promotion-receipt/v0` cannot). Single-use consumption, risk-linked independence, and dependency freshness are present there and absent here (CE-06). |
 | **SWE-Review (arXiv 2607.06065)** | — | — | **Not used.** This paper's existence could not be independently confirmed during the source plan's research pass. Any claim about generate→review→revise loop effectiveness that traces back to this citation is explicitly withdrawn and must not be reintroduced without independent verification that the source actually exists. |
 
 No citation in this document or in any Evidence-Closed Delivery contract's own documentation
 may be added without recording its source, publication date, and the specific scope it is being
 used to support — the same discipline this table itself follows.
+
+## Addendum 2026-10-16 — public-record dates and prior art
+
+This addendum records, by date, what this repository made public and what it does not claim.
+The canonical register is [`docs/claims/register.json`](claims/register.json) (entries change only by
+human approval; every entry is `pending` until a named reviewer approves it, and a pending entry is not
+citable outside this repository);
+[`docs/prior-art.md`](prior-art.md) is generated from it and must not be edited by hand.
+
+What can be stated, and all that can be stated:
+
+1. On 2026-08-22 this repository published the schema, fixtures, and verifier for three contracts
+   (`review-findings/v1`, `promotion-receipt/v0`, `release-approval/v0`) in PR #17; the diff
+   identifies the functional units (register element CE-01).
+2. On the same day it published the `release-evidence/v0` implementation, with a sealed bundle
+   digest and production read-back, and a GitHub Pages adapter demonstration (workflow run
+   32572501427; register element CE-02).
+
+Those publication dates precede the three September 2026 papers in the table above
+(NovaFabric, ZeroGate, Assurance Spine) and follow the four papers published between February
+and May 2026. Nothing here is described as first, as independently converged, or as an
+integrated release gate at that date; the earlier internal candidate claim to that effect was
+withdrawn on 2026-10-16 (see the register's `withdrawn_claims`).
+
+Design differences recorded against the later design compared here (Assurance Spine), as
+differences and not as advantages:
+
+| Element | This repository (2026-08-22 baseline) | Assurance Spine (2026-09-23) | Register |
+|---|---|---|---|
+| Authority placement | `promotion-receipt/v0` carries no approval reference; `release-approval/v0` is the sole authority | Receipt carries approval references; eligibility includes an authority-valid term | CE-03 |
+| LLM calls in receipt evaluation | 0 (frozen operational limit) | Not fixed | CE-04 |
+| Unmeasured quantities | null, never zero (D13 baseline) | Not addressed | CE-05 |
+| Single-use approval consumption | **not implemented** | Present | CE-06 |
+| Risk-linked required independence | **not defined** (`review-findings/v1` records independence as `{code, params}`; no policy consumes it) | Present (I0–I4) | CE-06 |
+| Dependency freshness | **not defined** | Present | CE-06 |
+
+Evidence for the two dated statements is GitHub platform metadata (PR #17 created
+2026-08-22T20:01:03Z and merged 20:04:04Z; the `release-evidence` repository created
+2026-08-22T10:42:32Z; run 32572501427 created 2026-08-22T12:15:28Z). All three are in one trust
+domain and are not three independent third-party timestamps. Git history rewritten after the fact
+(filter-repo) is not used as evidence. The USPTO permit-before-commit patent family reported during
+the research pass was not retrieved and is recorded as unresolved; no novelty, priority, or
+freedom-to-operate claim is made, so no legal prior-art search was performed.
