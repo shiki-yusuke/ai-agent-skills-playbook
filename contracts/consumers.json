@@ -1,0 +1,343 @@
+{
+  "version": "2026-10-16-r1",
+  "policy": "Pins are advanced by a human after the consumer's own merge (see contracts/CONSUMERS.md). Only sha / pinned_at / manifests live here; commands live in contracts/shared/consumer-conformance.mjs.",
+  "consumers": [
+    {
+      "name": "release-evidence",
+      "repository": "shiki-yusuke/release-evidence",
+      "sha": "a1b4cdadeea816223950b726e90a2ed35dda87da",
+      "pinned_at": "2026-10-16",
+      "contracts": [
+        "release-evidence/v0",
+        "shared"
+      ],
+      "vendored": [
+        {
+          "upstream": "contracts/shared",
+          "pinned_commit": "f9f0c127588f60fd299a02859c9f70f0b81a9dcc",
+          "consumer_path": "vendor/playbook-shared",
+          "manifest": [
+            {
+              "file": "VENDORED.md",
+              "consumer_only": true
+            },
+            {
+              "file": "jcs.d.mts",
+              "consumer_only": true
+            },
+            {
+              "file": "jcs.mjs",
+              "upstream_file": "contracts/shared/jcs.mjs"
+            },
+            {
+              "file": "personal-dimensions.d.mts",
+              "consumer_only": true
+            },
+            {
+              "file": "personal-dimensions.mjs",
+              "upstream_file": "contracts/shared/personal-dimensions.mjs"
+            },
+            {
+              "file": "schema-validator.d.mts",
+              "consumer_only": true
+            },
+            {
+              "file": "schema-validator.mjs",
+              "upstream_file": "contracts/shared/schema-validator.mjs"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "spec-lane",
+      "repository": "shiki-yusuke/spec-lane",
+      "sha": "175cae09c3e4393f3e1fdf39988b458fefe32eb1",
+      "pinned_at": "2026-10-16",
+      "contracts": [
+        "measure/v1",
+        "design-options/v1",
+        "shared"
+      ],
+      "vendored": [
+        {
+          "upstream": "contracts/measure/v1",
+          "pinned_commit": "e412ad140f42446b7a0769d4a27fb56d67ab60ca",
+          "consumer_path": "packages/adapters/test/fixtures/measure/v1",
+          "manifest": [
+            {
+              "file": "fixtures/accept-matched-false.json",
+              "upstream_file": "contracts/measure/v1/fixtures/accept-matched-false.json"
+            },
+            {
+              "file": "fixtures/accept-matched-normal.json",
+              "upstream_file": "contracts/measure/v1/fixtures/accept-matched-normal.json"
+            },
+            {
+              "file": "fixtures/accept-unpriced-lower-bound-mixed.json",
+              "upstream_file": "contracts/measure/v1/fixtures/accept-unpriced-lower-bound-mixed.json"
+            },
+            {
+              "file": "fixtures/expected-results.json",
+              "upstream_file": "contracts/measure/v1/fixtures/expected-results.json"
+            },
+            {
+              "file": "fixtures/invalid-matched-false-non-zero.json",
+              "upstream_file": "contracts/measure/v1/fixtures/invalid-matched-false-non-zero.json"
+            },
+            {
+              "file": "fixtures/invalid-personal-dimension.json",
+              "upstream_file": "contracts/measure/v1/fixtures/invalid-personal-dimension.json"
+            },
+            {
+              "file": "fixtures/invalid-protocol-version.json",
+              "upstream_file": "contracts/measure/v1/fixtures/invalid-protocol-version.json"
+            },
+            {
+              "file": "fixtures/invalid-session-entry-missing-key.json",
+              "upstream_file": "contracts/measure/v1/fixtures/invalid-session-entry-missing-key.json"
+            },
+            {
+              "file": "fixtures/invalid-total-rows-wrong-dimension.json",
+              "upstream_file": "contracts/measure/v1/fixtures/invalid-total-rows-wrong-dimension.json"
+            },
+            {
+              "file": "fixtures/invalid-totals-missing-key.json",
+              "upstream_file": "contracts/measure/v1/fixtures/invalid-totals-missing-key.json"
+            },
+            {
+              "file": "measure-output.schema.json",
+              "upstream_file": "contracts/measure/v1/measure-output.schema.json"
+            }
+          ]
+        },
+        {
+          "upstream": "contracts/design-options/v1",
+          "pinned_commit": "d8309b47ed13d5f29182adbfd6e9eaeb723ca576",
+          "consumer_path": "packages/schemas/test/fixtures/design-options/v1",
+          "manifest": [
+            {
+              "file": "design-options.schema.json",
+              "upstream_file": "contracts/design-options/v1/design-options.schema.json"
+            },
+            {
+              "file": "fixtures/accept-derivation-different_lineage.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-derivation-different_lineage.json"
+            },
+            {
+              "file": "fixtures/accept-derivation-human_third_party.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-derivation-human_third_party.json"
+            },
+            {
+              "file": "fixtures/accept-derivation-same_provider_different_family.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-derivation-same_provider_different_family.json"
+            },
+            {
+              "file": "fixtures/accept-derivation-shaped-dependency.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-derivation-shaped-dependency.json"
+            },
+            {
+              "file": "fixtures/accept-derivation-unknown-human-decision-maker.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-derivation-unknown-human-decision-maker.json"
+            },
+            {
+              "file": "fixtures/accept-living-twin-discovery-scope-options.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-living-twin-discovery-scope-options.json"
+            },
+            {
+              "file": "fixtures/accept-living-twin-discovery-thresholds-options.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-living-twin-discovery-thresholds-options.json"
+            },
+            {
+              "file": "fixtures/accept-living-twin-pivot-options.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-living-twin-pivot-options.json"
+            },
+            {
+              "file": "fixtures/accept-self-referential-digest.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-self-referential-digest.json"
+            },
+            {
+              "file": "fixtures/accept-unknown-not-qualifying.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-unknown-not-qualifying.json"
+            },
+            {
+              "file": "fixtures/accept-zero-qualifying-reviews.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/accept-zero-qualifying-reviews.json"
+            },
+            {
+              "file": "fixtures/expected-results.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/expected-results.json"
+            },
+            {
+              "file": "fixtures/invalid-decision-request-dangling-option-id.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-decision-request-dangling-option-id.json"
+            },
+            {
+              "file": "fixtures/invalid-empty-artifact-shapers.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-empty-artifact-shapers.json"
+            },
+            {
+              "file": "fixtures/invalid-engine-ref-missing-model-id.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-engine-ref-missing-model-id.json"
+            },
+            {
+              "file": "fixtures/invalid-independence-status-in-producer-input.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-independence-status-in-producer-input.json"
+            },
+            {
+              "file": "fixtures/invalid-missing-decision-request.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-missing-decision-request.json"
+            },
+            {
+              "file": "fixtures/invalid-missing-review-output-ref.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-missing-review-output-ref.json"
+            },
+            {
+              "file": "fixtures/invalid-none-observed-without-scope-ref.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-none-observed-without-scope-ref.json"
+            },
+            {
+              "file": "fixtures/invalid-personal-dimension.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-personal-dimension.json"
+            },
+            {
+              "file": "fixtures/invalid-predicted-outcomes-missing.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-predicted-outcomes-missing.json"
+            },
+            {
+              "file": "fixtures/invalid-prior-involvement-none-absolute.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-prior-involvement-none-absolute.json"
+            },
+            {
+              "file": "fixtures/invalid-rollback-strategy-missing.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-rollback-strategy-missing.json"
+            },
+            {
+              "file": "fixtures/invalid-shaped-dependency-with-scope-ref.json",
+              "upstream_file": "contracts/design-options/v1/fixtures/invalid-shaped-dependency-with-scope-ref.json"
+            }
+          ]
+        },
+        {
+          "upstream": "contracts/shared",
+          "pinned_commit": "7f3982de665d35f1ee0733ee5aea1bdbb66d6232",
+          "consumer_path": "packages/core/src/vendor/derive-independence/v1",
+          "manifest": [
+            {
+              "file": "derive-independence.d.mts",
+              "consumer_only": true
+            },
+            {
+              "file": "derive-independence.mjs",
+              "upstream_file": "contracts/shared/derive-independence.mjs"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "agent-metrics-harvester",
+      "repository": "shiki-yusuke/agent-metrics-harvester",
+      "sha": "6f0b5c8b9dfaa08f0c2b8e18ecad3902da3340fd",
+      "pinned_at": "2026-10-16",
+      "contracts": [
+        "agent-metrics/v1"
+      ],
+      "vendored": [
+        {
+          "upstream": "contracts/agent-metrics/v1",
+          "pinned_commit": "e60ed28c472df6eea5b6b9be5c37aae83cb6d02b",
+          "consumer_recorded_commit": "d99e48057a98af80871d00ace90f2ca18ae78eba",
+          "note": "UPSTREAM.md records d99e480 (not reachable from main; tree 6e228bc). e60ed28 is the main commit whose contracts/agent-metrics/v1 tree is exactly 6e228bc. Consumer should re-pin to e60ed28.",
+          "consumer_path": "test/contract/vendor",
+          "manifest": [
+            {
+              "file": "UPSTREAM.md",
+              "consumer_only": true
+            },
+            {
+              "file": "envelope.schema.json",
+              "upstream_file": "contracts/agent-metrics/v1/envelope.schema.json"
+            },
+            {
+              "file": "fixtures/correction-record-removed-1.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/correction-record-removed-1.json"
+            },
+            {
+              "file": "fixtures/correction-record-removed-2.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/correction-record-removed-2.json"
+            },
+            {
+              "file": "fixtures/correction-same-key-1.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/correction-same-key-1.json"
+            },
+            {
+              "file": "fixtures/correction-same-key-2.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/correction-same-key-2.json"
+            },
+            {
+              "file": "fixtures/expected-results.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/expected-results.json"
+            },
+            {
+              "file": "fixtures/invalid-base64.marker.txt",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/invalid-base64.marker.txt"
+            },
+            {
+              "file": "fixtures/invalid-hash.marker.txt",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/invalid-hash.marker.txt"
+            },
+            {
+              "file": "fixtures/invalid-personal-dimension.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/invalid-personal-dimension.json"
+            },
+            {
+              "file": "fixtures/invalid-unsupported-kind.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/invalid-unsupported-kind.json"
+            },
+            {
+              "file": "fixtures/invalid-upsert-key.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/invalid-upsert-key.json"
+            },
+            {
+              "file": "fixtures/legacy-marker-ignored.marker.txt",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/legacy-marker-ignored.marker.txt"
+            },
+            {
+              "file": "fixtures/valid-minimum.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/valid-minimum.json"
+            },
+            {
+              "file": "fixtures/valid-minimum.marker.txt",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/valid-minimum.marker.txt"
+            },
+            {
+              "file": "fixtures/valid-multi-record.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/valid-multi-record.json"
+            },
+            {
+              "file": "fixtures/valid-multi-record.marker.txt",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/valid-multi-record.marker.txt"
+            },
+            {
+              "file": "fixtures/valid-no-data.json",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/valid-no-data.json"
+            },
+            {
+              "file": "fixtures/valid-no-data.marker.txt",
+              "upstream_file": "contracts/agent-metrics/v1/fixtures/valid-no-data.marker.txt"
+            },
+            {
+              "file": "token-usage.schema.json",
+              "upstream_file": "contracts/agent-metrics/v1/token-usage.schema.json"
+            },
+            {
+              "file": "verify-fixtures.mjs",
+              "upstream_file": "contracts/agent-metrics/v1/verify-fixtures.mjs"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
