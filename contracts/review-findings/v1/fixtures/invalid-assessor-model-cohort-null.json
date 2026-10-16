@@ -9,16 +9,13 @@
   },
   "scan_scope": {
     "paths": ["packages/core/src/**/*.ts"],
-    "commit_range": {
-      "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    },
+    "commit_range": { "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
     "lenses": ["correctness"]
   },
   "assessor": {
     "kind": "model",
     "model_cohort": null,
-    "independence": { "code": "provider_unknown", "params": {} }
+    "independence": { "code": "provider_unknown", "params": { "attestation": "unknown" } }
   },
   "outcome": "none_observed_in_recorded_scope",
   "abstention": null,

@@ -1,0 +1,144 @@
+{
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-2026-08-23-001",
+    "evaluated_at": "2026-08-23T13:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa000000000000000000000000000000000000000000000000000000000000",
+      "selection_manifest_digest": "sha256:bbbb000000000000000000000000000000000000000000000000000000000000",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc000000000000000000000000000000000000000000000000000000000000",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:5c6e49356da44b49db6badc08fab3bb8c5e8e877ed293ed370b56c50c4a0d36c",
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:87ebd4e078f16c03e5abb0840939149d1dc2d966e43de9bda417ea219715d9a6",
+    "predicates": [
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-2026-08-23-003#scope",
+            "digest": "sha256:2372135dfc36844102ef1d02a0fc95223e7cd1bbd089ebda4268b5c444672890",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": { "code": "different_provider", "attestation": "orchestrator_observed" },
+              "check": "satisfied"
+            }
+          },
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": null,
+              "check": "satisfied"
+            }
+          }
+        ]
+      },
+      {
+        "predicate_id": "verification_coverage",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "preview_verified", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      {
+        "predicate_id": "rollback_target_valid",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.6.0",
+            "digest": "sha256:eeee000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "privilege_boundary", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "ready_for_approval"
+  },
+  "findings": [
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-2026-08-23-003",
+      "recorded_at": "2026-08-23T11:00:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/release-evidence-harness",
+        "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "scan_scope": {
+        "paths": ["contracts/release-evidence/v0/**/*.mjs"],
+        "commit_range": { "base": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "head": "ffffffffffffffffffffffffffffffffffffffff" },
+        "lenses": ["security", "performance"]
+      },
+      "assessor": {
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
+        "independence": {
+          "code": "different_provider",
+          "params": {
+            "attestation": "orchestrator_observed",
+            "session_ref": {
+              "session_id": "review-session-b1-01",
+              "started_at": "2026-08-23T12:01:00Z",
+              "args_digest": "sha256:ceec2ce574b64d3a81d604425fd16e03329211a34cff3834df617bd54f0ace3a"
+            }
+          }
+        }
+      },
+      "outcome": "none_observed_in_recorded_scope",
+      "abstention": null,
+      "findings": []
+    }
+  ],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": [
+      {
+        "session_id": "review-session-b1-01",
+        "started_at": "2026-08-23T12:01:00Z",
+        "args_digest": "sha256:ceec2ce574b64d3a81d604425fd16e03329211a34cff3834df617bd54f0ace3a",
+        "independence_code": "different_provider",
+        "review_record_digest": "sha256:2372135dfc36844102ef1d02a0fc95223e7cd1bbd089ebda4268b5c444672890"
+      }
+    ]
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-2026-08-23-001",
+    "evaluated_at": "2026-08-23T13:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa000000000000000000000000000000000000000000000000000000000000",
+      "selection_manifest_digest": "sha256:bbbb000000000000000000000000000000000000000000000000000000000000",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc000000000000000000000000000000000000000000000000000000000000",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:07e209746bb1ba00950aaf33183f01f7d7fb750ab451f5da90d4cc88e26ef0d2",
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:d8354f1b4323dc8e1db9f286e4945c05007f29971b99edeb875eeb5bce34521d",
+    "predicates": [
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-2026-08-23-003#scope",
+            "digest": "sha256:91c311423091cf2511b56bb8b402e74eaf6159626aae75f4c60643aa5c30a66f",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": { "code": "provider_unknown", "attestation": "orchestrator_observed" },
+              "check": "unknown"
+            }
+          }
+        ]
+      },
+      {
+        "predicate_id": "verification_coverage",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "preview_verified", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      {
+        "predicate_id": "rollback_target_valid",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.6.0",
+            "digest": "sha256:eeee000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "privilege_boundary", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "abstained"
+  },
+  "findings": [
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-2026-08-23-003",
+      "recorded_at": "2026-08-23T11:00:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/release-evidence-harness",
+        "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "scan_scope": {
+        "paths": ["contracts/release-evidence/v0/**/*.mjs"],
+        "commit_range": { "base": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "head": "ffffffffffffffffffffffffffffffffffffffff" },
+        "lenses": ["security", "performance"]
+      },
+      "assessor": {
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
+        "independence": {
+          "code": "provider_unknown",
+          "params": {
+            "attestation": "orchestrator_observed",
+            "session_ref": {
+              "session_id": "review-session-b1-01",
+              "started_at": "2026-08-23T12:01:00Z",
+              "args_digest": "sha256:ceec2ce574b64d3a81d604425fd16e03329211a34cff3834df617bd54f0ace3a"
+            }
+          }
+        }
+      },
+      "outcome": "none_observed_in_recorded_scope",
+      "abstention": null,
+      "findings": []
+    }
+  ],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": [
+      {
+        "session_id": "review-session-b1-01",
+        "started_at": "2026-08-23T12:01:00Z",
+        "args_digest": "sha256:ceec2ce574b64d3a81d604425fd16e03329211a34cff3834df617bd54f0ace3a",
+        "independence_code": "provider_unknown",
+        "review_record_digest": "sha256:91c311423091cf2511b56bb8b402e74eaf6159626aae75f4c60643aa5c30a66f"
+      }
+    ]
+  }
+}

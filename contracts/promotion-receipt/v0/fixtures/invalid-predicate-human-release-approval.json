@@ -1,25 +1,52 @@
 {
-  "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-invalid-001",
-  "evaluated_at": "2026-08-23T15:00:00Z",
-  "evaluation_phase": "pre_promotion",
-  "subject": {
-    "bundle_digest": "sha256:aaaa444444444444444444444444444444444444444444444444444444444444",
-    "selection_manifest_digest": "sha256:bbbb444444444444444444444444444444444444444444444444444444444444",
-    "target": "production"
-  },
-  "policy_digest": "sha256:cccc444444444444444444444444444444444444444444444444444444444444",
-  "effective_risk": "medium",
-  "semantic_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
-  "predicates": [
-    {
-      "predicate_id": "human_release_approval",
-      "applicability": "applicable",
-      "status": "satisfied",
-      "evidence_refs": [
-        { "kind": "other", "ref": "some-human-said-so", "digest": "sha256:dddd444444444444444444444444444444444444444444444444444444444444" }
-      ]
+  "context": {
+    "expected_promotion_id": {
+      "run_id": "gh-run-20260823-1001",
+      "run_attempt": 1
     }
-  ],
-  "verdict": "ready_for_approval"
+  },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-invalid-001",
+    "evaluated_at": "2026-08-23T15:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa444444444444444444444444444444444444444444444444444444444444",
+      "selection_manifest_digest": "sha256:bbbb444444444444444444444444444444444444444444444444444444444444",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc444444444444444444444444444444444444444444444444444444444444",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": {
+      "run_id": "gh-run-20260823-1001",
+      "run_attempt": 1
+    },
+    "session_ledger_digest": "sha256:e4687c1e065f2267c97614586d8393e822e76be545d719b05ebe146b4dc5eae8",
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:d11bc4a4c5c70f5b99a21466106ce25ee87b86c388fe2c1d2c28ba4fa4312e09",
+    "predicates": [
+      {
+        "predicate_id": "human_release_approval",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "other",
+            "ref": "some-human-said-so",
+            "digest": "sha256:dddd444444444444444444444444444444444444444444444444444444444444"
+          }
+        ]
+      }
+    ],
+    "verdict": "ready_for_approval"
+  },
+  "findings": [],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": {
+      "run_id": "gh-run-20260823-1001",
+      "run_attempt": 1
+    },
+    "entries": []
+  }
 }

@@ -1,0 +1,40 @@
+{
+  "policy_id": "ai-agent-skills-playbook/independence-policy",
+  "policy_version": "2026-10-16.1",
+  "code_classes": {
+    "technical": ["different_provider", "same_provider_different_family", "different_session_ref"],
+    "principal": ["human_third_party", "different_organization", "different_session_ref"]
+  },
+  "rules": [
+    {
+      "effective_risk": "high",
+      "predicate_id": "review_admissibility",
+      "acceptable": [
+        { "code": "different_provider", "attestation": "orchestrator_observed" },
+        { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+        { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+      ]
+    },
+    {
+      "effective_risk": "medium",
+      "predicate_id": "review_admissibility",
+      "acceptable": [
+        { "code": "different_provider", "attestation": "orchestrator_observed" },
+        { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+        { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+      ]
+    },
+    {
+      "effective_risk": "low",
+      "predicate_id": "review_admissibility",
+      "acceptable": [
+        { "code": "different_provider", "attestation": "orchestrator_observed" },
+        { "code": "different_provider", "attestation": "self_reported" },
+        { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+        { "code": "same_provider_different_family", "attestation": "self_reported" },
+        { "code": "different_session_ref", "attestation": "orchestrator_observed" },
+        { "code": "different_session_ref", "attestation": "self_reported" }
+      ]
+    }
+  ]
+}

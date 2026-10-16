@@ -1,6 +1,6 @@
 # review-findings/v1
 
-> **Status: DRAFT (draft_revision 1) — NOT FROZEN.** Part of the Evidence-Closed Delivery
+> **Status: DRAFT (draft_revision 2) — NOT FROZEN.** Part of the Evidence-Closed Delivery
 > Shadow Evidence Contracts (Milestone F). No reference implementer exists yet; lane's
 > intended role is vendor + verify only (never a model call from this contract). Freezing
 > follows this repo's freeze-after-exercise discipline (see `release-evidence/v0`'s own
@@ -74,6 +74,37 @@ apart from a session ID or a name typed into the wrong field. Producers are resp
 writing personal or execution-specific content into `model_cohort`'s value; this contract
 enforces the shape, not the semantics, of that promise.
 
+### `params.attestation` and `params.session_ref` (draft_revision 2)
+
+`params` stays an open bag (code-specific params such as derive-independence.mjs's coexist), but
+always carries **`attestation`** — who stands behind the independence claim
+(see [`CHANGELOG.md`](../../contracts/review-findings/v1/CHANGELOG.md)):
+
+| `attestation` | meaning | `session_ref` |
+|---|---|---|
+| `orchestrator_observed` | the orchestrator wrapper launched this review session and recorded it in its session ledger | **required** `{session_id, started_at, args_digest}` |
+| `self_reported` | the assessor's own statement | forbidden |
+| `unknown` | nobody stands behind it | forbidden |
+
+A missing `attestation` makes the record **invalid** — it is never silently read as `unknown`.
+`session_ref` is a *reference* to the wrapper's record, not evidence: a record saying
+`orchestrator_observed` is only a claim until promotion-receipt/v0's `evaluateReceipt()` finds
+the matching session ledger entry (same whole-record digest, same `session_ref`, same `code`).
+Without a resolvable ledger it evaluates as `unknown`. `session_ref.started_at` must be a real
+UTC date and `args_digest` a `sha256:` digest.
+
+What each attestation can and cannot prove:
+
+- **A session ledger proves technical execution separation only** — that a distinct, wrapper-
+  launched session (provider / model family / session) produced the record. It says nothing about
+  people.
+- **principal-class codes** (`human_third_party`, `different_organization`) are evaluated as
+  `unknown` whenever no authenticable reviewer-principal information exists — which, in
+  draft_revision 2, is always.
+- **Approver authentication is not reviewer-independence authentication.** release-approval/v0
+  authenticates who *approved* a release; that principal is never used to vouch for who
+  *reviewed* it.
+
 ## Findings: one verifiable claim each, no confidence
 
 Each finding's `category` and `severity` are closed sets (9 × 4 — see the schema for the
@@ -101,8 +132,8 @@ same broadened scan is copied identically into `promotion-receipt/v0`'s and
 
 `recorded_at`'s `^\d{4}-\d{2}-\d{2}T...Z$` pattern accepts strings that are syntactically
 well-formed but calendar-nonsensical (e.g. `"2026-99-99T00:00:00Z"`). `verify-fixtures.mjs`
-additionally requires `Date.parse(recorded_at)` to succeed — a value the pattern lets through
-but that resolves to no real date/time is rejected.
+additionally requires `recorded_at` (and `session_ref.started_at`) to be a real calendar
+date/time: a value the pattern accepts is split into its year/month/day/hour/minute/second fields and must survive a `Date.UTC` round trip unchanged — so `"2026-99-99T00:00:00Z"`, and also `"2026-02-29T00:00:00Z"` / `"2026-04-31T00:00:00Z"` (which `Date.parse` silently rolls into the next month), are rejected.
 
 ## Append-only correction
 
@@ -134,7 +165,8 @@ recorded scope and outcome — never by re-running or re-scoring the review.
 
 `node contracts/review-findings/v1/verify-fixtures.mjs` checks every fixture against
 `review-findings.schema.json` plus: `finding_id` uniqueness within one record (a single-record
-schema cannot see its own siblings), the location line-range consistency and real-calendar-date
+schema cannot see its own siblings), the attestation/session_ref rules above (schema
+`allOf` if/then/else, plus a real-date check on `session_ref.started_at`), the location line-range consistency and real-calendar-date
 checks described above, the broadened numeric-confidence scan, and the personal-dimension scan
 (`contracts/shared/personal-dimensions.mjs`). See the fixtures directory's
 `expected-results.json` for the declared outcome of each fixture.

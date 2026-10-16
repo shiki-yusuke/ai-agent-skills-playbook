@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "promotion-receipt/v0 independence policy",
+  "description": "DRAFT (promotion-receipt/v0 draft_revision 2). Frozen policy fixture: an explicit set of `(effective_risk, predicate_id) -> acceptable {code, attestation}` tuples. NO numeric ordering exists anywhere in it -- evaluation is exact-key lookup on (effective_risk, predicate_id) plus set membership on (code, attestation); there is no risk fallback, no comparison between risks, no inheritance, and no first-match. The semantic MUSTs this schema cannot express (rule-key uniqueness, the rule-key manifest, code_classes disjointness and per-array uniqueness, acceptable tuple uniqueness, acceptable codes being technical-class only) are enforced by checkPolicy() in ../evaluate.mjs. `acceptable[].attestation` never admits `unknown` -- an unknown attestation can never satisfy a rule. A principal-class code may be REGISTERED in code_classes.principal (reserved for a future revision that has an authenticable principal source) but may never appear in acceptable[] in draft_revision 2 (it could never be satisfied -- see docs/protocols/promotion-receipt-v0.md). The receipt binds the JCS sha256 of this whole document as `independence_policy_digest`.",
+  "type": "object",
+  "required": ["policy_id", "policy_version", "code_classes", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "policy_id": { "type": "string", "minLength": 1 },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "code_classes": {
+      "type": "object",
+      "required": ["technical", "principal"],
+      "additionalProperties": false,
+      "properties": {
+        "technical": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Codes whose independence claim is about technical execution separation (provider / model family / session). A session ledger can at most attest these."
+        },
+        "principal": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Codes whose independence claim is about a human or organizational principal. Always evaluated to check=unknown in draft_revision 2 (no authenticable reviewer-principal source exists; approver authentication is not reviewer-independence authentication)."
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["effective_risk", "predicate_id", "acceptable"],
+        "additionalProperties": false,
+        "properties": {
+          "effective_risk": { "enum": ["low", "medium", "high"] },
+          "predicate_id": {
+            "enum": [
+              "artifact_identity",
+              "review_admissibility",
+              "verification_coverage",
+              "preview_verified",
+              "rollback_target_valid",
+              "privilege_boundary",
+              "deployed_artifact_readback"
+            ]
+          },
+          "acceptable": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["code", "attestation"],
+              "additionalProperties": false,
+              "properties": {
+                "code": { "type": "string", "minLength": 1 },
+                "attestation": { "enum": ["orchestrator_observed", "self_reported"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
