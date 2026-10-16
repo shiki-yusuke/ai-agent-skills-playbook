@@ -9,6 +9,14 @@
 //   additionalProperties:false cannot reach because those bags are intentionally open;
 //   the personal-dimension scan, same as every other contract in this repo.
 //
+//   draft_revision 2: assessor.independence.params.attestation is schema-required (a missing
+//   attestation rejects the record -- it is never read as "unknown"), params.session_ref is
+//   required exactly when attestation=orchestrator_observed and forbidden otherwise (schema
+//   allOf if/then/else), and session_ref.started_at must parse to a real date (checked here,
+//   same reason recorded_at is). Whether an orchestrator_observed claim is TRUE is not this
+//   contract's question: only promotion-receipt/v0's evaluateReceipt() can answer it, by
+//   matching the wrapper's session ledger.
+//
 // Zero npm dependencies by design. Usage: node verify-fixtures.mjs (no args, no network).
 
 import { readFileSync, readdirSync } from "node:fs";
@@ -33,6 +41,18 @@ const dedupe = (a) => [...new Set(a)];
 // "confidence" (e.g. "confidenceScore"), not only an exact "confidence" key -- copied
 // identically into promotion-receipt/v0's and release-approval/v0's own verify-fixtures.mjs
 // (contracts/shared cannot be touched, so this lives in all three).
+// reason_code matching: a machine code (snake_case) must match the reason's leading code exactly
+// (`<code>:` or the whole reason), so `promotion_id_mismatch` cannot be satisfied by
+// `context_promotion_id_mismatch`; free-text reason codes (legacy, e.g. "not in enum") stay substrings.
+function reasonMatches(reason, code) {
+  if (/^[a-z][a-z0-9_]*$/.test(code)) {
+    // whole-token match: the code may be nested (`outer_code: inner_code: ...`) but may not be a
+    // suffix of a longer identifier (`context_promotion_id_mismatch` must not satisfy `promotion_id_mismatch`)
+    return reason === code || new RegExp(`(^|[^a-z0-9_])${code}(:|$)`).test(reason);
+  }
+  return reason.includes(code);
+}
+
 function scanNumericConfidence(value, pathStr = "") {
   const violations = [];
   if (Array.isArray(value)) {
@@ -49,8 +69,27 @@ function scanNumericConfidence(value, pathStr = "") {
   return violations;
 }
 
-function isRealTimestamp(s) {
-  return typeof s === "string" && !Number.isNaN(Date.parse(s));
+// Real-calendar UTC timestamp check. Date.parse alone is not enough: V8 rolls day overflow within
+// 1..31 into the next month ("2026-02-29T00:00:00Z" and "2026-04-31T00:00:00Z" both parse), so the
+// string is split into its fields and the fields Date.UTC() normalizes them to must equal the
+// input. Leap seconds (":60") and years 0000-0099 (Date.UTC maps them to 19xx) are rejected.
+// Duplicated identically in review-findings/v1, promotion-receipt/v0 and release-approval/v0's
+// verify-fixtures.mjs (contracts/shared cannot be touched) -- keep the three bodies identical; the
+// promotion-receipt/v0 copy is exported because evaluate.mjs uses it for ledger started_at.
+function isRealUtcTimestamp(s) {
+  if (typeof s !== "string") return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?Z$/.exec(s);
+  if (!m) return false;
+  const [y, mo, d, h, mi, sec] = m.slice(1, 7).map(Number);
+  const t = new Date(Date.UTC(y, mo - 1, d, h, mi, sec));
+  return (
+    t.getUTCFullYear() === y &&
+    t.getUTCMonth() === mo - 1 &&
+    t.getUTCDate() === d &&
+    t.getUTCHours() === h &&
+    t.getUTCMinutes() === mi &&
+    t.getUTCSeconds() === sec
+  );
 }
 
 // R5 (Revision 2, sol architect should-2): locations[].start_line/end_line must be both null or
@@ -78,8 +117,12 @@ export function checkRecord(record) {
   reasons.push(...validate("review-findings.schema.json", record));
   reasons.push(...scanPersonalDimensions(record).map((v) => `personal_dimension_forbidden_key: ${v}`));
   reasons.push(...scanNumericConfidence(record).map((v) => `numeric_confidence_forbidden_field: ${v}`));
-  if (!isRealTimestamp(record.recorded_at)) {
-    reasons.push(`invalid_calendar_timestamp: record "${record.record_id}" recorded_at "${record.recorded_at}" does not parse to a real date/time`);
+  if (!isRealUtcTimestamp(record.recorded_at)) {
+    reasons.push(`invalid_calendar_timestamp: record "${record.record_id}" recorded_at "${record.recorded_at}" is not a real calendar date/time`);
+  }
+  const sessionRef = record.assessor?.independence?.params?.session_ref;
+  if (sessionRef && typeof sessionRef === "object" && !isRealUtcTimestamp(sessionRef.started_at)) {
+    reasons.push(`invalid_calendar_timestamp: record "${record.record_id}" assessor.independence.params.session_ref.started_at "${sessionRef.started_at}" is not a real calendar date/time`);
   }
   if (reasons.length > 0) return dedupe(reasons);
 
@@ -121,7 +164,7 @@ function main() {
     const result = runFixture(entry);
     let ok = result.category === entry.expected;
     if (ok && entry.expected === "reject" && entry.reason_code) {
-      ok = result.reasons.some((r) => r.includes(entry.reason_code));
+      ok = result.reasons.some((r) => reasonMatches(r, entry.reason_code));
     }
     const status = ok ? "PASS" : "FAIL";
     if (!ok) failures++;

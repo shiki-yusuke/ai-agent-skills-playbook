@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "review-findings/v1 record",
-  "description": "DRAFT (draft_revision 1) -- NOT FROZEN. One immutable observation record: 'what a reviewer found (or did not find, or could not determine) in one recorded scan_scope of one subject digest.' A record never edits another; a correction is a NEW record naming the old one via supersedes_record_id, and a different subject.digest (e.g. after a fix) makes it a DIFFERENT subject by construction -- the old record's findings are not silently migrated forward. This contract carries NO promotion authority: it only records what was observed. See docs/protocols/review-findings-v1.md. NOTE: the spec's field name 'reviewer' collides with contracts/shared/personal-dimensions.mjs's forbidden-key set (same collision decision/v1 already hit with 'reviewer'/'critic_engine' -- see that protocol's own note); this schema uses 'assessor' instead, naming the SAME concept (kind of thing that produced the finding, never a person), to keep every accepting fixture passing the mandatory personal-dimension scan.",
+  "description": "DRAFT (draft_revision 2) -- NOT FROZEN. One immutable observation record: 'what a reviewer found (or did not find, or could not determine) in one recorded scan_scope of one subject digest.' A record never edits another; a correction is a NEW record naming the old one via supersedes_record_id, and a different subject.digest (e.g. after a fix) makes it a DIFFERENT subject by construction -- the old record's findings are not silently migrated forward. This contract carries NO promotion authority: it only records what was observed. See docs/protocols/review-findings-v1.md. NOTE: the spec's field name 'reviewer' collides with contracts/shared/personal-dimensions.mjs's forbidden-key set (same collision decision/v1 already hit with 'reviewer'/'critic_engine' -- see that protocol's own note); this schema uses 'assessor' instead, naming the SAME concept (kind of thing that produced the finding, never a person), to keep every accepting fixture passing the mandatory personal-dimension scan.",
   "type": "object",
   "required": [
     "schema_version",
@@ -99,9 +99,36 @@
           "additionalProperties": false,
           "properties": {
             "code": { "type": "string", "minLength": 1 },
-            "params": { "type": "object" }
+            "params": {
+              "type": "object",
+              "required": ["attestation"],
+              "properties": {
+                "attestation": {
+                  "enum": ["orchestrator_observed", "self_reported", "unknown"],
+                  "description": "draft_revision 2: who stands behind this independence claim. orchestrator_observed = the orchestrator wrapper launched this review session itself and recorded it in its session ledger (verifiable only by matching that ledger -- a record saying so is a claim, not proof); self_reported = the assessor's own statement; unknown = nobody. Required: a missing attestation makes the record invalid (it is never silently read as unknown)."
+                },
+                "session_ref": {
+                  "type": "object",
+                  "required": ["session_id", "started_at", "args_digest"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "session_id": { "type": "string", "minLength": 1 },
+                    "started_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$" },
+                    "args_digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+                  },
+                  "description": "draft_revision 2: REFERENCE to the wrapper-recorded session (not evidence by itself). Required exactly when attestation=orchestrator_observed and forbidden otherwise. A session ledger entry matching it proves technical execution separation only."
+                }
+              },
+              "allOf": [
+                {
+                  "if": { "required": ["attestation"], "properties": { "attestation": { "const": "orchestrator_observed" } } },
+                  "then": { "required": ["session_ref"] },
+                  "else": { "not": { "required": ["session_ref"] } }
+                }
+              ]
+            }
           },
-          "description": "Structured {code, params} record, same shape contracts/shared/derive-independence.mjs already emits (e.g. rec('different_provider', {...})) -- never a numeric independence score."
+          "description": "Structured {code, params} record, same shape contracts/shared/derive-independence.mjs already emits (e.g. rec('different_provider', {...})) -- never a numeric independence score. params stays an OPEN bag (existing code-specific params coexist) but always carries attestation (draft_revision 2)."
         }
       },
       "allOf": [

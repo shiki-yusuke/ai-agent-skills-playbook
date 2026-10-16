@@ -113,7 +113,7 @@ Decision–Evidence Graph の正本エッジ（append-only JSONL、1行=1イベ�
 
 Evidence-Closed Delivery の Shadow Evidence Contracts（3本組）。「何を観測したか（review-findings）→ 人間承認以外の述語をどう機械評価したか（promotion-receipt）→ 誰が exact digest に対して承認したか（release-approval、唯一の promotion authority）」という Authority DAG を構成する。3本とも **DRAFT — NOT FROZEN**。
 
-- Status: **DRAFT（draft_revision 1）**。schema/fixture/protocol文書はこのリポジトリがSSOTだが、reference 実装（emitter/receipt evaluator/approval ledger consumer）はまだ無い。freeze はこのリポジトリの freeze-after-exercise 規律に従う（`release-evidence/v0` 同様、実際の shadow/live 運用実証が先）
+- Status: **DRAFT（draft_revision 2）**（review-findings/v1・promotion-receipt/v0 が draft_revision 2。release-approval/v0 は revision を 2 系統で管理: schema revision（event schema、不変、draft_revision 1）と conformance-profile revision（composite verifier の受理条件、draft_revision 2。変更履歴は [`contracts/release-approval/v0/CHANGELOG.md`](contracts/release-approval/v0/CHANGELOG.md)））。schema/fixture/protocol文書はこのリポジトリがSSOTだが、reference 実装（emitter/receipt evaluator/approval ledger consumer）はまだ無い。freeze はこのリポジトリの freeze-after-exercise 規律に従う（`release-evidence/v0` 同様、実際の shadow/live 運用実証が先）
 - Protocol documents: [`docs/protocols/review-findings-v1.md`](docs/protocols/review-findings-v1.md) / [`docs/protocols/promotion-receipt-v0.md`](docs/protocols/promotion-receipt-v0.md) / [`docs/protocols/release-approval-v0.md`](docs/protocols/release-approval-v0.md)
 - Conformance fixtures: [`contracts/review-findings/v1/`](contracts/review-findings/v1/) / [`contracts/promotion-receipt/v0/`](contracts/promotion-receipt/v0/) / [`contracts/release-approval/v0/`](contracts/release-approval/v0/)
 - KPI・数値解禁条件・外部根拠・運用上限などの正本値: [`docs/evidence-closed-delivery-frozen-decisions.md`](docs/evidence-closed-delivery-frozen-decisions.md)

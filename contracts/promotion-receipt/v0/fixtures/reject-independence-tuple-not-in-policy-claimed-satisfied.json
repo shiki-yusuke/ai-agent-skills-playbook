@@ -1,0 +1,108 @@
+{
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-2026-08-23-001",
+    "evaluated_at": "2026-08-23T13:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa000000000000000000000000000000000000000000000000000000000000",
+      "selection_manifest_digest": "sha256:bbbb000000000000000000000000000000000000000000000000000000000000",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc000000000000000000000000000000000000000000000000000000000000",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": null,
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:cb337ecb2a25d621ac97ee9d11db6affbbed1930b8120fba993b4adddb1c15eb",
+    "predicates": [
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-2026-08-23-003#scope",
+            "digest": "sha256:d200a305a37f69d1bc36c08f4a2e579e5052b637ade71260c41ed8420e8c9207",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": { "code": "different_provider", "attestation": "self_reported" },
+              "check": "satisfied"
+            }
+          }
+        ]
+      },
+      {
+        "predicate_id": "verification_coverage",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "preview_verified", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      {
+        "predicate_id": "rollback_target_valid",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.6.0",
+            "digest": "sha256:eeee000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "privilege_boundary", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "ready_for_approval"
+  },
+  "findings": [
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-2026-08-23-003",
+      "recorded_at": "2026-08-23T11:00:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/release-evidence-harness",
+        "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "scan_scope": {
+        "paths": ["contracts/release-evidence/v0/**/*.mjs"],
+        "commit_range": { "base": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "head": "ffffffffffffffffffffffffffffffffffffffff" },
+        "lenses": ["security", "performance"]
+      },
+      "assessor": {
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
+        "independence": { "code": "different_provider", "params": { "attestation": "self_reported" } }
+      },
+      "outcome": "none_observed_in_recorded_scope",
+      "abstention": null,
+      "findings": []
+    }
+  ],
+  "session_ledger": null
+}

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "promotion-receipt/v0 record",
-  "description": "DRAFT (draft_revision 1) -- NOT FROZEN. A promotion-receipt is a machine-evaluated, deterministic (zero LLM calls) verdict over every predicate EXCEPT human approval: 'ready_for_approval | ineligible | abstained'. It carries NO promotion authority by itself -- authority is release-approval/v0's event, which binds to this receipt's exact digest. Naming: this contract deliberately does NOT use the word 'decision' anywhere in its fields (see docs/protocols/promotion-receipt-v0.md) to avoid collision with the unrelated contracts/decision/v1 (a human design-decision record); this contract's outcome field is `verdict`. See docs/protocols/promotion-receipt-v0.md.",
+  "description": "DRAFT (draft_revision 2) -- NOT FROZEN. A promotion-receipt is a machine-evaluated, deterministic (zero LLM calls) verdict over every predicate EXCEPT human approval: 'ready_for_approval | ineligible | abstained'. It carries NO promotion authority by itself -- authority is release-approval/v0's event, which binds to this receipt's exact digest. Naming: this contract deliberately does NOT use the word 'decision' anywhere in its fields (see docs/protocols/promotion-receipt-v0.md) to avoid collision with the unrelated contracts/decision/v1 (a human design-decision record); this contract's outcome field is `verdict`. See docs/protocols/promotion-receipt-v0.md.",
   "type": "object",
   "required": [
     "schema_version",
@@ -10,6 +10,9 @@
     "evaluation_phase",
     "subject",
     "policy_digest",
+    "independence_policy_digest",
+    "promotion_id",
+    "session_ledger_digest",
     "effective_risk",
     "semantic_digest",
     "predicates",
@@ -56,6 +59,20 @@
       "type": "string",
       "pattern": "^sha256:[0-9a-f]{64}$",
       "description": "Frozen at evaluation start, same as effective_risk (R4/sol Round 2: a receipt never re-derives risk or policy from its own evaluation result -- that would be a self-consistency loop)."
+    },
+    "independence_policy_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "draft_revision 2: JCS sha256 of the frozen independence policy (policy/independence-policy.json) this receipt's independence checks were evaluated under. Distinct from policy_digest: policy_digest names the general promotion policy (opaque here); independence_policy_digest names exactly the (effective_risk, predicate_id) -> acceptable {code, attestation} set. The verifier recomputes the digest of the policy it was given and rejects any mismatch -- a syntactically valid digest is not a binding by itself."
+    },
+    "promotion_id": {
+      "$ref": "#/$defs/promotionId",
+      "description": "draft_revision 2: the promotion run this receipt belongs to. The verifier rejects a receipt whose promotion_id differs from the caller-supplied expected_promotion_id (in production, the calling workflow fixes it -- never read from the receipt itself), and the session ledger is resolved in the EXPECTED promotion_id's namespace."
+    },
+    "session_ledger_digest": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "draft_revision 2: JCS sha256 of the orchestrator session ledger (orchestrator-session-ledger.schema.json) for this promotion_id, or null when the evaluator had no ledger. A resolved ledger whose digest differs is rejected; an unresolvable ledger makes every orchestrator_observed attestation evaluate to unknown -- never satisfied."
     },
     "effective_risk": {
       "enum": ["low", "medium", "high"],
@@ -104,7 +121,8 @@
                   "description": "review_finding: ref is \"<review-findings record_id>#<finding_id>\" (an actual finding in that record) or \"<record_id>#scope\" (only valid when that record's outcome is none_observed_in_recorded_scope); digest MUST equal the WHOLE record's JCS (RFC 8785) sha256 -- its record_digest, NOT subject.digest (R23 -- editing a finding's claim/severity/outcome changes record_digest even when subject.digest, bound to the scanned tree, stays the same; a finding recorded against a stale record_digest cannot back a predicate about the current content, TEST-12). release_evidence: ref is a release_id, digest is the release-evidence/v0 bundle's own JCS sha256 (resolved by digest against embedded bundles in release-approval/v0's composite fixture, not by release_id alone -- one release_id can have multiple attempts at different digests). other: opaque, this contract's verifier does not resolve it."
                 },
                 "ref": { "type": "string", "minLength": 1 },
-                "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+                "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+                "independence": { "$ref": "#/$defs/independenceCheck" }
               }
             }
           },
@@ -116,7 +134,12 @@
               "required": ["applicability"],
               "properties": { "applicability": { "const": "not_applicable" } }
             },
-            "then": { "properties": { "status": { "const": "unknown" } } }
+            "then": {
+              "properties": {
+                "status": { "const": "unknown" },
+                "evidence_refs": { "items": { "not": { "required": ["independence"] } } }
+              }
+            }
           },
           {
             "if": {
@@ -132,6 +155,56 @@
     "verdict": {
       "enum": ["ready_for_approval", "ineligible", "abstained"],
       "description": "R13: closed to exactly these three. 'eligible' and 'break_glass_authorized' do not exist in this schema at all -- eligible was Round-5-retired for an authority circularity (a receipt cannot itself grant promotion eligibility, only say 'ready for a human to approve'), and break-glass is release-approval/v0's own event kind, never a receipt verdict."
+    }
+  },
+  "$defs": {
+    "promotionId": {
+      "type": "object",
+      "required": ["run_id", "run_attempt"],
+      "additionalProperties": false,
+      "properties": {
+        "run_id": { "type": "string", "minLength": 1 },
+        "run_attempt": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "independenceTuple": {
+      "type": "object",
+      "required": ["code", "attestation"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "attestation": { "enum": ["orchestrator_observed", "self_reported"] }
+      }
+    },
+    "independenceCheck": {
+      "type": "object",
+      "description": "draft_revision 2: per (predicate_id x evidence_ref) independence check. REQUIRED on every evidence_ref of an applicable predicate that has a rule in the frozen independence policy for this receipt's effective_risk, and FORBIDDEN everywhere else (the not_applicable half is schema-enforced; the policy-dependent half is enforced by evaluate.mjs). `required` is the policy rule's acceptable set copied verbatim (same order); `observed` is {code, verified attestation} derived from the referenced review-findings record (null for any evidence kind other than review_finding); `check` is derived, never asserted: unknown attestation -> unknown; principal-class code -> unknown; technical code -> satisfied iff {code, attestation} is in required, else unsatisfied. unsatisfied -> ineligible, unknown -> abstained, unsatisfied wins when mixed. Every field is recomputed by the verifier and a mismatch is rejected.",
+      "required": ["required", "observed", "check"],
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/independenceTuple" } },
+        "observed": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["code", "attestation"],
+              "additionalProperties": false,
+              "properties": {
+                "code": { "type": "string", "minLength": 1 },
+                "attestation": { "enum": ["orchestrator_observed", "self_reported", "unknown"] }
+              }
+            }
+          ]
+        },
+        "check": { "enum": ["satisfied", "unsatisfied", "unknown"] }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["observed"], "properties": { "observed": { "type": "null" } } },
+          "then": { "properties": { "check": { "const": "unknown" } } }
+        }
+      ]
     }
   },
   "allOf": [

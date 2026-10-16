@@ -1,23 +1,30 @@
 {
-  "schema_version": "promotion-receipt/v0",
-  "receipt_id": "pr-invalid-012",
-  "evaluated_at": "2026-08-23T17:00:00Z",
-  "evaluation_phase": "post_deploy",
-  "subject": {
-    "bundle_digest": "sha256:3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c",
-    "selection_manifest_digest": "sha256:3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d",
-    "target": "production"
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-invalid-012",
+    "evaluated_at": "2026-08-23T17:00:00Z",
+    "evaluation_phase": "post_deploy",
+    "subject": {
+      "bundle_digest": "sha256:3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c",
+      "selection_manifest_digest": "sha256:3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d",
+      "target": "production"
+    },
+    "policy_digest": "sha256:3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:e4687c1e065f2267c97614586d8393e822e76be545d719b05ebe146b4dc5eae8",
+    "effective_risk": "low",
+    "predicates": [
+      { "predicate_id": "deployed_artifact_readback", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "ready_for_approval",
+    "semantic_digest": "sha256:bbdd9e38034d89e11f22e9a28bec2dbd1154354453e3b18601e5f9ef26aabebc"
   },
-  "policy_digest": "sha256:3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e",
-  "effective_risk": "low",
-  "predicates": [
-    {
-      "predicate_id": "deployed_artifact_readback",
-      "applicability": "not_applicable",
-      "status": "unknown",
-      "evidence_refs": []
-    }
-  ],
-  "verdict": "ready_for_approval",
-  "semantic_digest": "sha256:0ab66e1fc160479860a096902a3387b2373dfe294eb3f6ca1d72ff9cc3471a7a"
+  "findings": [],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": []
+  }
 }

@@ -9,16 +9,13 @@
   },
   "scan_scope": {
     "paths": ["packages/core/src/**/*.ts"],
-    "commit_range": {
-      "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    },
+    "commit_range": { "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
     "lenses": ["correctness", "security"]
   },
   "assessor": {
     "kind": "human",
     "model_cohort": null,
-    "independence": { "code": "human_third_party", "params": {} }
+    "independence": { "code": "human_third_party", "params": { "attestation": "self_reported" } }
   },
   "outcome": "findings_observed",
   "abstention": null,
@@ -28,9 +25,7 @@
       "category": "correctness",
       "severity": "high",
       "claim": "estimate --adopt writes estimate_refs before the abstain gate runs, so an abstained estimate can still be adopted.",
-      "locations": [
-        { "path": "packages/core/src/estimate/adopt.ts", "start_line": 42, "end_line": 58 }
-      ],
+      "locations": [{ "path": "packages/core/src/estimate/adopt.ts", "start_line": 42, "end_line": 58 }],
       "suggested_fix": "Move the abstain check before writeEstimateRefs().",
       "evidence_gate": {
         "oracle_kind": "evigate",

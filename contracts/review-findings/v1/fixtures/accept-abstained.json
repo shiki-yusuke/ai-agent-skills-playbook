@@ -9,16 +9,13 @@
   },
   "scan_scope": {
     "paths": ["src/**/*.ts"],
-    "commit_range": {
-      "base": "1010101010101010101010101010101010101010",
-      "head": "2020202020202020202020202020202020202020"
-    },
+    "commit_range": { "base": "1010101010101010101010101010101010101010", "head": "2020202020202020202020202020202020202020" },
     "lenses": ["performance"]
   },
   "assessor": {
     "kind": "hybrid",
     "model_cohort": "sonnet-5",
-    "independence": { "code": "human_missing_decision_maker_flag", "params": {} }
+    "independence": { "code": "human_missing_decision_maker_flag", "params": { "attestation": "unknown" } }
   },
   "outcome": "abstained",
   "abstention": {

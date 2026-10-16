@@ -1,0 +1,181 @@
+{
+  "context": { "expected_promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 } },
+  "receipt": {
+    "schema_version": "promotion-receipt/v0",
+    "receipt_id": "pr-2026-08-23-001",
+    "evaluated_at": "2026-08-23T13:00:00Z",
+    "evaluation_phase": "pre_promotion",
+    "subject": {
+      "bundle_digest": "sha256:aaaa000000000000000000000000000000000000000000000000000000000000",
+      "selection_manifest_digest": "sha256:bbbb000000000000000000000000000000000000000000000000000000000000",
+      "target": "production"
+    },
+    "policy_digest": "sha256:cccc000000000000000000000000000000000000000000000000000000000000",
+    "independence_policy_digest": "sha256:6b7bf18e4e86c91a618bed70fd8f62fbe7ae484212a10d118e4ca4289eb98eea",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "session_ledger_digest": "sha256:e4687c1e065f2267c97614586d8393e822e76be545d719b05ebe146b4dc5eae8",
+    "effective_risk": "medium",
+    "semantic_digest": "sha256:70121e1558dc107796d746b1272bf63b6accf792239f16e93f4d72aaa6be280f",
+    "predicates": [
+      {
+        "predicate_id": "artifact_identity",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      {
+        "predicate_id": "review_admissibility",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "review_finding",
+            "ref": "rf-2026-08-23-003#scope",
+            "digest": "sha256:19d0176117d18e45c8ba28144a50d245ba2f1f8cf960c28ea54d36995133517f",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": { "code": "different_provider", "attestation": "unknown" },
+              "check": "unknown"
+            }
+          },
+          {
+            "kind": "review_finding",
+            "ref": "rf-2026-08-23-002#F-01",
+            "digest": "sha256:59490dcdee28c66a84b59d4daf3e55d1034d9d5f82a56206745765d33f1daa05",
+            "independence": {
+              "required": [
+                { "code": "different_provider", "attestation": "orchestrator_observed" },
+                { "code": "same_provider_different_family", "attestation": "orchestrator_observed" },
+                { "code": "different_session_ref", "attestation": "orchestrator_observed" }
+              ],
+              "observed": { "code": "different_provider", "attestation": "self_reported" },
+              "check": "unsatisfied"
+            }
+          }
+        ]
+      },
+      {
+        "predicate_id": "verification_coverage",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.7.0",
+            "digest": "sha256:dddd000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "preview_verified", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] },
+      {
+        "predicate_id": "rollback_target_valid",
+        "applicability": "applicable",
+        "status": "satisfied",
+        "evidence_refs": [
+          {
+            "kind": "release_evidence",
+            "ref": "spec-lane@0.6.0",
+            "digest": "sha256:eeee000000000000000000000000000000000000000000000000000000000000"
+          }
+        ]
+      },
+      { "predicate_id": "privilege_boundary", "applicability": "not_applicable", "status": "unknown", "evidence_refs": [] }
+    ],
+    "verdict": "ineligible"
+  },
+  "findings": [
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-2026-08-23-002",
+      "recorded_at": "2026-08-23T10:15:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/agent-cost",
+        "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "scan_scope": {
+        "paths": ["**/*"],
+        "commit_range": {
+          "base": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "head": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+        },
+        "lenses": ["type_safety", "test_quality", "documentation"]
+      },
+      "assessor": {
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
+        "independence": { "code": "different_provider", "params": { "attestation": "self_reported" } }
+      },
+      "outcome": "findings_observed",
+      "abstention": null,
+      "findings": [
+        {
+          "finding_id": "F-01",
+          "category": "type_safety",
+          "severity": "medium",
+          "claim": "measure() return type widens to any after the JSON.parse in report.py's cross-language shim.",
+          "locations": [{ "path": "src/agent_cost/report.py", "start_line": 120, "end_line": 133 }],
+          "suggested_fix": null,
+          "evidence_gate": {
+            "oracle_kind": "evigate",
+            "oracle_ref": "evigate://agent-cost/report-return-type",
+            "predicate": { "code": "type_check_fails_on_head", "params": {} },
+            "required_verdict": "proven"
+          }
+        },
+        {
+          "finding_id": "F-02",
+          "category": "documentation",
+          "severity": "low",
+          "claim": "docs/releasing.md still references the pre-v0.2.0 measure --format flag name.",
+          "locations": [{ "path": "docs/releasing.md", "start_line": null, "end_line": null }],
+          "suggested_fix": "Update to --format json.",
+          "evidence_gate": {
+            "oracle_kind": "external_outcome",
+            "oracle_ref": "https://github.com/shiki-yusuke/agent-cost/blob/dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd/docs/releasing.md",
+            "predicate": { "code": "stale_reference_confirmed", "params": {} },
+            "required_verdict": "proven"
+          }
+        }
+      ]
+    },
+    {
+      "schema_version": "review-findings/v1",
+      "record_id": "rf-2026-08-23-003",
+      "recorded_at": "2026-08-23T11:00:00Z",
+      "supersedes_record_id": null,
+      "subject": {
+        "repository_ref": "shiki-yusuke/release-evidence-harness",
+        "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "scan_scope": {
+        "paths": ["contracts/release-evidence/v0/**/*.mjs"],
+        "commit_range": { "base": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "head": "ffffffffffffffffffffffffffffffffffffffff" },
+        "lenses": ["security", "performance"]
+      },
+      "assessor": {
+        "kind": "model",
+        "model_cohort": "cohort-review-b",
+        "independence": { "code": "different_provider", "params": { "attestation": "unknown" } }
+      },
+      "outcome": "none_observed_in_recorded_scope",
+      "abstention": null,
+      "findings": []
+    }
+  ],
+  "session_ledger": {
+    "ledger_version": "orchestrator-session-ledger/0",
+    "promotion_id": { "run_id": "gh-run-20260823-1001", "run_attempt": 1 },
+    "entries": []
+  }
+}

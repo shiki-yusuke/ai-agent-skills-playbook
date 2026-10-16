@@ -9,16 +9,13 @@
   },
   "scan_scope": {
     "paths": ["packages/core/src/**/*.ts"],
-    "commit_range": {
-      "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    },
+    "commit_range": { "base": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "head": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
     "lenses": ["correctness"]
   },
   "assessor": {
     "kind": "model",
     "model_cohort": "sonnet-5",
-    "independence": { "code": "different_provider", "params": { "confidence": 0.87 } }
+    "independence": { "code": "different_provider", "params": { "confidence": 0.87, "attestation": "unknown" } }
   },
   "outcome": "findings_observed",
   "abstention": null,

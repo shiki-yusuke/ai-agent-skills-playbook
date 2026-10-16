@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "release-approval/v0 event",
-  "description": "DRAFT (draft_revision 1) -- NOT FROZEN. One append-only ledger event of the ONLY promotion authority in the Evidence-Closed Delivery Authority DAG: a human (or an authorized emergency principal, break_glass_approve) binding exact digests -- receipt, its own semantic content, the release bundle, the selection manifest, and the target -- to an approval/rejection/revocation. No kind is exempt from this exact binding (R14); no verdict in promotion-receipt/v0 can substitute for it, and human_release_approval never appears as a predicate there. See docs/protocols/release-approval-v0.md.",
+  "description": "DRAFT -- NOT FROZEN. Schema revision: draft_revision 1 (this event schema; unchanged). The composite verifier's conformance-profile revision is tracked separately (draft_revision 2, see CHANGELOG.md). One append-only ledger event of the ONLY promotion authority in the Evidence-Closed Delivery Authority DAG: a human (or an authorized emergency principal, break_glass_approve) binding exact digests -- receipt, its own semantic content, the release bundle, the selection manifest, and the target -- to an approval/rejection/revocation. No kind is exempt from this exact binding (R14); no verdict in promotion-receipt/v0 can substitute for it, and human_release_approval never appears as a predicate there. See docs/protocols/release-approval-v0.md.",
   "type": "object",
   "required": ["schema_version", "event_id", "kind", "subject", "principal", "occurred_at"],
   "additionalProperties": false,
@@ -96,7 +96,7 @@
           "deployed_artifact_readback"
         ]
       },
-      "description": "break_glass_approve only (schema-enforced below): a non-empty, duplicate-free subset of promotion-receipt/v0's own predicate_id closed set -- the exact predicates this emergency approval bypasses. Never human_release_approval (not a member of that set at all). A composite ledger fixture additionally requires every id here to actually appear among the referenced receipt's own predicates[] -- bypassing a predicate the receipt never evaluated is meaningless (checked by verify-fixtures.mjs, not expressible in this single-event schema)."
+      "description": "break_glass_approve only (schema-enforced below): a non-empty, duplicate-free subset of promotion-receipt/v0's own predicate_id closed set -- the exact predicates this emergency approval bypasses. Never human_release_approval (not a member of that set at all). A composite ledger fixture additionally requires every id here to actually appear among the referenced receipt's own predicates[] -- bypassing a predicate the receipt never evaluated is meaningless (checked by verify-fixtures.mjs, not expressible in this single-event schema). Since promotion-receipt/v0 draft_revision 2 the composite also requires this set to EQUAL the receipt's blockers (as derived by promotion-receipt/v0 evaluate.mjs) exactly -- no subset, no superset, no not_applicable predicate -- and rejects a break_glass_approve against a receipt that has no blockers."
     },
     "incident_ref": {
       "type": "string",
