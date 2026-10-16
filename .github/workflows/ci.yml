@@ -34,3 +34,59 @@ jobs:
         run: node contracts/shared/repo-checks.mjs
       - name: Claim register (schema + semantic rules) and generated prior-art view up to date
         run: node docs/claims/verify-register.mjs
+      - name: Validate the consumer pin register (data-only; commands are allowlisted in the script)
+        run: node contracts/shared/consumer-conformance.mjs --validate
+      - name: consumer-conformance self-test
+        run: node --test contracts/shared/consumer-conformance.test.mjs
+
+  # Hub-side half of the bidirectional conformance check (contracts/CONSUMERS.md).
+  # Each consumer is checked out at the commit pinned in contracts/consumers.json and
+  # re-checked against THIS revision's contracts. Repository names and commands are fixed
+  # in contracts/shared/consumer-conformance.mjs, not read from the JSON.
+  consumer-conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # install 10 + tests 5 + probe 5 + checkouts / git
+    strategy:
+      fail-fast: false
+      matrix:
+        consumer: [release-evidence, spec-lane, agent-metrics-harvester]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # ancestor / base / pin-drift checks need history
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+      - name: Resolve the consumer pin (repository + sha come from the validated register)
+        id: pin
+        run: |
+          set -euo pipefail
+          node contracts/shared/consumer-conformance.mjs --validate
+          node contracts/shared/consumer-conformance.mjs --print-pin --consumer "${{ matrix.consumer }}" | tee -a "$GITHUB_OUTPUT"
+      - name: Resolve the base revision for the deprecation gate
+        run: |
+          set -euo pipefail
+          base='${{ github.event.pull_request.base.sha || github.event.before }}'
+          # A push that creates a branch reports an all-zero `before`; fall back to merge-base(origin/main, HEAD).
+          if [ -n "$base" ] && [ "$base" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "CONSUMER_CONFORMANCE_BASE=$base" >> "$GITHUB_ENV"
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ steps.pin.outputs.repository }}
+          ref: ${{ steps.pin.outputs.sha }}
+          path: consumer
+          fetch-depth: 0 # the ancestry gate checks sha against the consumer's default branch
+          persist-credentials: false
+      - name: Ancestry gate (before any toolchain reads files from the consumer checkout)
+        run: node contracts/shared/consumer-conformance.mjs --consumer "${{ matrix.consumer }}" --checkout consumer --gate-only
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        if: matrix.consumer == 'release-evidence'
+        with:
+          package_json_file: consumer/package.json # safe: the gate above already accepted this checkout
+      - name: Conformance check
+        run: node contracts/shared/consumer-conformance.mjs --consumer "${{ matrix.consumer }}" --checkout consumer
+      - name: Negative probe (the live check must be able to fail)
+        if: matrix.consumer == 'release-evidence'
+        run: node contracts/shared/consumer-conformance.mjs --consumer "${{ matrix.consumer }}" --checkout consumer --break-contract

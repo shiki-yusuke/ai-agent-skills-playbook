@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiki-yusuke/ai-agent-skills-playbook/contracts/consumers.schema.json",
+  "title": "Consumer pin register (hub-side half of the bidirectional conformance check)",
+  "description": "Data only: which consumer repositories the hub re-checks on every contract PR, at which commit, and which files they vendor. Commands are NOT configurable here -- they live in contracts/shared/consumer-conformance.mjs behind a fixed allowlist, so a PR editing this file cannot make CI run arbitrary code.",
+  "type": "object",
+  "required": ["version", "consumers"],
+  "properties": {
+    "version": { "type": "string" },
+    "policy": { "type": "string" },
+    "consumers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "repository", "sha", "pinned_at", "contracts"],
+        "properties": {
+          "name": { "type": "string" },
+          "repository": { "type": "string" },
+          "sha": { "type": "string" },
+          "pinned_at": { "type": "string" },
+          "contracts": { "type": "array", "items": { "type": "string" } },
+          "vendored": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["upstream", "pinned_commit", "consumer_path", "manifest"],
+              "properties": {
+                "upstream": { "type": "string" },
+                "pinned_commit": { "type": "string" },
+                "consumer_recorded_commit": { "type": "string" },
+                "note": { "type": "string" },
+                "consumer_path": { "type": "string" },
+                "manifest": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["file"],
+                    "properties": {
+                      "file": { "type": "string" },
+                      "upstream_file": { "type": "string" },
+                      "consumer_only": { "type": "boolean" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
