@@ -17,6 +17,18 @@ make CI run arbitrary code.
 
 ## Rules
 
+- **The pinned sha must be on the consumer's default branch (ancestry gate).** Before anything
+  in the checkout is read, installed or run, the script requires checkout `HEAD` == `sha`,
+  `origin` == the allowlisted GitHub repository, and `sha` to be an ancestor of the default
+  branch HEAD (`git ls-remote origin HEAD` + fetch; an unreachable remote fails, it is not
+  best effort). `consumers.json` can be edited from a PR and a PR ref's commit can be checked out
+  by sha, so a commit that only exists on a PR ref is rejected.
+- **The vendored skeleton is fixed in the script, not in the JSON.** Each consumer's `contracts`
+  list and, per vendored entry, `upstream` / `consumer_path` / the set of `consumer_only` files
+  are pinned in the allowlist of
+  [`shared/consumer-conformance.mjs`](./shared/consumer-conformance.mjs). `consumers.json`
+  carries only the shas, dates and the per-file manifest; adding, dropping or re-pointing an
+  entry, or flagging more files consumer-only, is invalid until the script changes too.
 - **Breaking changes go add -> migrate -> remove.** A contract directory that a consumer
   references at the PR's base revision may not be deleted in that PR (the gate reads the *base*
   `consumers.json`, so dropping the reference and the directory together does not bypass it).
@@ -31,6 +43,7 @@ make CI run arbitrary code.
 
   ```sh
   node contracts/shared/consumer-conformance.mjs --validate
+  node contracts/shared/consumer-conformance.mjs --consumer spec-lane --checkout ../lane --gate-only
   node contracts/shared/consumer-conformance.mjs --consumer spec-lane --checkout ../lane --base <sha>
   node contracts/shared/consumer-conformance.mjs --consumer release-evidence --checkout ../release-evidence --break-contract
   ```
