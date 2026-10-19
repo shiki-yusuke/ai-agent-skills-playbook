@@ -71,6 +71,7 @@ installerで、導入時にはGitHubへ接続し、公式document上は匿名ins
 | [`docs/ai-metrics-platform-template.md`](docs/ai-metrics-platform-template.md) | AI支援開発の効果計測基盤（5テーブルスキーマ + PRコメントマーカー収集 + Goodhart回避ガードレール）の参照設計テンプレート |
 | [`docs/prior-art.md`](docs/prior-art.md) | Evidence-Closed Delivery の設計について「何を・いつ公開したか」と比較した先行研究を、人間承認制の claim register（`docs/claims/register.json`）から生成した一覧。「初」「独立に収束」は主張しない |
 | [`docs/protocols/agent-metrics-v1.md`](docs/protocols/agent-metrics-v1.md) | 上記テンプレートの「PRコメントマーカー収集」パターンを具体化した、機械検証可能な normative protocol（次節参照） |
+| [`docs/protocols/cognitive-debt-metrics-v0.md`](docs/protocols/cognitive-debt-metrics-v0.md) | 認知負債の指標（M1 未解決 impact assertion の経過時間 / M2 予測誤り / M3 abstain 理由）を F1・F2・lane・release-evidence の記録だけから決定論的に出すレポート形式の設計（draft、authority none、実装先は agent-metrics-harvester） |
 
 ## Public interoperability protocols
 
