@@ -73,6 +73,10 @@ const FIXES = {
     delete c.ingest[`sha256:${"9".repeat(64)}`];
     return c;
   },
+  "reject-composite-no-ack-bad-ingest.json": (c) => {
+    c.ingest = {};
+    return c;
+  },
   "reject-composite-ingest-empty-path.json": (c) => {
     c.ingest[c.ack_records[0].record_id].path = "approvals/ledger/ack.json";
     return c;
