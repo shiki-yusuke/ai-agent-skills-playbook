@@ -257,7 +257,7 @@ shadow-evaluation/v0 wrapper record の 3 層を別々に数える。
 
 ```
 { "schema_version": "cognitive-debt-metrics/v0", "authority": "none", "as_of": "<ISO8601 UTC>",
-  "generator": {"name": "agent-metrics-harvester", "version": "<pkg version>"},
+  "generator": {"name": "agent-metrics-harvester", "version": "<pkg version>", "options": {"detail": true|false}},
   "inputs": [ {"kind": "ack_composite", "dir": null, "files": [{"path": "...", "sha256": "..."}]},
               {"kind": "evaluations", "repo": "<path>", "commit": "<sha>"},
               {"kind": "explanations", "repo": "<path>", "commit": "<sha>"},
@@ -265,6 +265,7 @@ shadow-evaluation/v0 wrapper record の 3 層を別々に数える。
               {"kind": "lane_evidence", "dir": "<path>", "files": [{"path": "...", "sha256": "..."}]},
               {"kind": "release_ids", "dir": null, "files": [{"path": "...", "sha256": "..."}], "count": n},
               {"kind": "release_ledger", "repo": "<path>", "commit": "<sha>"} ],
+  "population": {"requested_releases": n, "resolved_releases": n},
   "m1_open_assertions": {...}, "m2_prediction_error": {...}, "m3_abstain_reasons": {...},
   "ack": {...}, "coverage": {...}, "missing": {...}, "suppressed_rows": {...}, "limits": ["..."] }
 ```
@@ -285,7 +286,7 @@ shadow-evaluation/v0 wrapper record の 3 層を別々に数える。
 
 ## 4. 実装先と形
 
-- **agent-metrics-harvester**。`src/cognitive-debt/` + CLI
+- **agent-metrics-harvester**。`src/cognitive-debt/` + CLI（実装は同じ入口を bin `agent-metrics-cognitive-debt` としても公開する。harvester decisions #1）
   `agent-metrics-harvester cognitive-debt --release-ids <file> --release-ledger <repo> --ack <composite.json>
   --lane-repo <repo> --lane-evidence <dir> --explanations <corpus repo> --evaluations <repo> --as-of <iso> --out <file> [--detail]`。
 - git は `execFileSync("git", [...])` を PATH 解決で（B5 と同じ規律）。network なし。
