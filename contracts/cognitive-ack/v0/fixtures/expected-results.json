@@ -212,6 +212,12 @@
       "expected": "reject",
       "files": "reject-composite-one-bad-among-many.json",
       "reason_code": "ingest_commit_mismatch"
+    },
+    {
+      "type": "composite",
+      "expected": "reject",
+      "files": "reject-composite-no-ack-bad-ingest.json",
+      "reason_code": "ingest_extraneous_entry"
     }
   ]
 }

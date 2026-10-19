@@ -213,8 +213,19 @@ export function preflightComposite(composite, { approvalFixturesDir = RELEASE_AP
 export function checkAckLedger(composite) {
   const problems = [];
   const records = composite.ack_records;
+  // The ingest envelope is checked for every composite, ack or no ack: an extraneous entry,
+  // a bad commit_oid or an empty path is a malformed envelope even when there is nothing to
+  // bind (no early accept may skip this).
+  const envelopeIds = new Set([
+    ...composite.approval_events.map((e) => (isPlainObject(e) ? e.event_id : undefined)),
+    ...records.map((r) => (isPlainObject(r) ? r.record_id : undefined)),
+  ]);
+  for (const [id, entry] of Object.entries(composite.ingest)) {
+    if (!envelopeIds.has(id)) problems.push(`ingest_extraneous_entry: ingest["${id}"] matches no approval event or ack record in this composite`);
+    problems.push(...checkIngestEntry(id, entry));
+  }
   // C1: no ack, nothing to judge -- whatever the approval events are.
-  if (records.length === 0) return { verdict: "accept", problems };
+  if (records.length === 0) return { verdict: problems.length > 0 ? "reject" : "accept", problems: dedupe(problems) };
 
   const eventIds = composite.approval_events.map((e) => (isPlainObject(e) ? e.event_id : undefined));
   const resolvable = new Map();
