@@ -36,8 +36,14 @@ jobs:
         run: node docs/claims/verify-register.mjs
       - name: Validate the consumer pin register (data-only; commands are allowlisted in the script)
         run: node contracts/shared/consumer-conformance.mjs --validate
-      - name: consumer-conformance self-test
-        run: node --test contracts/shared/consumer-conformance.test.mjs
+      - name: Contract unit tests (every contracts/**/*.test.mjs, discovered like the verifiers above)
+        run: |
+          set -euo pipefail
+          # node --test over every *.test.mjs under contracts/ (shared helpers and per-contract
+          # verifier unit tests alike), so a new test file is picked up without a workflow edit.
+          # cognitive-ack/v0's verify-fixtures.test.mjs was merged red once (2026-10-19) because
+          # only verify-fixtures.mjs ran here.
+          find contracts -type f -name "*.test.mjs" | sort | xargs node --test
 
   # Hub-side half of the bidirectional conformance check (contracts/CONSUMERS.md).
   # Each consumer is checked out at the commit pinned in contracts/consumers.json and
