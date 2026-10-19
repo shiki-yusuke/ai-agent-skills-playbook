@@ -1,5 +1,5 @@
 {
-  "version": "2026-10-19-r1",
+  "version": "2026-10-19-r2",
   "policy": "Pins are advanced by a human after the consumer's own merge (see contracts/CONSUMERS.md). Only sha / pinned_at / manifests live here; commands live in contracts/shared/consumer-conformance.mjs.",
   "consumers": [
     {
@@ -238,8 +238,8 @@
     {
       "name": "agent-metrics-harvester",
       "repository": "shiki-yusuke/agent-metrics-harvester",
-      "sha": "6f0b5c8b9dfaa08f0c2b8e18ecad3902da3340fd",
-      "pinned_at": "2026-10-16",
+      "sha": "d979970c956db81cf4e80e96a0ee8bb7c34067f2",
+      "pinned_at": "2026-10-19",
       "contracts": [
         "agent-metrics/v1"
       ],
@@ -247,8 +247,6 @@
         {
           "upstream": "contracts/agent-metrics/v1",
           "pinned_commit": "e60ed28c472df6eea5b6b9be5c37aae83cb6d02b",
-          "consumer_recorded_commit": "d99e48057a98af80871d00ace90f2ca18ae78eba",
-          "note": "UPSTREAM.md records d99e480 (not reachable from main; tree 6e228bc). e60ed28 is the main commit whose contracts/agent-metrics/v1 tree is exactly 6e228bc. Consumer should re-pin to e60ed28.",
           "consumer_path": "test/contract/vendor",
           "manifest": [
             {
