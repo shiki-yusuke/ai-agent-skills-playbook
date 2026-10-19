@@ -1,12 +1,12 @@
 {
-  "version": "2026-10-16-r2",
+  "version": "2026-10-19-r1",
   "policy": "Pins are advanced by a human after the consumer's own merge (see contracts/CONSUMERS.md). Only sha / pinned_at / manifests live here; commands live in contracts/shared/consumer-conformance.mjs.",
   "consumers": [
     {
       "name": "release-evidence",
       "repository": "shiki-yusuke/release-evidence",
-      "sha": "1eb1168185559254b17cd4f99766a496a3867c70",
-      "pinned_at": "2026-10-16",
+      "sha": "213c2d1585e6a8c3bb7c63c1bd1f1cf7da0e9413",
+      "pinned_at": "2026-10-19",
       "contracts": [
         "release-evidence/v0",
         "shared"
