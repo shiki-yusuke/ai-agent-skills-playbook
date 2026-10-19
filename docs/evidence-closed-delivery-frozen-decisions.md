@@ -333,3 +333,12 @@ domain and are not three independent third-party timestamps. Git history rewritt
 (filter-repo) is not used as evidence. The USPTO permit-before-commit patent family reported during
 the research pass was not retrieved and is recorded as unresolved; no novelty, priority, or
 freedom-to-operate claim is made, so no legal prior-art search was performed.
+
+## Addendum 2026-10-19 — cognitive-ack/v0 (draft, authority: none)
+
+`cognitive-ack/v0` records, inside the same approval operation as a `release-approval/v0` event, the
+approver's own self-report (`acknowledged` / `held` / `rejected`) about related high-risk impact-scan
+scopes. It is not proof of understanding, carries no score, and gates nothing: an approval completes
+with or without an ack, and with or without an explanation. Authority contracts and shared helpers
+must not reference it (checked mechanically by its verifier). See
+[`docs/protocols/cognitive-ack-v0.md`](protocols/cognitive-ack-v0.md).
