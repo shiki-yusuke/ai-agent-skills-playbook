@@ -10,7 +10,12 @@ import { compareVendored, escapeAnnotation, isSafeRelative, validateConsumersDoc
 
 const CONSUMERS_JSON = join(dirname(fileURLToPath(import.meta.url)), "..", "consumers.json");
 const loadDoc = () => JSON.parse(readFileSync(CONSUMERS_JSON, "utf8"));
-const NOW = new Date("2026-10-16T12:00:00Z");
+// Fixed clock for the mutation tests, taken from the committed register itself: noon UTC of the
+// latest pinned_at. A hardcoded date made every pin advance fail this file ("pinned_at is in the
+// future", 2026-10-19) until someone also edited the test; the CLI --validate path uses the real
+// clock, so staleness is still checked where it matters.
+const latestPinnedAt = loadDoc().consumers.map((c) => c.pinned_at).sort().at(-1);
+const NOW = new Date(`${latestPinnedAt}T12:00:00Z`);
 
 describe("compareVendored / walkFiles", () => {
   let root;
@@ -166,7 +171,8 @@ describe("validateConsumersDoc", () => {
   });
 
   test("pinned_at in the future", () => {
-    invalid((d) => (consumer(d, "spec-lane").pinned_at = "2026-10-17"), /in the future/);
+    const tomorrow = new Date(NOW.getTime() + 24 * 3600 * 1000).toISOString().slice(0, 10);
+    invalid((d) => (consumer(d, "spec-lane").pinned_at = tomorrow), /in the future/);
   });
 
   test("pinned_at that is not a calendar date", () => {
