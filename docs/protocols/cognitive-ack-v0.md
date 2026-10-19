@@ -95,7 +95,7 @@ record, and one violating record makes the composite's ack verdict `reject`):
 - **C8** coverage — whether every high-risk scope of a release has an ack — is **not** checked: the
   release's scope set lives in the lane, not here. Coverage is an F3 measurement.
 
-## Two verdicts, kept apart
+## One verdict, about the ack ledger only
 
 `checkAckLedger(composite)` returns exactly `{verdict: "accept" | "reject", problems}` — the ack
 ledger's quality. There is no field about the approval; approval validity is release-approval/v0's
